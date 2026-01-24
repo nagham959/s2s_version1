@@ -32,7 +32,6 @@ s2s_website/
 - **Text Main**: `#0e151b`
 - **Text Sub**: `#4e7597`
 - **Text Secondary**: `#94a3b8`
-- والمزيد...
 
 ## الخطوط
 
