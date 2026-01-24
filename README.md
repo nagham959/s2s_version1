@@ -1,6 +1,4 @@
-# SignTranslator - React Project
-
-مشروع React لتحويل موقع SignTranslator من HTML إلى React مع Tailwind CSS.
+# SignTranslator - React Project.
 
 ## البنية (Folder Structure)
 
@@ -20,9 +18,7 @@ s2s_website/
 └── README.md
 ```
 
-## الألوان المستخدمة
-
-تم استخراج جميع الألوان من ملفات HTML الأصلية:
+## الألوان المستخدمة:
 
 - **Primary**: `#F2593D`
 - **Primary Dark**: `#D14026`
