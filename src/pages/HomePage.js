@@ -11,12 +11,10 @@ const HomePage = () => {
     <ThemeProvider>
       <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-background-light dark:bg-background-dark text-text-main dark:text-white transition-colors duration-200 font-display rtl" dir="rtl">
         <Navbar variant="default" />
-        
         <main className="flex flex-col flex-1">
           <section className="flex flex-col justify-center py-10 lg:py-24 px-4 md:px-10 lg:px-40 bg-white dark:bg-surface-dark">
             <div className="mx-auto flex max-w-[1280px] flex-col w-full">
               <div className="flex flex-col-reverse gap-12 lg:flex-row items-center">
-                
                 {/* Content Area - Right Aligned */}
                 <div className="flex flex-col gap-8 lg:w-1/2 text-right">
                   <div className="flex flex-col gap-6">
@@ -45,7 +43,7 @@ const HomePage = () => {
                     <div
                       className="absolute inset-0 bg-cover bg-center opacity-95 transition-transform duration-700 hover:scale-110"
                       style={{ backgroundImage: "url('https://images.unsplash.com/photo-1617791160536-598cf32026fb?q=80&w=1000&auto=format&fit=crop')" }}>
-                      </div>
+                    </div>
                   </div>
                 </div>
 
