@@ -1,22 +1,45 @@
-# SignTranslator - React Project.
+# SignaryAI - منصة ترجمة لغة الإشارة الذكية
 
-## البنية (Folder Structure)
+هي منصة متطورة تعتمد على الذكاء الاصطناعي لترجمة لغة الإشارة بشكل متبادل وفوري، مما يسهل التواصل بين مجتمع الصم وضعاف السمع وبقية العالم.
+
+
+## البنية البرمجية (Folder Structure)
 
 ```
 s2s_website/
-├── public/
-│   └── index.html
+├── public/              # الملفات العامة والأيقونات
 ├── src/
-│   ├── components/        # مكونات React
-│   ├── pages/           # صفحات التطبيق
-│   ├── App.js           # المكون الرئيسي
+│   ├── components/      # مكونات الواجهة (Navbar, Sidebar)
+│   ├── contexts/        # إدارة الحالة (ThemeContext, HistoryContext)
+│   ├── pages/           # صفحات التطبيق (Dashboard, History, Settings)
+│   ├── App.js           # المكون الرئيسي وتوزيع المسارات
 │   ├── index.js         # نقطة الدخول
-│   └── index.css        # ملفات CSS و Tailwind
-├── package.json
-├── tailwind.config.js   # إعدادات Tailwind مع الألوان والخطوط
-├── postcss.config.js
+│   └── index.css        # التنسيقات العامة
+├── tailwind.config.js   # إعدادات التصميم والألوان
 └── README.md
 ```
+
+## المتطلبات التقنية (Tech Stack)
+
+*   **React.js**: المطور الأساسي لتطوير واجهة المستخدم.
+*   **Tailwind CSS**: للتصميم العصري والتجاوب.
+*   **Web Speech API**: للتعرف على الكلام باللغة العربية.
+*   **React Router**: لإدارة الانتقالات بين الصفحات.
+
+## التثبيت والتشغيل (Setup & Development)
+
+```bash
+# تثبيت التبعيات
+npm install
+
+# تشغيل المشروع في بيئة التطوير
+npm start
+
+# بناء النسخة النهائية
+npm run build
+```
+
+## الألوان والهوية (Identity)
 
 ## الألوان المستخدمة:
 
@@ -37,22 +60,3 @@ s2s_website/
 
 - **Cairo**: الخط الأساسي المستخدم في جميع الصفحات
 - **Material Symbols Outlined**: للأيقونات
-
-## التثبيت
-
-```bash
-npm install
-```
-
-## التشغيل
-
-```bash
-npm start
-```
-
-## البناء
-
-```bash
-npm run build
-```
-"# web_app" 
