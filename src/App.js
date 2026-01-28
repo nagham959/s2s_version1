@@ -3,28 +3,34 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './index.css';
 
 // Import all pages
+import { ThemeProvider } from './contexts/ThemeContext';
+import { HistoryProvider } from './contexts/HistoryContext';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfileSettingsPage from './pages/ProfileSettingsPage';
-import SignToVoicePage from './pages/SignToVoicePage';
-import VoiceToAvatarPage from './pages/VoiceToAvatarPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
+import HistoryPage from './pages/HistoryPage';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/profile-settings" element={<ProfileSettingsPage />} />
-        <Route path="/sign-to-voice" element={<SignToVoicePage />} />
-        <Route path="/voice-to-avatar" element={<VoiceToAvatarPage />} />
-      </Routes>
-    </Router>
+    <ThemeProvider>
+      <HistoryProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/profile-settings" element={<ProfileSettingsPage />} />
+            <Route path="/change-password" element={<ChangePasswordPage />} />
+          </Routes>
+        </Router>
+      </HistoryProvider>
+    </ThemeProvider>
   );
 }
 
