@@ -59,7 +59,7 @@ const ProfileSettingsContent = () => {
 
   return (
     <div className="bg-background-subtle dark:bg-background-dark font-display text-text-main dark:text-white antialiased min-h-screen flex flex-col relative">
-      <Navbar variant="dashboard" logo="SignVoice" />
+      <Navbar variant="dashboard" logo="SignaryAI" />
 
       {/* Toast Notification */}
       {notification && (
