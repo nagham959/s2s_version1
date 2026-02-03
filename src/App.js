@@ -22,7 +22,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-      <HistoryProvider>
+      <HistoryProvider> 
       <Router>
         <Routes>
           <Route path="/" element={<HomePage />} />
