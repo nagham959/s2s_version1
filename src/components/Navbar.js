@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 
-const Navbar = ({ 
+const Navbar = ({
   variant = 'default', // 'default', 'auth', 'dashboard'
   logo = 'SignaryAI',
   navItems = [],
@@ -24,9 +24,9 @@ const Navbar = ({
       { label: 'الأسعار', href: '#pricing' }
     ],
     dashboard: [
-      { label: 'لوحة التحكم', href: '/dashboard', active: true },
+      { label: 'لوحة التحكم', href: '/dashboard' },
       { label: 'السجل', href: '/history' },
-      { label: 'الإعدادات', href: '/settings' }
+      { label: 'الإعدادات', href: '/profile-settings' }
     ],
     auth: []
   };
@@ -99,11 +99,10 @@ const Navbar = ({
                   <Link
                     key={index}
                     to={item.href}
-                    className={`text-sm font-medium transition-colors ${
-                      isActive
+                    className={`text-sm font-medium transition-colors ${isActive
                         ? 'text-primary'
                         : 'text-slate-600 dark:text-slate-400 hover:text-primary'
-                    }`}
+                      }`}
                   >
                     {item.label}
                   </Link>
@@ -111,11 +110,10 @@ const Navbar = ({
                   <a
                     key={index}
                     href={item.href}
-                    className={`text-sm font-medium transition-colors ${
-                      isActive
+                    className={`text-sm font-medium transition-colors ${isActive
                         ? 'text-primary'
                         : 'text-slate-600 dark:text-slate-400 hover:text-primary'
-                    }`}
+                      }`}
                   >
                     {item.label}
                   </a>
