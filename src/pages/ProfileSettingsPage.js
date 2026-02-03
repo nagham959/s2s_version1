@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/authContext';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 
 const ProfileSettingsContent = () => {
   const { isDark, toggleTheme } = useTheme();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   // State for user profile and settings
   const [profile, setProfile] = useState({
@@ -55,6 +58,16 @@ const ProfileSettingsContent = () => {
       // Hide notification after 3 seconds
       setTimeout(() => setNotification(null), 3000);
     }, 1000);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      setNotification({ type: 'error', message: 'فشل تسجيل الخروج. حاول مرة أخرى.' });
+      setTimeout(() => setNotification(null), 3000);
+    }
   };
 
   return (
@@ -255,7 +268,7 @@ const ProfileSettingsContent = () => {
                   <p className="text-xs text-red-500 dark:text-red-400 mt-1">تسجيل الخروج بشكل آمن من حسابك على هذا الجهاز.</p>
                 </div>
                 <button
-                  onClick={() => alert("سيتم تسجيل الخروج...")}
+                  onClick={handleLogout}
                   className="px-5 py-2.5 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm font-bold hover:bg-red-50 dark:hover:bg-red-900/30 hover:border-red-300 dark:hover:border-red-700 transition-all flex items-center gap-2 shadow-sm"
                 >
                   <span className="material-symbols-outlined text-[18px] transform scale-x-[-1]">logout</span>
