@@ -7,8 +7,6 @@ import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProfileSettingsPage from "./pages/ProfileSettingsPage";
-import SignToVoicePage from "./pages/SignToVoicePage";
-import VoiceToAvatarPage from "./pages/VoiceToAvatarPage";
 import VerifyEmailPage from "./pages/verifyEmailPage";
 
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -38,8 +36,6 @@ function App() {
 
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/profile-settings" element={<ProfileSettingsPage />} />
-          <Route path="/sign-to-voice" element={<SignToVoicePage />} />
-          <Route path="/voice-to-avatar" element={<VoiceToAvatarPage />} />
         </Routes>
       </Router>
     </QueryClientProvider>
