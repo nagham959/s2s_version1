@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 
-const Sidebar = ({ 
+const Sidebar = ({
   variant = 'mobile', // 'mobile', 'desktop'
   items = [],
   activeItem = null,
   onItemClick = null
 }) => {
-  const { isDark } = useTheme();
+
   const location = useLocation();
 
   // Default mobile navigation items
@@ -55,11 +55,10 @@ const Sidebar = ({
                   onItemClick(item);
                 }
               }}
-              className={`flex flex-col items-center gap-1 transition-colors ${
-                isActive
+              className={`flex flex-col items-center gap-1 transition-colors ${isActive
                   ? 'text-primary'
                   : 'text-slate-500 dark:text-slate-400 hover:text-primary'
-              }`}
+                }`}
             >
               <span className="material-symbols-outlined">{item.icon}</span>
               <span className="text-[10px] font-medium">{item.label}</span>
@@ -85,11 +84,10 @@ const Sidebar = ({
                   onItemClick(item);
                 }
               }}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                isActive
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
                   ? 'bg-primary/10 text-primary font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary'
-              }`}
+                }`}
             >
               <span className="material-symbols-outlined">{item.icon}</span>
               <span className="text-sm font-medium">{item.label}</span>

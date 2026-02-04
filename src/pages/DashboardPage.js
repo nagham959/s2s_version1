@@ -142,7 +142,7 @@ const DashboardPage = () => {
     return () => {
       stopCamera();
     };
-  }, []);
+  }, [isRecording, stopCamera]);
 
   const toggleMode = () => {
     setMode(prev => prev === 'sign-to-voice' ? 'voice-to-avatar' : 'sign-to-voice');

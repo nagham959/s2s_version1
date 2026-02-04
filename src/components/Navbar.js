@@ -12,7 +12,7 @@ const Navbar = ({
   onLoginClick = null,
   onMenuClick = null
 }) => {
-  const { isDark, toggleTheme } = useTheme();
+  const { toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -100,8 +100,8 @@ const Navbar = ({
                     key={index}
                     to={item.href}
                     className={`text-sm font-medium transition-colors ${isActive
-                        ? 'text-primary'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-primary'
+                      ? 'text-primary'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-primary'
                       }`}
                   >
                     {item.label}
@@ -111,8 +111,8 @@ const Navbar = ({
                     key={index}
                     href={item.href}
                     className={`text-sm font-medium transition-colors ${isActive
-                        ? 'text-primary'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-primary'
+                      ? 'text-primary'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-primary'
                       }`}
                   >
                     {item.label}
