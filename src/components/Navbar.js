@@ -12,7 +12,7 @@ const Navbar = ({
   onLoginClick = null,
   onMenuClick = null
 }) => {
-  const { toggleTheme } = useTheme();
+  const { isDark, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 

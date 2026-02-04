@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = ({ variant = 'default' }) => {
   // Logo SVG Component
@@ -13,19 +14,19 @@ const Footer = ({ variant = 'default' }) => {
       <footer className="w-full py-6 text-center text-xs text-slate-400 dark:text-slate-600">
         <div className="flex justify-center gap-6 mb-2">
           <a
-            href="/"
+            href="#"
             className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
           >
             سياسة الخصوصية
           </a>
           <a
-            href="/"
+            href="#"
             className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
           >
             شروط الخدمة
           </a>
           <a
-            href="/"
+            href="#"
             className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
           >
             مركز المساعدة
@@ -123,14 +124,14 @@ const Footer = ({ variant = 'default' }) => {
           <div className="flex gap-4">
             <a
               aria-label="Twitter"
-              href="/"
+              href="#"
               className="text-gray-400 dark:text-slate-500 hover:text-white transition-colors"
             >
               <span className="material-symbols-outlined text-sm">public</span>
             </a>
             <a
               aria-label="LinkedIn"
-              href="/"
+              href="#"
               className="text-gray-400 dark:text-slate-500 hover:text-white transition-colors"
             >
               <span className="material-symbols-outlined text-sm">group</span>
