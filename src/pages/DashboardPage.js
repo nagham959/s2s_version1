@@ -4,6 +4,7 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import { useHistory } from '../contexts/HistoryContext';
+import avatarSrc from '../assets/avatar.png';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -258,11 +259,6 @@ const DashboardPage = () => {
                         </div>
                       </div>
                     )}
-
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="absolute w-32 h-32 border-2 border-primary/60 rounded-xl top-1/4 right-1/3 opacity-40 shadow-[0_0_15px_rgba(242,89,61,0.3)]"></div>
-                      <div className="absolute w-32 h-32 border-2 border-primary/60 rounded-xl bottom-1/3 left-1/3 opacity-40 shadow-[0_0_15px_rgba(242,89,61,0.3)]"></div>
-                    </div>
                     <div className="absolute top-6 right-6 flex gap-3">
                       <div className={`bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 border border-slate-200 dark:border-slate-700 shadow-sm transition-opacity ${isCameraActive ? 'opacity-100' : 'opacity-50'}`}>
                         <span className={`material-symbols-outlined text-green-500 text-sm filled ${isCameraActive ? 'animate-pulse' : ''}`}>radio_button_checked</span>
@@ -458,7 +454,7 @@ const DashboardPage = () => {
                       {/* Thumbnail shown before play */}
                       {!isAvatarPlaying && (
                         <img
-                          src="/images/avatar.png"
+                          src={avatarSrc}
                           alt="أفاتار"
                           className="absolute inset-0 w-full h-full object-contain bg-slate-100 dark:bg-slate-700"
                         />

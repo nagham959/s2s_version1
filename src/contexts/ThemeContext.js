@@ -18,7 +18,7 @@ export const ThemeProvider = ({ children }) => {
       if (stored) {
         return stored === 'dark';
       }
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return false; // Default to light theme
     }
     return false;
   });

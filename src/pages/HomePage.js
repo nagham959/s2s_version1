@@ -54,7 +54,7 @@ const HomePage = () => {
               </div>
             </div>
           </section>
-          <section className="border-y border-gray-100 dark:border-slate-700 bg-background-alt dark:bg-slate-800 py-10">
+          {/* <section className="border-y border-gray-100 dark:border-slate-700 bg-background-alt dark:bg-slate-800 py-10">
             <div className="mx-auto max-w-[1280px] px-6 lg:px-40 text-center">
               <p className="text-sm font-semibold text-text-sub dark:text-slate-400 uppercase tracking-widest mb-8">موثوق به من قبل قادة إمكانية الوصول</p>
               <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-8 opacity-60 grayscale transition-all hover:grayscale-0 hover:opacity-100">
@@ -64,8 +64,8 @@ const HomePage = () => {
                 <span className="text-xl font-black text-gray-400 dark:text-slate-500">GlobalSign</span>
               </div>
             </div>
-          </section>
-          <section className="pt-20 pb-10 px-6 lg:px-40 flex justify-center bg-white dark:bg-surface-dark">
+          </section> */}
+          <section id="features" className="pt-20 pb-10 px-6 lg:px-40 flex justify-center bg-white dark:bg-surface-dark">
             <div className="max-w-[960px] w-full text-center">
               <h2 className="text-primary font-bold tracking-wide uppercase text-sm mb-3">المميزات</h2>
               <h3 className="text-text-main dark:text-white text-3xl md:text-4xl font-bold leading-tight tracking-[-0.015em]">القدرات الأساسية</h3>
@@ -158,8 +158,8 @@ const HomePage = () => {
                 >
                   ابدأ مجانًا
                 </button>
-                <button className="flex items-center justify-center rounded-xl h-14 px-8 bg-primary-dark/40 border border-white/30 text-white text-lg font-bold hover:bg-primary-dark/60 transition-colors backdrop-blur-sm">
-                  تواصل مع المبيعات
+                <button onClick={() => navigate('/contact')} className="flex items-center justify-center rounded-xl h-14 px-8 bg-primary-dark/40 border border-white/30 text-white text-lg font-bold hover:bg-primary-dark/60 transition-colors backdrop-blur-sm">
+                 تواصل معنا
                 </button>
               </div>
             </div>
