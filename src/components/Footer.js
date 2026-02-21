@@ -22,6 +22,8 @@ const Footer = ({ variant = 'default' }) => {
     }
   };
 
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
   if (variant === 'auth') {
     return (
       <footer className="w-full py-6 text-center text-xs text-slate-400 dark:text-slate-600">
@@ -77,6 +79,7 @@ const Footer = ({ variant = 'default' }) => {
             </Link>
             <Link
               to="/pricing"
+              onClick={scrollToTop}
               className="text-gray-400 dark:text-slate-500 hover:text-primary transition-colors text-sm"
             >
               الأسعار
@@ -86,12 +89,14 @@ const Footer = ({ variant = 'default' }) => {
             <h4 className="font-bold text-base mb-1">الشركة</h4>
             <Link
               to="/about"
+              onClick={scrollToTop}
               className="text-gray-400 dark:text-slate-500 hover:text-primary transition-colors text-sm"
             >
               من نحن
             </Link>
             <Link
               to="/contact"
+              onClick={scrollToTop}
               className="text-gray-400 dark:text-slate-500 hover:text-primary transition-colors text-sm"
             >
               اتصل بنا
@@ -101,12 +106,14 @@ const Footer = ({ variant = 'default' }) => {
             <h4 className="font-bold text-base mb-1">قانوني</h4>
             <Link
               to="/privacy"
+              onClick={scrollToTop}
               className="text-gray-400 dark:text-slate-500 hover:text-primary transition-colors text-sm"
             >
               سياسة الخصوصية
             </Link>
             <Link
               to="/terms"
+              onClick={scrollToTop}
               className="text-gray-400 dark:text-slate-500 hover:text-primary transition-colors text-sm"
             >
               شروط الخدمة
