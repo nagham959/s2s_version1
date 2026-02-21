@@ -7,6 +7,13 @@ export const useHistory = () => useContext(HistoryContext);
 export const HistoryProvider = ({ children }) => {
     const [historyItems, setHistoryItems] = useState(() => {
         try {
+            const version = localStorage.getItem('translationHistoryVersion');
+            // If version is old or missing, clear old mock data
+            if (version !== '2') {
+                localStorage.removeItem('translationHistory');
+                localStorage.setItem('translationHistoryVersion', '2');
+                return [];
+            }
             const saved = localStorage.getItem('translationHistory');
             if (saved) {
                 return JSON.parse(saved);
@@ -14,40 +21,38 @@ export const HistoryProvider = ({ children }) => {
         } catch (e) {
             console.error('Failed to load history', e);
         }
-        // Default Mock Data for initial state if empty
-        return [
-            {
-                id: 1,
-                type: 'voice-to-avatar',
-                duration: '02:14 دقيقة',
-                date: 'الآن',
-                status: 'completed',
-                label: 'صوت إلى إشارة',
-                preview: 'مرحباً، أنا أقوم باختبار ميزة الترجمة...'
-            },
-            {
-                id: 2,
-                type: 'sign-to-voice',
-                duration: '05:45 دقيقة',
-                date: 'أمس، 4:30 م',
-                status: 'archived',
-                label: 'إشارة إلى صوت',
-                preview: 'محادثة حول حجز تذاكر القطار'
-            }
-        ];
+        return [];
     });
 
     useEffect(() => {
         localStorage.setItem('translationHistory', JSON.stringify(historyItems));
     }, [historyItems]);
 
+    const formatDate = (date) => {
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+
+        const timeStr = date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+        if (diffMins < 1) return 'الآن';
+        if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+        if (diffHours < 24) return `اليوم، ${timeStr}`;
+
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        if (date.toDateString() === yesterday.toDateString()) return `أمس، ${timeStr}`;
+
+        return date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) + `، ${timeStr}`;
+    };
+
     const addHistoryItem = (item) => {
         const now = new Date();
-        const formattedDate = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')} ${now.getHours() >= 12 ? 'م' : 'ص'}`;
-
         const newItem = {
             id: Date.now(),
-            date: formattedDate,
+            timestamp: now.toISOString(),
+            date: formatDate(now),
             status: 'completed',
             ...item
         };

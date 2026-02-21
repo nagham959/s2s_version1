@@ -37,13 +37,17 @@ const HomePage = () => {
                   </div>
                 </div>
 
-                {/* Visual Area (Image) */}
+                {/* Visual Area (Video) */}
                 <div className="w-full lg:w-1/2">
-                  <div className="relative w-full aspect-square md:aspect-[4/3] rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] bg-gradient-to-br from-orange-50 to-red-100 border border-white dark:border-slate-700">
-                    <div
-                      className="absolute inset-0 bg-cover bg-center opacity-95 transition-transform duration-700 hover:scale-110"
-                      style={{ backgroundImage: "url('https://images.unsplash.com/photo-1617791160536-598cf32026fb?q=80&w=1000&auto=format&fit=crop')" }}>
-                    </div>
+                  <div className="relative w-full aspect-square md:aspect-[4/3] rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white dark:border-slate-700">
+                    <video
+                      src="/videos/hello.mp4"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-cover scale-[1.25]"
+                    />
                   </div>
                 </div>
 

@@ -130,7 +130,12 @@ const HistoryPage = () => {
                                                     <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-full">
                                                         <span className="material-symbols-outlined text-4xl text-slate-400">history</span>
                                                     </div>
-                                                    <p>لا توجد سجلات مطابقة للفلتر المحدد.</p>
+                                                    <p className="font-medium text-slate-700 dark:text-slate-300">
+                                                        {historyItems.length === 0 ? 'لا توجد سجلات بعد' : 'لا توجد سجلات مطابقة للفلتر المحدد'}
+                                                    </p>
+                                                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                                                        {historyItems.length === 0 ? 'ستظهر هنا سجلات الترجمة تلقائياً بعد استخدام لوحة التحكم.' : 'جرّب تغيير الفلتر لعرض المزيد من السجلات.'}
+                                                    </p>
                                                 </div>
                                             </td>
                                         </tr>

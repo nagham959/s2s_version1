@@ -20,6 +20,20 @@ const DashboardPage = () => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const recognitionRef = useRef(null);
+  const avatarVideoRef = useRef(null);
+  const [isAvatarPlaying, setIsAvatarPlaying] = useState(false);
+
+  const toggleAvatarVideo = () => {
+    const vid = avatarVideoRef.current;
+    if (!vid) return;
+    if (isAvatarPlaying) {
+      vid.pause();
+      setIsAvatarPlaying(false);
+    } else {
+      vid.play();
+      setIsAvatarPlaying(true);
+    }
+  };
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -215,13 +229,35 @@ const DashboardPage = () => {
                       className={`absolute inset-0 w-full h-full object-cover transform scale-x-[-1] ${isCameraActive ? 'opacity-100' : 'opacity-0'}`}
                     />
 
-                    {/* Fallback Image if Camera Not Active */}
+                    {/* Fallback Placeholder if Camera Not Active */}
                     {!isCameraActive && (
-                      <div
-                        className="absolute inset-0 bg-cover bg-center opacity-90"
-                        style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCveAY_GA5lNGzRGPoVE3DMEfwA07o8nviCXHP8JnCCBKnqiFIdn4TMD3ywlWCGuSTtI_kyNMvOi3q4LQ2r8OaoYYEmyJBJ4jPkUAuD63n_nPPoflZhmKOK7Jswv0eDjoi9ngPojI4ywwYYJgtArXg_aJ55Qbmyj9QR8E9fSGccsuJFwjfbQSqPFOvSqU_yCFKuafipOzufmk5YwPCesCfRf1X4HSHSd165r6gDjs0dknceZqMr7Jz-WA8rmM0TosXgpwI6ri2CBnY')", transform: 'scaleX(-1)' }}
-                        alt="Live camera feed showing a person using sign language"
-                      ></div>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black">
+                        <div className="flex flex-col items-center gap-4">
+                        <svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg" className="w-40 h-32 opacity-80">
+                          {/* Camera body */}
+                          <rect x="5" y="20" width="90" height="55" rx="10" ry="10" fill="#E8624A" />
+                          {/* Viewfinder hump */}
+                          <rect x="30" y="10" width="25" height="14" rx="5" ry="5" fill="#E8624A" />
+                          {/* Flash dot */}
+                          <circle cx="18" cy="30" r="5" fill="white" />
+                          {/* Lens outer ring */}
+                          <circle cx="55" cy="47" r="20" fill="#D4503A" />
+                          {/* Lens middle ring */}
+                          <circle cx="55" cy="47" r="14" fill="#E8624A" />
+                          {/* Lens inner */}
+                          <circle cx="55" cy="47" r="9" fill="#D4503A" />
+                          {/* Lens center */}
+                          <circle cx="55" cy="47" r="5" fill="#E8624A" />
+                          {/* White ring highlight */}
+                          <circle cx="55" cy="47" r="20" fill="none" stroke="white" strokeWidth="3" />
+                          <circle cx="55" cy="47" r="9" fill="none" stroke="white" strokeWidth="2.5" />
+                        </svg>
+                          <div className="text-center">
+                            <p className="text-slate-300 font-semibold text-base">الكاميرا متوقفة</p>
+                            <p className="text-slate-500 text-sm mt-1">اضغط على "تشغيل الكاميرا" للبدء</p>
+                          </div>
+                        </div>
+                      </div>
                     )}
 
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -419,30 +455,43 @@ const DashboardPage = () => {
                         </button>
                       </div>
                     </div>
-                    <div className="relative aspect-video w-full bg-slate-100 dark:bg-slate-700 group overflow-hidden">
-                      <div
-                        className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-multiply dark:mix-blend-normal"
-                        style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuD4LUVr1snRfxJz_VuBODhdrn6FEtaOsajNvOommZgpmQxaJcDEdyX1pvfU8FN2pO_jSlT2jEow_ETBX6Dsm9ZFHGDuITFon-NAwl7yzDPtL2BS_npngEaSmChDT68K-U0nUEDLFsQH8-sIZWl_xkPEhNo2h__-mBPUYzV57Of7Te34P5T63yXHM4p8hwXxDjPJ1pxaTyIECccwxoFnLbNAvRL-UWPKU9QAoel7GwxTzPrebhvxApXfYhyKL8GICXyvhADNZwXd6bQ')" }}
-                        alt="Background gradient"
-                      ></div>
-                      <div className="absolute inset-0 flex items-end justify-center z-10">
+                    <div className="relative aspect-video w-full bg-black overflow-hidden">
+                      {/* Thumbnail shown before play */}
+                      {!isAvatarPlaying && (
+                        <img
+                          src="/images/avatar.png"
+                          alt="أفاتار"
+                          className="absolute inset-0 w-full h-full object-contain bg-slate-100 dark:bg-slate-700"
+                        />
+                      )}
+                      {/* Video */}
+                      <video
+                        ref={avatarVideoRef}
+                        src="/videos/hello.mp4"
+                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 scale-[1.3] ${isAvatarPlaying ? 'opacity-100' : 'opacity-0'}`}
+                        onEnded={() => setIsAvatarPlaying(false)}
+                        playsInline
+                      />
+                      {/* Play overlay */}
+                      {!isAvatarPlaying && (
                         <div
-                          className="h-[95%] w-auto aspect-[3/4] bg-contain bg-bottom bg-no-repeat drop-shadow-[0_10px_20px_rgba(0,0,0,0.2)] transition-transform duration-500"
-                          style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCzxzL9Xm4G71Z5QYK21bhY7iWJ772VkrpxzNlXPa-0ZcXAVPOvAODyIuv5WRrJpBwHGeA1JptyPf_kQIxvp0CwjqK07_pQinAOEG8mxG8GFHI7OS2L0mwIPflseYMkx7fVCxymxSkXbRsf0wjI5IxfS3MEXgcTPN0g-blyysZMewIb2DaEA2JWtNxzSP93aaFd5hBU7y6LbV-ce-wPbrNNRdKqnaD-3LJbimcN-AAAKbdgpH5x_tMTuHY2MuScYybp1Lh0_dr8CnU')" }}
-                          alt="3D animated avatar"
-                        ></div>
-                      </div>
-                      <div className={`absolute inset-0 flex items-center justify-center bg-white/30 dark:bg-black/30 transition-opacity duration-300 z-20 pointer-events-none ${isTranslating ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'}`}>
-                        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-full p-5 shadow-2xl border border-white/50 dark:border-slate-700 transform rotate-180">
-                          <span className={`material-symbols-outlined text-5xl text-primary ${isTranslating ? 'animate-pulse' : ''}`}>play_arrow</span>
+                          className="absolute inset-0 flex items-center justify-center cursor-pointer bg-black/10 hover:bg-black/20 transition-colors z-10"
+                          onClick={toggleAvatarVideo}
+                        >
+                          <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full p-5 shadow-2xl border border-white/50 dark:border-slate-700">
+                            <span className="material-symbols-outlined text-5xl text-primary">play_arrow</span>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                     <div className="p-4 bg-white dark:bg-slate-800 flex flex-col md:flex-row items-center justify-center gap-4 border-t border-slate-200 dark:border-slate-700">
                       <div className="flex items-center gap-3 w-full md:w-auto">
-                        <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 border border-primary">
-                          <span className="material-symbols-outlined transform rotate-180">play_circle</span>
-                          <span>تشغيل</span>
+                        <button
+                          onClick={toggleAvatarVideo}
+                          className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 border border-primary"
+                        >
+                          <span className="material-symbols-outlined">{isAvatarPlaying ? 'pause' : 'play_arrow'}</span>
+                          <span>{isAvatarPlaying ? 'إيقاف' : 'تشغيل'}</span>
                         </button>
                       </div>
                     </div>
