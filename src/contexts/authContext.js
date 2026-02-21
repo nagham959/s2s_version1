@@ -138,7 +138,7 @@ const safeErrorMessage = (err, fallback = "حدث خطأ، حاول مرة أخ�
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-   const forgotPassword = async (email) => {
+  const forgotPassword = async (email) => {
     try {
       await api.post("/api/v1/Auth/ForgotPassword", { email });
       return true;
@@ -146,19 +146,23 @@ const safeErrorMessage = (err, fallback = "حدث خطأ، حاول مرة أخ�
       throw new Error(safeErrorMessage(err, "فشل إرسال طلب إعادة تعيين كلمة المرور."));
     }
   };
+  
+const resetPassword = async ({ token, newPassword, confirmPassword }) => {
+  try {
+    const cleanToken = token.replace(/ /g, "+");
 
-  const resetPassword = async ({ token, newPassword, confirmPassword }) => {
-    try {
-      await api.post("/api/v1/Auth/ResetPassword", {
-        token,
-        newPassword,
-        confirmPassword,
-      });
-      return true;
-    } catch (err) {
-      throw new Error(safeErrorMessage(err, "فشل تغيير كلمة المرور. حاول مرة أخرى."));
-    }
-  };
+    await api.post("/api/v1/Auth/ResetPassword", {
+      Token: cleanToken,            
+      NewPassword: newPassword,     
+      ConfirmPassword: confirmPassword, 
+    });
+
+    return true;
+  } catch (err) {
+    console.error("Server Response Error:", err.response?.data);
+    throw new Error(safeErrorMessage(err, "فشل تغيير كلمة المرور. حاول مرة أخرى."));
+  }
+};
 
   return (
     <AuthContext.Provider

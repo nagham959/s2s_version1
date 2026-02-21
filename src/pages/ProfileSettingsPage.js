@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/authContext';
@@ -7,28 +7,38 @@ import Sidebar from '../components/Sidebar';
 
 const ProfileSettingsContent = () => {
   const { isDark, toggleTheme } = useTheme();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();  // استخدم بيانات اليوزر من الـ context
   const navigate = useNavigate();
 
   // State for user profile and settings
   const [profile, setProfile] = useState({
-    name: 'Nagham Ahmed',
-    email: 'naghamelsorady@gmail.com',
+    name: '',
+    email: '',
     avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA1VSvtH1AlkzXbOETNqCK2bOSBX9zehvxrYtg-eU2kf9VmtHAZjwj4vb58SSSx7KEwA4O8dgYp9msr07NT3_4xhpmUb-HH-xn1iF9HZkOjr71J-TqS9cR9vFyvNj9LsoeVAPv4-zgWsZ4MqmTFskzH9cmweAq0KpOYbzv4vwlGjHHqKuo_zxU4zQBLSmlnPCqD-27GLkXf9mzkePEXzgr6UMDnYfI13Rtb0Jl-ns96YAhfq1eWAeHsf3cZ3UG1777wh1L3oXLuCQQ',
-
     signLanguage: 'asl',
     spokenLanguage: 'en-us'
   });
 
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState(null);
-  const fileInputRef = React.useRef(null);
+  const fileInputRef = useRef(null);
 
-  // Load from localStorage on mount
-  React.useEffect(() => {
+  // Load user data from auth context when available
+  useEffect(() => {
+    if (user) {
+      setProfile(prev => ({
+        ...prev,
+        name: user.displayName || '',
+        email: user.email || ''
+      }));
+    }
+  }, [user]);
+
+  // Load from localStorage on mount if you want to keep local changes
+  useEffect(() => {
     const savedProfile = localStorage.getItem('userProfile');
     if (savedProfile) {
-      setProfile(JSON.parse(savedProfile));
+      setProfile(prev => ({ ...prev, ...JSON.parse(savedProfile) }));
     }
   }, []);
 
