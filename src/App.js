@@ -12,6 +12,12 @@ import HistoryPage from "./pages/HistoryPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
+import FeaturesPage from "./pages/FeaturesPage";
+import AboutPage from "./pages/AboutPage";
+import PricingPage from "./pages/PricingPage";
+import TermsPage from "./pages/TermsPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import ContactPage from "./pages/ContactPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { HistoryProvider } from "./contexts/HistoryContext";
@@ -27,6 +33,12 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/home" element={<HomePage />} />
+              <Route path="/features" element={<FeaturesPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/contact" element={<ContactPage />} />
 
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
