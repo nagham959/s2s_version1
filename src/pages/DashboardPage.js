@@ -34,7 +34,6 @@ const DashboardPage = () => {
       setIsAvatarPlaying(true);
     }
   };
-
   // Initialize Speech Recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -219,7 +218,7 @@ const DashboardPage = () => {
               <>
                 <div className="lg:col-span-8 flex flex-col gap-6">
                   {/* Camera Component */}
-                  <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl ring-1 ring-slate-200 dark:ring-slate-700 group">
+                  <div className="relative w-full aspect-video max-h-[260px] sm:max-h-[360px] md:max-h-none bg-black rounded-2xl overflow-hidden shadow-2xl ring-1 ring-slate-200 dark:ring-slate-700 group">
                     {/* Live Video Feed */}
                     <video
                       ref={videoRef}
@@ -231,9 +230,9 @@ const DashboardPage = () => {
 
                     {/* Fallback Placeholder if Camera Not Active */}
                     {!isCameraActive && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
                         <div className="flex flex-col items-center gap-4">
-                        <svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg" className="w-40 h-32 opacity-80">
+                        <svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg" className="w-24 h-20 sm:w-32 sm:h-28 md:w-40 md:h-32 opacity-80">
                           {/* Camera body */}
                           <rect x="5" y="20" width="90" height="55" rx="10" ry="10" fill="#E8624A" />
                           {/* Viewfinder hump */}
@@ -253,8 +252,8 @@ const DashboardPage = () => {
                           <circle cx="55" cy="47" r="9" fill="none" stroke="white" strokeWidth="2.5" />
                         </svg>
                           <div className="text-center">
-                            <p className="text-slate-300 font-semibold text-base">الكاميرا متوقفة</p>
-                            <p className="text-slate-500 text-sm mt-1">اضغط على "تشغيل الكاميرا" للبدء</p>
+                            <p className="text-slate-600 dark:text-slate-300 font-semibold text-sm sm:text-base">الكاميرا متوقفة</p>
+                            <p className="text-slate-400 dark:text-slate-500 text-xs sm:text-sm mt-1">اضغط على "تشغيل الكاميرا" للبدء</p>
                           </div>
                         </div>
                       </div>
@@ -314,7 +313,7 @@ const DashboardPage = () => {
                 </div>
 
                 {/* Output Panel (Live Text) */}
-                <div className="lg:col-span-4 flex flex-col h-[600px] lg:h-auto bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden">
+                <div className="lg:col-span-4 flex flex-col h-[260px] sm:h-[360px] lg:h-auto bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden">
                   <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-700/50">
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-primary">translate</span>
