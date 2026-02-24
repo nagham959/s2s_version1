@@ -136,3 +136,10 @@ npm run build
 - المنصة تدعم اتجاه **RTL** بالكامل.
 - الـ Navbar يدعم ثلاثة أوضاع: `default` (الصفحات العامة)، `auth` (صفحات المصادقة)، `dashboard` (لوحة التحكم).
 - روابط الـ hash (مثل `/#features`) تعمل مع scroll سلس حتى عند الانتقال من صفحة أخرى.
+
+
+
+
+//979897845795-csdecb918rga2up05qth0p1nf2p8iakt.apps.googleusercontent.com
+
+//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

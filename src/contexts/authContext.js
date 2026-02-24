@@ -1,11 +1,19 @@
 import axios from "axios";
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+} from "react";
+import { auth, googleProvider } from "../config/firebase";
+import { signInWithPopup } from "firebase/auth";
 
 const AuthContext = React.createContext(null);
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://s2s-1d5c94958ff6.herokuapp.com";
-
 
 const safeErrorMessage = (err, fallback = "حدث خطأ، حاول مرة أخرى.") => {
   const status = err?.response?.status;
@@ -21,41 +29,65 @@ const safeErrorMessage = (err, fallback = "حدث خطأ، حاول مرة أخ�
     return "حدث خطأ في الاتصال بالخادم. حاول مرة أخرى.";
   }
 
-
-  if (status === 400) return "البيانات غير صحيحة. راجع المدخلات وحاول مرة أخرى.";
+  if (status === 400)
+    return "البيانات غير صحيحة. راجع المدخلات وحاول مرة أخرى.";
   if (status === 401) return "غير مصرح. يرجى تسجيل الدخول مرة أخرى.";
   if (status === 503) return "السيرفر غير متاح حاليًا. حاول بعد قليل.";
 
   return s || fallback;
 };
 
-  export function AuthProvider({ children }) {
+export function AuthProvider({ children }) {
   const [accessToken, setAccessToken] = useState(null);
   const [user, setUser] = useState(null);
-  
+  const [isLoading, setIsLoading] = useState(false);
+
   const tokenRef = useRef(null);
   useEffect(() => {
     tokenRef.current = accessToken;
   }, [accessToken]);
 
-  const api = axios.create({
-    baseURL: API_BASE_URL,
-  });
+  const api = useMemo(
+    () =>
+      axios.create({
+        baseURL: API_BASE_URL,
+      }),
+    [],
+  );
 
-  const doRefresh = async (storedRefresh) => {
-    const res = await api.post("/api/v1/Auth/RefreshToken", {
-      refreshToken: storedRefresh,
-    });
-    const data = res.data;
+  const doRefresh = useCallback(
+    async (storedRefresh) => {
+      const res = await api.post("/api/v1/Auth/RefreshToken", {
+        refreshToken: storedRefresh,
+      });
+      const data = res.data;
 
-    setAccessToken(data.token);
-    setUser({ email: data.email, displayName: data.displayName });
+      setAccessToken(data.token);
+      setUser({ email: data.email, displayName: data.displayName });
 
-    if (data.refreshToken) {
-      localStorage.setItem("refreshToken", data.refreshToken);
+      if (data.refreshToken) {
+        localStorage.setItem("refreshToken", data.refreshToken);
+      }
+      return data;
+    },
+    [api],
+  );
+
+  const logout = useCallback(async () => {
+    try {
+      const refreshToken = localStorage.getItem("refreshToken");
+      if (refreshToken) {
+        await api.post("/api/v1/Auth/Logout", { refreshToken });
+      }
+    } catch {
+      // ignore
     }
-    return data;
-  };
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+
+    setAccessToken(null);
+    setUser(null);
+  }, [api]);
 
   useEffect(() => {
     const reqId = api.interceptors.request.use((req) => {
@@ -89,15 +121,14 @@ const safeErrorMessage = (err, fallback = "حدث خطأ، حاول مرة أخ�
         }
 
         return Promise.reject(err);
-      }
+      },
     );
 
     return () => {
       api.interceptors.request.eject(reqId);
       api.interceptors.response.eject(resId);
     };
-    
-  }, []);
+  }, [api, doRefresh, logout]);
 
   const login = async (email, password) => {
     const res = await api.post("/api/v1/Auth/Login", { email, password });
@@ -113,20 +144,32 @@ const safeErrorMessage = (err, fallback = "حدث خطأ، حاول مرة أخ�
     return data;
   };
 
-  const logout = async () => {
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
     try {
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (refreshToken) {
-        await api.post("/api/v1/Auth/Logout", { refreshToken });
-      }
-    } catch {
-      // ignore
-    }
-    localStorage.removeItem("refreshToken");
-    setAccessToken(null);
-    setUser(null);
-  };
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
 
+      const response = await api.post("/api/v1/Auth/google-login", {
+        idToken: idToken,
+      });
+
+      const { token, refreshToken, email, displayName } = response.data;
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("refreshToken", refreshToken);
+      setUser({ email, displayName });
+
+      return response.data;
+    } catch (error) {
+      console.error("Auth Error:", error);
+      const serverMessage =
+        error.response?.data?.detail || "فشل التحقق من الحساب عبر السيرفر";
+      throw new Error(serverMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   // Auto-refresh لو عندك refreshToken محفوظ وداخل الصفحة لأول مرة
   useEffect(() => {
     const storedRefresh = localStorage.getItem("refreshToken");
@@ -143,37 +186,63 @@ const safeErrorMessage = (err, fallback = "حدث خطأ، حاول مرة أخ�
       await api.post("/api/v1/Auth/ForgotPassword", { email });
       return true;
     } catch (err) {
-      throw new Error(safeErrorMessage(err, "فشل إرسال طلب إعادة تعيين كلمة المرور."));
+      throw new Error(
+        safeErrorMessage(err, "فشل إرسال طلب إعادة تعيين كلمة المرور."),
+      );
     }
   };
-  
-const resetPassword = async ({ token, newPassword, confirmPassword }) => {
-  try {
-    const cleanToken = token.replace(/ /g, "+");
 
-    await api.post("/api/v1/Auth/ResetPassword", {
-      Token: cleanToken,            
-      NewPassword: newPassword,     
-      ConfirmPassword: confirmPassword, 
-    });
+  const resetPassword = async ({ token, newPassword, confirmPassword }) => {
+    try {
+      const cleanToken = token.replace(/ /g, "+");
 
-    return true;
-  } catch (err) {
-    console.error("Server Response Error:", err.response?.data);
-    throw new Error(safeErrorMessage(err, "فشل تغيير كلمة المرور. حاول مرة أخرى."));
-  }
-};
+      await api.post("/api/v1/Auth/ResetPassword", {
+        Token: cleanToken,
+        NewPassword: newPassword,
+        ConfirmPassword: confirmPassword,
+      });
+
+      return true;
+    } catch (err) {
+      console.error("Server Response Error:", err.response?.data);
+      throw new Error(
+        safeErrorMessage(err, "فشل تغيير كلمة المرور. حاول مرة أخرى."),
+      );
+    }
+  };
+
+  const changePassword = async (
+    currentPassword,
+    newPassword,
+    confirmNewPassword,
+  ) => {
+    try {
+      const response = await api.post("/api/v1/Auth/ChangePassword", {
+        currentPassword,
+        newPassword,
+        confirmNewPassword,
+      });
+
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.detail || "فشل تغيير كلمة المرور.";
+      throw new Error(message);
+    }
+  };
 
   return (
     <AuthContext.Provider
       value={{
         accessToken,
         user,
+        isLoading,
         api,
         login,
         logout,
         forgotPassword,
         resetPassword,
+        loginWithGoogle,
+        changePassword,
       }}
     >
       {children}
