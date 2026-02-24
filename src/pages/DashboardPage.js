@@ -328,10 +328,10 @@ const DashboardPage = () => {
                   </div>
 
                   {/* Controls */}
-                  <div className="w-full mx-auto bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-5">
+                  <div className="w-full mx-auto bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <button
                       onClick={isCameraActive ? stopCamera : startCamera}
-                      className={`flex-1 flex items-center justify-center gap-3 px-10 py-3 rounded-xl font-bold text-lg transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ${isCameraActive ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100' : 'bg-primary text-white border border-primary hover:bg-primary-hover'}`}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-base transition-all shadow-md hover:shadow-lg ${isCameraActive ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100' : 'bg-primary text-white border border-primary hover:bg-primary-hover'}`}
                     >
                       <span className="material-symbols-outlined text-2xl">{isCameraActive ? 'videocam_off' : 'videocam'}</span>
                       <span>{isCameraActive ? 'إيقاف الكاميرا' : 'تشغيل الكاميرا'}</span>
@@ -345,7 +345,7 @@ const DashboardPage = () => {
                     />
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="flex-1 flex items-center justify-center gap-3 px-10 py-3 rounded-xl font-bold text-lg transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-base transition-all shadow-md hover:shadow-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600"
                     >
                       <span className="material-symbols-outlined text-2xl">upload_file</span>
                       <span>رفع فيديو</span>
