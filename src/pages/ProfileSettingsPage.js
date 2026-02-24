@@ -144,7 +144,7 @@ const ProfileSettingsContent = () => {
                 />
               </div>
 
-              <div className="w-full space-y-4">
+              {/* <div className="w-full space-y-4">
                 <div className="flex items-center justify-between px-5 py-4 bg-gray-50 dark:bg-slate-700 rounded-xl border border-gray-100 dark:border-slate-600">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 rounded-lg">
@@ -157,7 +157,7 @@ const ProfileSettingsContent = () => {
                   </div>
                   <span className="px-2.5 py-1 text-xs font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20 rounded-full">نشط</span>
                 </div>
-              </div>
+              </div> */}
             </div>
             <div className="bg-surface-light dark:bg-slate-800 rounded-2xl p-6 border border-border-light dark:border-slate-700 shadow-sm">
               <h3 className="font-bold text-text-main dark:text-white mb-6 flex items-center gap-2 text-lg">

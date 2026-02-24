@@ -4,6 +4,7 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../contexts/authContext';
+import VideoHelpModal from '../components/VideoHelpModal';
 
 
 
@@ -21,7 +22,12 @@ const LoginPage = () => {
   const {login} = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  
+  const [helpModal, setHelpModal] = useState({ open: false, title: '', videoSrc: '', anchorRect: null });
+  const openHelp = (e, title, videoSrc) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHelpModal({ open: true, title, videoSrc, anchorRect: rect });
+  };
+  const closeHelp = () => setHelpModal(prev => ({ ...prev, open: false, anchorRect: null }));
   
 
 
@@ -78,6 +84,13 @@ const LoginPage = () => {
   return (
     <ThemeProvider>
       <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display antialiased transition-colors duration-300">
+        <VideoHelpModal
+          open={helpModal.open}
+          onClose={closeHelp}
+          title={helpModal.title}
+          videoSrc={helpModal.videoSrc}
+          anchorRect={helpModal.anchorRect}
+        />
         <Navbar variant="auth" logo="SignaryAI" />
         
         <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
@@ -94,22 +107,41 @@ const LoginPage = () => {
 
             <div className="px-8 mt-6 w-full">
               <div className="flex w-full bg-slate-100 dark:bg-black/20 p-1 rounded-xl">
-                <button className="flex-1 py-2 text-center rounded-lg bg-white dark:bg-[#2a2a2a] shadow-sm text-primary font-bold text-sm transition-all focus-visible-ring">
-                  تسجيل الدخول
-                </button>
-                <Link to="/signup" className="flex-1 py-2 text-center rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium text-sm transition-colors focus-visible-ring">
-                  إنشاء حساب
-                </Link>
+                <div className="flex-1 rounded-lg bg-white dark:bg-[#2a2a2a] shadow-sm transition-all flex items-center justify-center gap-1.5 px-2 py-2">
+                  <span className="text-primary font-bold text-sm">تسجيل الدخول</span>
+                  <button
+                    type="button"
+                    onClick={(e) => openHelp(e, 'تسجيل الدخول', '/videos/hello.mp4')}
+                    aria-label="عرض مثال بلغة الإشارة"
+                    className="flex items-center justify-center text-primary hover:text-primary-hover transition-colors"
+                  >
+                    <i className="fa-solid fa-hands-asl-interpreting text-sm"></i>
+                  </button>
+                </div>
+                <div className="flex-1 rounded-lg flex items-center justify-center gap-1.5 px-2 py-2">
+                  <Link to="/signup" className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium text-sm transition-colors">
+                    إنشاء حساب
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={(e) => openHelp(e, 'إنشاء حساب', '/videos/hello.mp4')}
+                    aria-label="عرض مثال بلغة الإشارة"
+                    className="flex items-center justify-center text-slate-400 hover:text-primary transition-colors"
+                  >
+                    <i className="fa-solid fa-hands-asl-interpreting text-sm"></i>
+                  </button>
+                </div>
               </div>
             </div>
 
             <form className="p-8 flex flex-col gap-5" onSubmit={handleSubmit}>
               <label className="flex flex-col gap-2 group">
                 <span className="text-sm font-medium text-slate-700 dark:text-white">البريد الإلكتروني</span>
-                <div className="relative">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
                   <input
                     className="w-full h-12 pr-10 pl-4 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base text-right"
-                    placeholder="name@example.com"
+                    placeholder="أدخل بريدك الإلكتروني"
                     type = "email"
                     value={email}
                     onChange={(e)=> {
@@ -120,6 +152,10 @@ const LoginPage = () => {
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                     <span className="material-symbols-outlined text-[20px]">mail</span>
                   </div>
+                  </div>
+                  <button type="button" onClick={(e) => openHelp(e, 'البريد الإلكتروني', '/videos/hello.mp4')} aria-label="عرض مثال بلغة الإشارة" className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 hover:bg-primary/10 transition-colors shadow-sm">
+                    <i className="fa-solid fa-hands-asl-interpreting text-xl text-primary"></i>
+                  </button>
                 </div>
               </label>
 
@@ -131,7 +167,8 @@ const LoginPage = () => {
                   </Link>
                 </div>
 
-                <div className="relative flex items-center">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex items-center flex-1">
                   <input
                     className="w-full h-12 pr-4 pl-12 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base text-right"
                     placeholder="أدخل كلمة المرور"
@@ -152,6 +189,10 @@ const LoginPage = () => {
                     <span className="material-symbols-outlined text-[20px]">
                       {showPassword ? 'visibility' : 'visibility_off'}
                     </span>
+                  </button>
+                  </div>
+                  <button type="button" onClick={(e) => openHelp(e, 'كلمة المرور', '/videos/hello.mp4')} aria-label="عرض مثال بلغة الإشارة" className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 hover:bg-primary/10 transition-colors shadow-sm">
+                    <i className="fa-solid fa-hands-asl-interpreting text-xl text-primary"></i>
                   </button>
                 </div>
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import VideoHelpModal from "../components/VideoHelpModal";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://s2s-1d5c94958ff6.herokuapp.com";
@@ -81,6 +82,25 @@ const SignUpPage = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [helpModal, setHelpModal] = useState({ open: false, title: '', videoSrc: '', anchorRect: null });
+  const openHelp = (e, title, videoSrc) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHelpModal({ open: true, title, videoSrc, anchorRect: rect });
+  };
+  const closeHelp = () => setHelpModal(prev => ({ ...prev, open: false, anchorRect: null }));
+
+  // sign-language help button — logo icon, sits on the LEFT of the input (last in flex = left in RTL)
+  const HelpBtn = ({ label, videoSrc }) => (
+    <button
+      type="button"
+      onClick={(e) => openHelp(e, label, videoSrc)}
+      aria-label={`عرض مثال بلغة الإشارة: ${label}`}
+      className="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 hover:bg-primary/10 transition-colors shadow-sm"
+    >
+      <i className="fa-solid fa-hands-asl-interpreting text-xl text-primary"></i>
+    </button>
+  );
 
   const canSubmit = useMemo(() => {
     return (
@@ -209,6 +229,13 @@ const SignUpPage = () => {
   return (
     <ThemeProvider>
       <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display antialiased transition-colors duration-300">
+        <VideoHelpModal
+          open={helpModal.open}
+          onClose={closeHelp}
+          title={helpModal.title}
+          videoSrc={helpModal.videoSrc}
+          anchorRect={helpModal.anchorRect}
+        />
         <Navbar variant="auth" logo="SignaryAI" />
 
         <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
@@ -223,25 +250,36 @@ const SignUpPage = () => {
                 إنشاء حساب
               </h2>
               <p className="text-slate-500 dark:text-text-secondary text-sm">
-                أنشئ حساباً جديداً للوصول إلى الأفاتار الخاص بك.
+              انشئ حسابك لكي تستطيع الترجمه من وإلى لغة الاشارة.
               </p>
             </div>
 
             <div className="px-8 mt-6 w-full">
               <div className="flex w-full bg-slate-100 dark:bg-black/20 p-1 rounded-xl">
-                <Link
-                  to="/login"
-                  className="flex-1 py-2 text-center rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium text-sm transition-colors focus-visible-ring"
-                >
-                  تسجيل الدخول
-                </Link>
-
-                <button
-                  className="flex-1 py-2 text-center rounded-lg bg-white dark:bg-[#2a2a2a] shadow-sm text-primary font-bold text-sm transition-all focus-visible-ring"
-                  type="button"
-                >
-                  إنشاء حساب
-                </button>
+                <div className="flex-1 rounded-lg flex items-center justify-center gap-1.5 px-2 py-2">
+                  <Link to="/login" className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium text-sm transition-colors">
+                    تسجيل الدخول
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={(e) => openHelp(e, 'تسجيل الدخول', '/videos/hello.mp4')}
+                    aria-label="عرض مثال بلغة الإشارة"
+                    className="flex items-center justify-center text-slate-400 hover:text-primary transition-colors"
+                  >
+                    <i className="fa-solid fa-hands-asl-interpreting text-sm"></i>
+                  </button>
+                </div>
+                <div className="flex-1 rounded-lg bg-white dark:bg-[#2a2a2a] shadow-sm transition-all flex items-center justify-center gap-1.5 px-2 py-2">
+                  <span className="text-primary font-bold text-sm">إنشاء حساب</span>
+                  <button
+                    type="button"
+                    onClick={(e) => openHelp(e, 'إنشاء حساب', '/videos/hello.mp4')}
+                    aria-label="عرض مثال بلغة الإشارة"
+                    className="flex items-center justify-center text-primary hover:text-primary-hover transition-colors"
+                  >
+                    <i className="fa-solid fa-hands-asl-interpreting text-sm"></i>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -261,13 +299,16 @@ const SignUpPage = () => {
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="displayName">
                   الاسم الكامل <span className="text-red-500 text-xs">(مطلوب)</span>
                 </label>
-                <input
-                  id="displayName"
-                  className="h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
-                  placeholder="محمد أحمد"
-                  value={form.displayName}
-                  onChange={(e) => setValue("displayName", e.target.value)}
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    id="displayName"
+                    className="flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
+                    placeholder="ادخل اسمك بالكامل"
+                    value={form.displayName}
+                    onChange={(e) => setValue("displayName", e.target.value)}
+                  />
+                  <HelpBtn label="الاسم الكامل" videoSrc="/videos/hello.mp4" />
+                </div>
                 {fieldErrors.displayName && (
                   <span className="text-xs text-red-600">{fieldErrors.displayName}</span>
                 )}
@@ -278,13 +319,16 @@ const SignUpPage = () => {
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="userName">
                   اسم المستخدم <span className="text-slate-400 text-xs">(اختياري)</span>
                 </label>
-                <input
-                  id="userName"
-                  className="h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
-                  placeholder="yousef.masoud"
-                  value={form.userName}
-                  onChange={(e) => setValue("userName", e.target.value)}
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    id="userName"
+                    className="flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
+                    placeholder="ادخل اسم المستخدم الخاص بك"
+                    value={form.userName}
+                    onChange={(e) => setValue("userName", e.target.value)}
+                  />
+                  <HelpBtn label="اسم المستخدم" videoSrc="/videos/hello.mp4" />
+                </div>
               </div>
 
               {/* البريد الإلكتروني */}
@@ -292,14 +336,17 @@ const SignUpPage = () => {
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="email">
                   البريد الإلكتروني <span className="text-red-500 text-xs">(مطلوب)</span>
                 </label>
-                <input
-                  id="email"
-                  className="h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
-                  placeholder="name@example.com"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setValue("email", e.target.value)}
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    id="email"
+                    className="flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
+                    placeholder="أدخل بريدك الإلكتروني"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setValue("email", e.target.value)}
+                  />
+                  <HelpBtn label="البريد الإلكتروني" videoSrc="/videos/hello.mp4" />
+                </div>
                 {fieldErrors.email && <span className="text-xs text-red-600">{fieldErrors.email}</span>}
               </div>
 
@@ -308,14 +355,17 @@ const SignUpPage = () => {
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="phoneNumber">
                   رقم الهاتف <span className="text-red-500 text-xs">(مطلوب)</span>
                 </label>
-                <input
-                  id="phoneNumber"
-                  className="h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
-                  placeholder="01012345678"
-                  value={form.phoneNumber}
-                  onChange={(e) => setValue("phoneNumber", e.target.value)}
-                  dir="ltr"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    id="phoneNumber"
+                    className="flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
+                    placeholder="ادخل رقم هاتفك"
+                    value={form.phoneNumber}
+                    onChange={(e) => setValue("phoneNumber", e.target.value)}
+                    dir="ltr"
+                  />
+                  <HelpBtn label="رقم الهاتف" videoSrc="/videos/hello.mp4" />
+                </div>
                 {fieldErrors.phoneNumber && (
                   <span className="text-xs text-red-600">{fieldErrors.phoneNumber}</span>
                 )}
@@ -327,29 +377,35 @@ const SignUpPage = () => {
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="gender">
                     النوع
                   </label>
-                  <select
-                    id="gender"
-                    className="h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right appearance-none"
-                    value={form.gender}
-                    onChange={(e) => setValue("gender", e.target.value)}
-                  >
-                    <option value="">اختر</option>
-                    <option value="male">ذكر</option>
-                    <option value="female">أنثى</option>
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <select
+                      id="gender"
+                      className="flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right appearance-none"
+                      value={form.gender}
+                      onChange={(e) => setValue("gender", e.target.value)}
+                    >
+                      <option value="">اختر</option>
+                      <option value="male">ذكر</option>
+                      <option value="female">أنثى</option>
+                    </select>
+                    <HelpBtn label="النوع" videoSrc="/videos/hello.mp4" />
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="dateOfBirth">
                     تاريخ الميلاد <span className="text-red-500 text-xs">(مطلوب)</span>
                   </label>
-                  <input
-                    id="dateOfBirth"
-                    className="h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
-                    type="date"
-                    value={form.dateOfBirth}
-                    onChange={(e) => setValue("dateOfBirth", e.target.value)}
-                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="dateOfBirth"
+                      className="flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
+                      type="date"
+                      value={form.dateOfBirth}
+                      onChange={(e) => setValue("dateOfBirth", e.target.value)}
+                    />
+                    <HelpBtn label="تاريخ الميلاد" videoSrc="/videos/hello.mp4" />
+                  </div>
                   {fieldErrors.dateOfBirth && (
                     <span className="text-xs text-red-600">{fieldErrors.dateOfBirth}</span>
                   )}
@@ -361,15 +417,18 @@ const SignUpPage = () => {
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="userType">
                   نوع المستخدم
                 </label>
-                <select
-                  id="userType"
-                  className="h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right appearance-none"
-                  value={form.userType}
-                  onChange={(e) => setValue("userType", Number(e.target.value))}
-                >
-                  <option value={1}>1</option>
-                  <option value={2}>2</option>
-                </select>
+                <div className="flex items-center gap-2">
+                  <select
+                    id="userType"
+                    className="flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right appearance-none"
+                    value={form.userType}
+                    onChange={(e) => setValue("userType", Number(e.target.value))}
+                  >
+                    <option value={1}>شخص أصم</option>
+                    <option value={2}>شخص عادي</option>
+                  </select>
+                  <HelpBtn label="نوع المستخدم" videoSrc="/videos/hello.mp4" />
+                </div>
               </div>
 
               {/* لغة الإشارة */}
@@ -415,25 +474,28 @@ const SignUpPage = () => {
                   كلمة المرور <span className="text-red-500 text-xs">(مطلوب)</span>
                 </label>
 
-                <div className="relative">
-                  <input
-                    id="password"
-                    className="h-11 w-full px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
-                    placeholder="كلمة المرور"
-                    type={showPassword ? "text" : "password"}
-                    value={form.password}
-                    onChange={(e) => setValue("password", e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((p) => !p)}
-                    className="absolute inset-y-0 left-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                    aria-label="إظهار/إخفاء كلمة المرور"
-                  >
-                    <span className="material-symbols-outlined">
-                      {showPassword ? "visibility" : "visibility_off"}
-                    </span>
-                  </button>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      id="password"
+                      className="h-11 w-full px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
+                      placeholder="كلمة المرور"
+                      type={showPassword ? "text" : "password"}
+                      value={form.password}
+                      onChange={(e) => setValue("password", e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((p) => !p)}
+                      className="absolute inset-y-0 left-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                      aria-label="إظهار/إخفاء كلمة المرور"
+                    >
+                      <span className="material-symbols-outlined">
+                        {showPassword ? "visibility" : "visibility_off"}
+                      </span>
+                    </button>
+                  </div>
+                  <HelpBtn label="كلمة المرور" videoSrc="/videos/hello.mp4" />
                 </div>
 
                 {fieldErrors.password && <span className="text-xs text-red-600">{fieldErrors.password}</span>}
@@ -445,25 +507,28 @@ const SignUpPage = () => {
                   تأكيد كلمة المرور <span className="text-red-500 text-xs">(مطلوب)</span>
                 </label>
 
-                <div className="relative">
-                  <input
-                    id="confirmPassword"
-                    className="h-11 w-full px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
-                    placeholder="تأكيد كلمة المرور"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={form.confirmPassword}
-                    onChange={(e) => setValue("confirmPassword", e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword((p) => !p)}
-                    className="absolute inset-y-0 left-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                    aria-label="إظهار/إخفاء تأكيد كلمة المرور"
-                  >
-                    <span className="material-symbols-outlined">
-                      {showConfirmPassword ? "visibility" : "visibility_off"}
-                    </span>
-                  </button>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      id="confirmPassword"
+                      className="h-11 w-full px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-right"
+                      placeholder="تأكيد كلمة المرور"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={form.confirmPassword}
+                      onChange={(e) => setValue("confirmPassword", e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((p) => !p)}
+                      className="absolute inset-y-0 left-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                      aria-label="إظهار/إخفاء تأكيد كلمة المرور"
+                    >
+                      <span className="material-symbols-outlined">
+                        {showConfirmPassword ? "visibility" : "visibility_off"}
+                      </span>
+                    </button>
+                  </div>
+                  <HelpBtn label="تأكيد كلمة المرور" videoSrc="/videos/hello.mp4" />
                 </div>
 
                 {fieldErrors.confirmPassword && (

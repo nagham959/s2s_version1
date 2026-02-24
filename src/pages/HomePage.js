@@ -1,16 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import VideoHelpModal from '../components/VideoHelpModal';
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const [helpModal, setHelpModal] = useState({ open: false, title: '', videoSrc: '', anchorRect: null });
+  const openHelp = (e, title, videoSrc) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHelpModal({ open: true, title, videoSrc, anchorRect: rect });
+  };
+  const closeHelp = () => setHelpModal(prev => ({ ...prev, open: false, anchorRect: null }));
 
   return (
     <ThemeProvider>
       <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-background-light dark:bg-background-dark text-text-main dark:text-white transition-colors duration-200 font-display rtl" dir="rtl">
         <Navbar variant="default" />
+        <VideoHelpModal
+          open={helpModal.open}
+          onClose={closeHelp}
+          title={helpModal.title}
+          videoSrc={helpModal.videoSrc}
+          anchorRect={helpModal.anchorRect}
+        />
         <main className="flex flex-col flex-1">
           <section className="flex flex-col justify-center py-10 lg:py-24 px-4 md:px-10 lg:px-40 bg-white dark:bg-surface-dark">
             <div className="mx-auto flex max-w-[1280px] flex-col w-full">
@@ -27,12 +41,20 @@ const HomePage = () => {
                   </div>
 
                   {/* Buttons Group - Right Aligned */}
-                  <div className="flex flex-wrap gap-4 justify-start">
+                  <div className="flex flex-wrap gap-3 justify-start items-center">
                     <button
                       onClick={() => navigate('/login')}
                       className="flex min-w-[160px] cursor-pointer items-center justify-center rounded-xl h-14 px-8 bg-primary text-white text-lg font-bold hover:bg-primary-dark transition-all active:scale-95 shadow-xl shadow-primary/20"
                     >
                       <span className="truncate">ابدأ الترجمة الآن</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => openHelp(e, 'ابدأ الترجمة الآن', '/videos/hello.mp4')}
+                      aria-label="عرض مثال بلغة الإشارة"
+                      className="flex items-center justify-center w-14 h-14 rounded-xl border-2 border-primary bg-white dark:bg-slate-800 text-primary hover:bg-primary/10 transition-all active:scale-95 shadow-xl shadow-primary/10"
+                    >
+                      <i className="fa-solid fa-hands-asl-interpreting text-2xl"></i>
                     </button>
                   </div>
                 </div>
