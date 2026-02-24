@@ -4,10 +4,13 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import { useHistory } from '../contexts/HistoryContext';
+import avatarSrc from '../assets/avatar.png';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState('sign-to-voice'); // 'sign-to-voice' or 'voice-to-avatar'
+  const [inputMode, setInputMode] = useState('voice'); // 'voice' or 'text' (for voice-to-avatar)
+  const [textInput, setTextInput] = useState(''); // typed text for text-to-avatar
 
   // Interactivity States
   const [isRecording, setIsRecording] = useState(false);
@@ -21,7 +24,22 @@ const DashboardPage = () => {
   const streamRef = useRef(null);
   const recognitionRef = useRef(null);
   const avatarVideoRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [uploadedVideo, setUploadedVideo] = useState(null);
   const [isAvatarPlaying, setIsAvatarPlaying] = useState(false);
+
+  const handleVideoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    stopCamera();
+    setUploadedVideo(url);
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+      videoRef.current.src = url;
+      videoRef.current.play();
+    }
+  };
 
   const toggleAvatarVideo = () => {
     const vid = avatarVideoRef.current;
@@ -44,21 +62,19 @@ const DashboardPage = () => {
       recognitionRef.current.lang = 'ar-SA';
 
       recognitionRef.current.onresult = (event) => {
+        let allFinal = '';
         let interimTranscript = '';
-        let finalTranscript = '';
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
+        for (let i = 0; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
+            allFinal += event.results[i][0].transcript + ' ';
           } else {
             interimTranscript += event.results[i][0].transcript;
           }
         }
 
-        // Append new final results to existing text, or show interim
-        if (finalTranscript) {
-          setOutputText(prev => prev + ' ' + finalTranscript);
-        }
+        // Show all finalized text + current interim in textarea in real-time
+        setTextInput((allFinal + interimTranscript).trim());
       };
 
       recognitionRef.current.onerror = (event) => {
@@ -82,6 +98,11 @@ const DashboardPage = () => {
   // Camera Handling
   const startCamera = async () => {
     try {
+      if (uploadedVideo) {
+        URL.revokeObjectURL(uploadedVideo);
+        setUploadedVideo(null);
+        if (videoRef.current) videoRef.current.src = '';
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -101,18 +122,25 @@ const DashboardPage = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = null;
       }
-      setIsCameraActive(false);
-
-      // Add to history
-      const duration = startTimeRef.current ? Math.round((Date.now() - startTimeRef.current) / 1000) : 0;
-      if (duration > 1) { // Only record sessions longer than 1 second
-        addHistoryItem({
-          type: 'sign-to-voice',
-          duration: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')} دقيقة`,
-          label: 'إشارة إلى صوت',
-          preview: outputText || 'ترجمة لغة إشارة'
-        });
+    }
+    if (uploadedVideo) {
+      URL.revokeObjectURL(uploadedVideo);
+      setUploadedVideo(null);
+      if (videoRef.current) {
+        videoRef.current.src = '';
       }
+    }
+    setIsCameraActive(false);
+
+    // Add to history
+    const duration = startTimeRef.current ? Math.round((Date.now() - startTimeRef.current) / 1000) : 0;
+    if (duration > 1) { // Only record sessions longer than 1 second
+      addHistoryItem({
+        type: 'sign-to-voice',
+        duration: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')} دقيقة`,
+        label: 'إشارة إلى صوت',
+        preview: outputText || 'ترجمة لغة إشارة'
+      });
     }
   };
 
@@ -134,7 +162,8 @@ const DashboardPage = () => {
         preview: outputText || 'ترجمة صوتية'
       });
     } else {
-      setOutputText(''); // Reset text on new recording
+      setOutputText('');
+      setTextInput(''); // Reset textarea on new recording
       startTimeRef.current = Date.now();
       if (recognitionRef.current) {
         try {
@@ -162,6 +191,8 @@ const DashboardPage = () => {
     setIsRecording(false);
     setIsTranslating(false);
     setOutputText('');
+    setInputMode('voice');
+    setTextInput('');
     stopCamera(); // Ensure camera stops when switching modes manually
   };
 
@@ -177,13 +208,13 @@ const DashboardPage = () => {
 
           {/* Translation Mode Toggle Header */}
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
-            <div className="flex items-center justify-between p-4">
+            <div className=" flex items-center justify-between p-4">
               <div className="flex-1 text-center">
                 <button
                   onClick={() => setMode('sign-to-voice')}
                   className={`text-lg font-bold px-6 py-2 rounded-xl transition-colors ${mode === 'sign-to-voice' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
                 >
-                  لغة الإشارة
+                  إشارة / صوت
                 </button>
               </div>
 
@@ -225,11 +256,12 @@ const DashboardPage = () => {
                       autoPlay
                       playsInline
                       muted
-                      className={`absolute inset-0 w-full h-full object-cover transform scale-x-[-1] ${isCameraActive ? 'opacity-100' : 'opacity-0'}`}
+                      controls={!!uploadedVideo}
+                      className={`absolute inset-0 w-full h-full object-cover ${uploadedVideo ? '' : 'transform scale-x-[-1]'} ${(isCameraActive || uploadedVideo) ? 'opacity-100' : 'opacity-0'}`}
                     />
 
                     {/* Fallback Placeholder if Camera Not Active */}
-                    {!isCameraActive && (
+                    {!isCameraActive && !uploadedVideo && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
                         <div className="flex flex-col items-center gap-4">
                         <svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg" className="w-24 h-20 sm:w-32 sm:h-28 md:w-40 md:h-32 opacity-80">
@@ -258,15 +290,10 @@ const DashboardPage = () => {
                         </div>
                       </div>
                     )}
-
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="absolute w-32 h-32 border-2 border-primary/60 rounded-xl top-1/4 right-1/3 opacity-40 shadow-[0_0_15px_rgba(242,89,61,0.3)]"></div>
-                      <div className="absolute w-32 h-32 border-2 border-primary/60 rounded-xl bottom-1/3 left-1/3 opacity-40 shadow-[0_0_15px_rgba(242,89,61,0.3)]"></div>
-                    </div>
                     <div className="absolute top-6 right-6 flex gap-3">
-                      <div className={`bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 border border-slate-200 dark:border-slate-700 shadow-sm transition-opacity ${isCameraActive ? 'opacity-100' : 'opacity-50'}`}>
+                      <div className={`bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 border border-slate-200 dark:border-slate-700 shadow-sm transition-opacity ${(isCameraActive || uploadedVideo) ? 'opacity-100' : 'opacity-50'}`}>
                         <span className={`material-symbols-outlined text-green-500 text-sm filled ${isCameraActive ? 'animate-pulse' : ''}`}>radio_button_checked</span>
-                        {isCameraActive ? 'تتبع نشط' : 'الكاميرا متوقفة'}
+                        {isCameraActive ? 'تتبع نشط' : uploadedVideo ? 'فيديو مرفوع' : 'الكاميرا متوقفة'}
                       </div>
                       {isRecording && (
                         <div className="bg-red-500/90 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 border border-red-600 shadow-sm animate-pulse">
@@ -301,13 +328,27 @@ const DashboardPage = () => {
                   </div>
 
                   {/* Controls */}
-                  <div className="w-full bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center">
+                  <div className="w-full mx-auto bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <button
                       onClick={isCameraActive ? stopCamera : startCamera}
-                      className={`flex items-center gap-3 px-8 py-3 rounded-xl font-bold text-lg transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ${isCameraActive ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100' : 'bg-primary text-white border border-primary hover:bg-primary-hover'}`}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-base transition-all shadow-md hover:shadow-lg ${isCameraActive ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100' : 'bg-primary text-white border border-primary hover:bg-primary-hover'}`}
                     >
                       <span className="material-symbols-outlined text-2xl">{isCameraActive ? 'videocam_off' : 'videocam'}</span>
                       <span>{isCameraActive ? 'إيقاف الكاميرا' : 'تشغيل الكاميرا'}</span>
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={handleVideoUpload}
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-base transition-all shadow-md hover:shadow-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600"
+                    >
+                      <span className="material-symbols-outlined text-2xl">upload_file</span>
+                      <span>رفع فيديو</span>
                     </button>
                   </div>
                 </div>
@@ -373,73 +414,98 @@ const DashboardPage = () => {
             {mode === 'voice-to-avatar' && (
               <>
                 <div className="lg:col-span-5 flex flex-col gap-6">
-                  {/* Mic / Input */}
-                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-8 shadow-lg flex flex-col items-center gap-8 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-full h-1 bg-gradient-to-l from-primary to-primary-light"></div>
-                    <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-                    <div className="flex flex-col items-center gap-4 mt-2">
-                      <span className="text-xs font-bold uppercase tracking-widest text-primary">{isRecording ? 'جاري الاستماع...' : 'جاهز للتسجيل'}</span>
-                      <div className="relative group cursor-pointer" onClick={toggleRecording}>
-                        <button className={`relative z-10 flex h-24 w-24 items-center justify-center rounded-full text-white shadow-[0_0_30px_rgba(242,89,61,0.3)] transition-all duration-300 border-4 ${isRecording ? 'bg-red-500 border-red-200 scale-110' : 'bg-primary border-white dark:border-slate-800 hover:bg-primary-light hover:scale-105'}`}>
-                          <span className="material-symbols-outlined text-5xl">{isRecording ? 'stop' : 'mic'}</span>
+                  {/* Unified Input Panel */}
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden">
+
+                    {/* Mic Section */}
+                    <div
+                      className={`p-5 flex items-center gap-5 cursor-pointer transition-colors border-b border-slate-200 dark:border-slate-700 ${inputMode === 'voice' ? 'bg-primary/5 dark:bg-primary/10' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
+                      onClick={() => {
+                        if (inputMode !== 'voice') {
+                          setInputMode('voice');
+                          setTextInput('');
+                          if (isRecording) { recognitionRef.current?.stop(); setIsRecording(false); setIsTranslating(false); }
+                        }
+                      }}
+                    >
+                      {/* Mic Button */}
+                      <div className="relative flex-shrink-0" onClick={(e) => { e.stopPropagation(); setInputMode('voice'); toggleRecording(); }}>
+                        <button className={`relative z-10 flex h-16 w-16 items-center justify-center rounded-full text-white shadow-lg transition-all duration-300 border-4 ${isRecording ? 'bg-red-500 border-red-200 scale-110' : 'bg-primary border-white dark:border-slate-700 hover:bg-primary-light hover:scale-105'}`}>
+                          <span className="material-symbols-outlined text-3xl">{isRecording ? 'stop' : 'mic'}</span>
                         </button>
                         {isRecording && (
                           <div className="absolute top-0 left-0 h-full w-full rounded-full bg-primary/30 animate-[ping_1.5s_ease-in-out_infinite] opacity-75"></div>
                         )}
-                        {!isRecording && (
-                          <div className="absolute top-0 left-0 h-full w-full rounded-full bg-primary/10 group-hover:animate-ping opacity-50 delay-75"></div>
+                      </div>
+
+                      {/* Mic Info + Visualizer */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">تسجيل صوتي</span>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${isRecording ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600'}`}>
+                            {isRecording ? 'جاري الاستماع...' : 'اضغط الميكروفون'}
+                          </span>
+                        </div>
+                        <div className={`flex items-end gap-1 h-8 transition-opacity ${isRecording ? 'opacity-100' : 'opacity-30'}`}>
+                          {[...Array(12)].map((_, i) => (
+                            <div
+                              key={i}
+                              className={`w-1 bg-primary/70 rounded-full ${isRecording ? 'animate-[pulse_0.5s_ease-in-out_infinite]' : ''}`}
+                              style={{ height: `${isRecording ? Math.random() * 2 + 0.5 : 0.5}rem`, animationDelay: `${i * 80}ms` }}
+                            ></div>
+                          ))}
+                        </div>
+                        {outputText && inputMode === 'voice' && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">"{outputText}"</p>
                         )}
                       </div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">{isRecording ? 'تحدث الآن' : 'اضغط للبدء في التحدث'}</p>
                     </div>
 
-                    {/* Audio Visualizer Mockup */}
-                    <div className={`flex items-end justify-center gap-1.5 h-16 w-full px-8 transition-opacity duration-300 ${isRecording ? 'opacity-100' : 'opacity-30'}`}>
-                      {[...Array(9)].map((_, i) => (
-                        <div
-                          key={i}
-                          className={`w-1.5 bg-primary/80 rounded-full ${isRecording ? 'animate-[pulse_0.5s_ease-in-out_infinite]' : ''}`}
-                          style={{ height: `${isRecording ? Math.random() * 3 + 1 : 1}rem`, animationDelay: `${i * 100}ms` }}
-                        ></div>
-                      ))}
+                    {/* OR Divider */}
+                    <div className="flex items-center gap-3 px-5 py-2 bg-slate-50 dark:bg-slate-700/40">
+                      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600"></div>
+                      <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">أو</span>
+                      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600"></div>
                     </div>
-                  </div>
 
-                  {/* Live Text Output for Voice */}
-                  <div className="flex flex-col gap-3">
-                    <div className="flex justify-between items-center px-1">
-                      <h3 className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">النص المباشر</h3>
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium border flex items-center gap-1.5 transition-colors ${isRecording ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isRecording ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></span>
-                        {isRecording ? 'نشط' : 'خامل'}
-                      </span>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-sm min-h-[220px] relative bg-slate-50/50 dark:bg-slate-700/50">
-                      {outputText ? (
-                        <p className="text-slate-700 dark:text-slate-300 text-lg leading-relaxed font-light text-right animate-fade-in">
-                          "{outputText}"
-                          {isRecording && <span className="inline-block w-1 h-5 mr-1 align-middle bg-primary animate-pulse"></span>}
-                        </p>
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-slate-400 opacity-50 text-sm">
-                          تحدث ليظهر النص هنا...
-                        </div>
-                      )}
-
-                      <div className="absolute bottom-4 left-4 flex gap-2">
-                        <button
-                          onClick={() => setOutputText('')}
-                          className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-lg transition-all shadow-sm"
-                        >
-                          <span className="material-symbols-outlined text-sm">restart_alt</span> إعادة تعيين
-                        </button>
-                        <button
-                          onClick={() => navigator.clipboard.writeText(outputText)}
-                          className="text-xs font-medium text-primary hover:text-primary-dark flex items-center gap-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-lg transition-all shadow-sm"
-                        >
-                          <span className="material-symbols-outlined text-sm">content_copy</span> نسخ
-                        </button>
+                    {/* Text Section */}
+                    <div
+                      className={`p-5 transition-colors ${inputMode === 'text' ? 'bg-primary/5 dark:bg-primary/10' : ''}`}
+                      onClick={() => { if (inputMode !== 'text') { setInputMode('text'); setOutputText(''); if (isRecording) { recognitionRef.current?.stop(); setIsRecording(false); setIsTranslating(false); } } }}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                          <span className="material-symbols-outlined text-base text-primary">edit_note</span>
+                          كتابة نص
+                        </span>
+                        {textInput && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setTextInput(''); }}
+                            className="text-xs text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-sm">close</span> مسح
+                          </button>
+                        )}
                       </div>
+                      <textarea
+                        value={textInput}
+                        onChange={(e) => { setTextInput(e.target.value); setInputMode('text'); if (isRecording) { recognitionRef.current?.stop(); setIsRecording(false); setIsTranslating(false); } }}
+                        placeholder="اكتب النص هنا لتحويله إلى إشارة..."
+                        rows={4}
+                        className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-slate-800 dark:text-white text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-right transition-shadow"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+
+                    {/* Convert Button */}
+                    <div className="px-5 pb-5">
+                      <button
+                        disabled={!textInput.trim()}
+                        className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98]"
+                      >
+                        <span className="material-symbols-outlined">smart_toy</span>
+                        تحويل إلى إشارة
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -458,7 +524,7 @@ const DashboardPage = () => {
                       {/* Thumbnail shown before play */}
                       {!isAvatarPlaying && (
                         <img
-                          src="/images/avatar.png"
+                          src={avatarSrc}
                           alt="أفاتار"
                           className="absolute inset-0 w-full h-full object-contain bg-slate-100 dark:bg-slate-700"
                         />

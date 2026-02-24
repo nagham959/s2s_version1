@@ -1,16 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import VideoHelpModal from '../components/VideoHelpModal';
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const [helpModal, setHelpModal] = useState({ open: false, title: '', videoSrc: '', anchorRect: null });
+  const openHelp = (e, title, videoSrc) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHelpModal({ open: true, title, videoSrc, anchorRect: rect });
+  };
+  const closeHelp = () => setHelpModal(prev => ({ ...prev, open: false, anchorRect: null }));
 
   return (
     <ThemeProvider>
       <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-background-light dark:bg-background-dark text-text-main dark:text-white transition-colors duration-200 font-display rtl" dir="rtl">
         <Navbar variant="default" />
+        <VideoHelpModal
+          open={helpModal.open}
+          onClose={closeHelp}
+          title={helpModal.title}
+          videoSrc={helpModal.videoSrc}
+          anchorRect={helpModal.anchorRect}
+        />
         <main className="flex flex-col flex-1">
           <section className="flex flex-col justify-center py-10 lg:py-24 px-4 md:px-10 lg:px-40 bg-white dark:bg-surface-dark">
             <div className="mx-auto flex max-w-[1280px] flex-col w-full">
@@ -27,12 +41,20 @@ const HomePage = () => {
                   </div>
 
                   {/* Buttons Group - Right Aligned */}
-                  <div className="flex flex-wrap gap-4 justify-start">
+                  <div className="flex flex-wrap gap-3 justify-start items-center">
                     <button
                       onClick={() => navigate('/login')}
                       className="flex min-w-[160px] cursor-pointer items-center justify-center rounded-xl h-14 px-8 bg-primary text-white text-lg font-bold hover:bg-primary-dark transition-all active:scale-95 shadow-xl shadow-primary/20"
                     >
                       <span className="truncate">ابدأ الترجمة الآن</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => openHelp(e, 'ابدأ الترجمة الآن', '/videos/hello.mp4')}
+                      aria-label="عرض مثال بلغة الإشارة"
+                      className="flex items-center justify-center w-14 h-14 rounded-xl border-2 border-primary bg-white dark:bg-slate-800 text-primary hover:bg-primary/10 transition-all active:scale-95 shadow-xl shadow-primary/10"
+                    >
+                      <i className="fa-solid fa-hands-asl-interpreting text-2xl"></i>
                     </button>
                   </div>
                 </div>
@@ -54,7 +76,7 @@ const HomePage = () => {
               </div>
             </div>
           </section>
-          <section className="border-y border-gray-100 dark:border-slate-700 bg-background-alt dark:bg-slate-800 py-10">
+          {/* <section className="border-y border-gray-100 dark:border-slate-700 bg-background-alt dark:bg-slate-800 py-10">
             <div className="mx-auto max-w-[1280px] px-6 lg:px-40 text-center">
               <p className="text-sm font-semibold text-text-sub dark:text-slate-400 uppercase tracking-widest mb-8">موثوق به من قبل قادة إمكانية الوصول</p>
               <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-8 opacity-60 grayscale transition-all hover:grayscale-0 hover:opacity-100">
@@ -64,8 +86,8 @@ const HomePage = () => {
                 <span className="text-xl font-black text-gray-400 dark:text-slate-500">GlobalSign</span>
               </div>
             </div>
-          </section>
-          <section className="pt-20 pb-10 px-6 lg:px-40 flex justify-center bg-white dark:bg-surface-dark">
+          </section> */}
+          <section id="features" className="pt-20 pb-10 px-6 lg:px-40 flex justify-center bg-white dark:bg-surface-dark">
             <div className="max-w-[960px] w-full text-center">
               <h2 className="text-primary font-bold tracking-wide uppercase text-sm mb-3">المميزات</h2>
               <h3 className="text-text-main dark:text-white text-3xl md:text-4xl font-bold leading-tight tracking-[-0.015em]">القدرات الأساسية</h3>
@@ -158,8 +180,8 @@ const HomePage = () => {
                 >
                   ابدأ مجانًا
                 </button>
-                <button className="flex items-center justify-center rounded-xl h-14 px-8 bg-primary-dark/40 border border-white/30 text-white text-lg font-bold hover:bg-primary-dark/60 transition-colors backdrop-blur-sm">
-                  تواصل مع المبيعات
+                <button onClick={() => navigate('/contact')} className="flex items-center justify-center rounded-xl h-14 px-8 bg-primary-dark/40 border border-white/30 text-white text-lg font-bold hover:bg-primary-dark/60 transition-colors backdrop-blur-sm">
+                 تواصل معنا
                 </button>
               </div>
             </div>

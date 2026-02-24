@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import { useAuth } from '../contexts/authContext'; // 1. استيراد الـ Hook
 
 const ChangePasswordPage = () => {
+    const { changePassword } = useAuth(); // 2. الحصول على دالة التغيير من الـ Context
     const [formData, setFormData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -11,22 +13,22 @@ const ChangePasswordPage = () => {
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isLoading, setIsLoading] = useState(false); // 3. حالة التحميل
 
     const handleChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
         });
-        // Clear errors when user types
         if (error) setError('');
         if (success) setSuccess('');
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const { currentPassword, newPassword, confirmPassword } = formData;
 
-        // Basic Validation
+        // Validations
         if (!currentPassword || !newPassword || !confirmPassword) {
             setError('يرجى ملء جميع الحقول.');
             return;
@@ -42,19 +44,23 @@ const ChangePasswordPage = () => {
             return;
         }
 
-        // Simulate API Call
+        setIsLoading(true); 
         setError('');
-        setSuccess('تم تغيير كلمة المرور بنجاح.');
-
-        // Reset form after success (optional)
-        setTimeout(() => {
-            setSuccess('');
+        
+        try {
+            await changePassword(currentPassword, newPassword, confirmPassword);
+            
+            setSuccess('تم تغيير كلمة المرور بنجاح.');
             setFormData({
                 currentPassword: '',
                 newPassword: '',
                 confirmPassword: ''
             });
-        }, 3000);
+        } catch (err) {
+            setError(err.message || 'حدث خطأ أثناء تغيير كلمة المرور.');
+        } finally {
+            setIsLoading(false); 
+        }
     };
 
     return (
@@ -94,7 +100,8 @@ const ChangePasswordPage = () => {
                                         name="currentPassword"
                                         value={formData.currentPassword}
                                         onChange={handleChange}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                                        disabled={isLoading}
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50"
                                         placeholder="أدخل كلمة المرور الحالية"
                                     />
                                 </div>
@@ -108,7 +115,8 @@ const ChangePasswordPage = () => {
                                         name="newPassword"
                                         value={formData.newPassword}
                                         onChange={handleChange}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                                        disabled={isLoading}
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50"
                                         placeholder="أدخل كلمة المرور الجديدة (8 أحرف على الأقل)"
                                     />
                                 </div>
@@ -122,16 +130,18 @@ const ChangePasswordPage = () => {
                                         name="confirmPassword"
                                         value={formData.confirmPassword}
                                         onChange={handleChange}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                                        disabled={isLoading}
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50"
                                         placeholder="أعد إدخال كلمة المرور الجديدة"
                                     />
                                 </div>
 
                                 <button
                                     type="submit"
-                                    className="w-full py-3.5 px-4 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 mt-2"
+                                    disabled={isLoading}
+                                    className="w-full py-3.5 px-4 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
-                                    حفظ التغييرات
+                                    {isLoading ? 'جاري الحفظ...' : 'حفظ التغييرات'}
                                 </button>
                             </form>
                         </div>
