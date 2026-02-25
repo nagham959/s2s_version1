@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../contexts/authContext';
 import VideoHelpModal from '../components/VideoHelpModal';
+import { useLanguage } from '../contexts/LanguageContext';
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
@@ -24,6 +25,13 @@ const LoginPage = () => {
     videoSrc: "",
     anchorRect: null,
   });
+  const { t, language, dir } = useLanguage();
+  const textAlignClass = language === 'ar' ? 'text-right' : 'text-left';
+  const emailPaddingClass = language === 'ar' ? 'pr-10 pl-4' : 'pl-10 pr-4';
+  const emailIconPosition = language === 'ar' ? 'right-3' : 'left-3';
+  const passwordPaddingClass = language === 'ar' ? 'pr-4 pl-12' : 'pl-4 pr-12';
+  const passwordTogglePosition = language === 'ar' ? 'left-3' : 'right-3';
+  const arrowIcon = language === 'ar' ? 'arrow_back' : 'arrow_forward';
 
   const openHelp = (e, title, videoSrc) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -40,7 +48,7 @@ const LoginPage = () => {
       await loginWithGoogle();
       navigate("/dashboard");
     } catch (error) {
-      setErrorMessage(error.message || "Google login failed.");
+      setErrorMessage(error.message || t('login.errorGoogle'));
     } finally {
       setIsLoading(false);
     }
@@ -52,12 +60,12 @@ const LoginPage = () => {
 
     const cleanEmail = email.trim();
 
-    if (!cleanEmail) return setErrorMessage("Please enter your email.");
+    if (!cleanEmail) return setErrorMessage(t('login.errorEmptyEmail'));
     if (!isValidEmail(cleanEmail))
-      return setErrorMessage("Please enter a valid email address.");
-    if (!password) return setErrorMessage("Please enter your password.");
+      return setErrorMessage(t('login.errorInvalidEmail'));
+    if (!password) return setErrorMessage(t('login.errorEmptyPassword'));
     if (password.length < 8)
-      return setErrorMessage("Password must be at least 8 characters.");
+      return setErrorMessage(t('login.errorShortPassword'));
 
     setIsLoading(true);
     try {
@@ -65,27 +73,27 @@ const LoginPage = () => {
       navigate("/dashboard");
     } catch (error) {
       const status = error?.response?.status;
-      let message = "Server connection error. Please try again.";
+      let message = t('login.errorServer');
 
       switch (status) {
         case 400:
-          message = "Incorrect email or password.";
+          message = t('login.errorIncorrect');
           break;
         case 401:
-          message = "Unauthorized. Please check your email.";
+          message = t('login.errorUnauthorized');
           break;
         case 503:
-          message = "Server unavailable (503). Try again later.";
+          message = t('login.errorUnavailable');
           break;
         case 500:
-          message = "Internal server error.";
+          message = t('login.errorInternal');
           break;
         default:
           if (error.message) {
             message = error.message;
           }
           if (/<!doctype|<html|<body|<pre/i.test(message)) {
-            message = "Server connection error. Please try again.";
+            message = t('login.errorServer');
           }
       }
       setIsLoading(false);
@@ -95,7 +103,10 @@ const LoginPage = () => {
 
   return (
     <ThemeProvider>
-      <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display antialiased transition-colors duration-300">
+      <div
+        dir={dir}
+        className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display antialiased transition-colors duration-300"
+      >
         <VideoHelpModal
           open={helpModal.open}
           onClose={closeHelp}
@@ -114,10 +125,10 @@ const LoginPage = () => {
           <div className="relative w-full max-w-[440px] bg-surface-light dark:bg-surface-dark rounded-2xl shadow-2xl border border-border-light dark:border-border-dark z-10 overflow-hidden flex flex-col transition-colors">
             <div className="pt-8 px-8 pb-2 text-center">
               <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
-                Welcome Back
+                {t('login.welcome')}
               </h2>
               <p className="text-slate-500 dark:text-text-secondary text-sm">
-                Log in to access your account.
+                {t('login.subtitle')}
               </p>
             </div>
 
@@ -125,14 +136,14 @@ const LoginPage = () => {
               <div className="flex w-full bg-slate-100 dark:bg-black/20 p-1 rounded-xl">
                 <div className="flex-1 rounded-lg bg-white dark:bg-[#2a2a2a] shadow-sm transition-all flex items-center justify-center gap-1.5 px-2 py-2">
                   <span className="text-primary font-bold text-sm">
-                    Login
+                    {t('login.loginTab')}
                   </span>
                   <button
                     type="button"
                     onClick={(e) =>
-                      openHelp(e, "Login", "/videos/hello.mp4")
+                      openHelp(e, t('login.helpLogin'), "/videos/hello.mp4")
                     }
-                    aria-label="Show sign language example"
+                    aria-label={t('help.openExample')}
                     className="flex items-center justify-center text-primary hover:text-primary-hover transition-colors"
                   >
                     <i className="fa-solid fa-hands-asl-interpreting text-sm"></i>
@@ -143,14 +154,14 @@ const LoginPage = () => {
                     to="/signup"
                     className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium text-sm transition-colors"
                   >
-                    Create Account
+                    {t('login.signupTab')}
                   </Link>
                   <button
                     type="button"
                     onClick={(e) =>
-                      openHelp(e, "Signup", "/videos/hello.mp4")
+                      openHelp(e, t('login.helpSignup'), "/videos/hello.mp4")
                     }
-                    aria-label="Show sign language example"
+                    aria-label={t('help.openExample')}
                     className="flex items-center justify-center text-slate-400 hover:text-primary transition-colors"
                   >
                     <i className="fa-solid fa-hands-asl-interpreting text-sm"></i>
@@ -162,13 +173,13 @@ const LoginPage = () => {
             <form className="p-8 flex flex-col gap-5" onSubmit={handleSubmit}>
               <label className="flex flex-col gap-2 group">
                 <span className="text-sm font-medium text-slate-700 dark:text-white">
-                  Email
+                  {t('login.email')}
                 </span>
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1">
                     <input
-                      className="w-full h-12 pr-10 pl-4 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base text-right"
-                      placeholder="Enter your email"
+                      className={`w-full h-12 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base ${emailPaddingClass} ${textAlignClass}`}
+                      placeholder={t('login.emailPlaceholder')}
                       type="email"
                       value={email}
                       onChange={(e) => {
@@ -176,7 +187,7 @@ const LoginPage = () => {
                         if (errorMessage) setErrorMessage("");
                       }}
                     />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                    <div className={`absolute ${emailIconPosition} top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none`}>
                       <span className="material-symbols-outlined text-[20px]">
                         mail
                       </span>
@@ -185,8 +196,9 @@ const LoginPage = () => {
                   <button
                     type="button"
                     onClick={(e) =>
-                      openHelp(e, "Email", "/videos/hello.mp4")
+                      openHelp(e, t('login.helpEmail'), "/videos/hello.mp4")
                     }
+                    aria-label={t('help.openExample')}
                     className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 hover:bg-primary/10 transition-colors shadow-sm"
                   >
                     <i className="fa-solid fa-hands-asl-interpreting text-xl text-primary"></i>
@@ -197,21 +209,21 @@ const LoginPage = () => {
               <label className="flex flex-col gap-2 group">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-slate-700 dark:text-white">
-                    Password
+                    {t('login.password')}
                   </span>
                   <Link
                     to="/forgot-password"
                     className="text-xs font-semibold text-primary hover:text-primary-hover hover:underline"
                   >
-                    Forgot Password?
+                    {t('login.forgot')}
                   </Link>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <div className="relative flex items-center flex-1">
                     <input
-                      className="w-full h-12 pr-4 pl-12 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base text-right"
-                      placeholder="Enter your password"
+                      className={`w-full h-12 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base ${passwordPaddingClass} ${textAlignClass}`}
+                      placeholder={t('login.passwordPlaceholder')}
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => {
@@ -221,7 +233,7 @@ const LoginPage = () => {
                     />
 
                     <button
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded"
+                      className={`absolute ${passwordTogglePosition} top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded`}
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                     >
@@ -233,7 +245,7 @@ const LoginPage = () => {
                   <button
                     type="button"
                     onClick={(e) =>
-                      openHelp(e, "Password", "/videos/hello.mp4")
+                      openHelp(e, t('login.helpPassword'), "/videos/hello.mp4")
                     }
                     className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 hover:bg-primary/10 transition-colors shadow-sm"
                   >
@@ -253,9 +265,9 @@ const LoginPage = () => {
                 type="submit"
                 disabled={isLoading}
               >
-                <span>{isLoading ? "Signing in..." : "Login"}</span>
+                <span>{isLoading ? t('login.submitting') : t('login.submit')}</span>
                 <span className="material-symbols-outlined text-[18px]">
-                  arrow_back
+                  {arrowIcon}
                 </span>
               </button>
 
@@ -265,7 +277,7 @@ const LoginPage = () => {
                 </div>
                 <div className="relative bg-surface-light dark:bg-surface-dark px-4">
                   <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Or continue with
+                    {t('login.or')}
                   </span>
                 </div>
               </div>
@@ -283,7 +295,7 @@ const LoginPage = () => {
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                   </svg>
-                  <span>Google</span>
+                  <span>{t('login.google')}</span>
                 </button>
 
                 <button
@@ -293,15 +305,15 @@ const LoginPage = () => {
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z" fill="#1877F2" />
                   </svg>
-                  <span>Facebook</span>
+                  <span>{t('login.facebook')}</span>
                 </button>
               </div>
             </form>
             <div className="bg-slate-50 dark:bg-black/40 px-8 py-5 border-t border-border-light dark:border-border-dark text-center">
               <p className="text-sm text-slate-500">
-                Don't have an account?
+                {t('login.noAccount')}
                 <Link to="/signup" className="font-bold text-primary hover:underline ml-1">
-                  Sign up free
+                  {t('login.signupLink')}
                 </Link>
               </p>
             </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Sidebar = ({ 
   variant = 'mobile', // 'mobile', 'desktop'
@@ -10,30 +11,32 @@ const Sidebar = ({
 }) => {
   const { isDark } = useTheme();
   const location = useLocation();
+  const { t, dir, language } = useLanguage();
+  const isRtl = language === 'ar';
 
   // Default mobile navigation items
   const defaultMobileItems = [
     {
       icon: 'dashboard',
-      label: 'الرئيسية',
+      label: t('navbar.dashboard', 'Dashboard'),
       href: '/dashboard',
       active: activeItem === 'dashboard' || location.pathname === '/dashboard'
     },
     {
       icon: 'history',
-      label: 'السجل',
+      label: t('navbar.history', 'History'),
       href: '/history',
       active: activeItem === 'history' || location.pathname === '/history'
     },
     {
       icon: 'settings',
-      label: 'الإعدادات',
+      label: t('navbar.settings', 'Settings'),
       href: '/profile-settings',
       active: activeItem === 'settings' || location.pathname === '/profile-settings'
     },
     {
       icon: 'account_circle',
-      label: 'الملف الشخصي',
+      label: t('navbar.profile', t('navbar.settings', 'Profile')), // fallback for profile label
       href: '/profile-settings',
       active: activeItem === 'profile' || location.pathname === '/profile-settings'
     }
@@ -43,7 +46,7 @@ const Sidebar = ({
 
   if (variant === 'mobile') {
     return (
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-border-dark px-6 py-3 flex justify-between items-center z-50">
+      <div dir={dir} className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-border-dark px-6 py-3 flex justify-between items-center z-50">
         {navigationItems.map((item, index) => {
           const isActive = item.active || location.pathname === item.href;
           return (
@@ -72,7 +75,7 @@ const Sidebar = ({
 
   // Desktop sidebar variant (if needed in the future)
   return (
-    <aside className="hidden lg:flex flex-col w-64 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-border-dark h-screen sticky top-0">
+    <aside dir={dir} className="hidden lg:flex flex-col w-64 bg-white dark:bg-surface-dark border-r border-slate-200 dark:border-border-dark h-screen sticky top-0">
       <nav className="flex-1 px-4 py-6 space-y-2">
         {navigationItems.map((item, index) => {
           const isActive = item.active || location.pathname === item.href;

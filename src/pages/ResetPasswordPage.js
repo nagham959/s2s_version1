@@ -4,11 +4,18 @@ import { ThemeProvider } from "../contexts/ThemeContext";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useAuth } from "../contexts/authContext";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { resetPassword } = useAuth();
+  const { t, language, dir } = useLanguage();
+  const isRtl = language === "ar";
+  const textStart = isRtl ? "text-right" : "text-left";
+  const passwordPadding = isRtl ? 'pr-4 pl-12' : 'pl-4 pr-12';
+  const passwordTogglePosition = isRtl ? 'left-3' : 'right-3';
+  const arrowIcon = isRtl ? 'arrow_back' : 'arrow_forward';
 
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const token = params.get("token") || params.get("Token") || "";
@@ -24,10 +31,10 @@ const ResetPasswordPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const validate = () => {
-    if (!token) return "رابط إعادة التعيين غير صالح أو ناقص (token).";
-    if (!newPassword) return "يرجى إدخال كلمة المرور الجديدة.";
-    if (newPassword.length < 8) return "يجب أن تتكون كلمة المرور من 8 خانات على الأقل.";
-    if (confirmPassword !== newPassword) return "كلمتا المرور غير متطابقتين.";
+    if (!token) return t("resetPassword.errors.noToken");
+    if (!newPassword) return t("resetPassword.errors.empty");
+    if (newPassword.length < 8) return t("resetPassword.errors.short");
+    if (confirmPassword !== newPassword) return t("resetPassword.errors.mismatch");
     return "";
   };
 
@@ -42,10 +49,10 @@ const ResetPasswordPage = () => {
     setIsLoading(true);
     try {
       await resetPassword({ token, newPassword, confirmPassword });
-      setSuccessMessage("تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.");
+      setSuccessMessage(t("resetPassword.success"));
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      setErrorMessage(err?.message || "حدث خطأ، حاول مرة أخرى.");
+      setErrorMessage(err?.message || t("common.error"));
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +60,10 @@ const ResetPasswordPage = () => {
 
   return (
     <ThemeProvider>
-      <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display antialiased transition-colors duration-300">
+      <div
+        dir={dir}
+        className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display antialiased transition-colors duration-300"
+      >
         <Navbar variant="auth" logo="SignaryAI" />
 
         <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
@@ -64,11 +74,11 @@ const ResetPasswordPage = () => {
 
           <div className="relative w-full max-w-[440px] bg-surface-light dark:bg-surface-dark rounded-2xl shadow-2xl border border-border-light dark:border-border-dark z-10 overflow-hidden flex flex-col transition-colors">
             <div className="pt-8 px-8 pb-2 text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
-                إعادة تعيين كلمة المرور
+              <h2 className={`text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2 ${textStart}`}>
+                {t("resetPassword.title")}
               </h2>
-              <p className="text-slate-500 dark:text-text-secondary text-sm">
-                أدخل كلمة مرور جديدة لحسابك.
+              <p className={`text-slate-500 dark:text-text-secondary text-sm ${textStart}`}>
+                {t("resetPassword.subtitle")}
               </p>
             </div>
 
@@ -79,17 +89,19 @@ const ResetPasswordPage = () => {
                   aria-live="polite"
                   className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm text-red-600"
                 >
-                  رابط إعادة التعيين غير صالح أو ناقص (token).
+                  {t("resetPassword.invalidToken")}
                 </div>
               )}
 
               <label className="flex flex-col gap-2 group">
-                <span className="text-sm font-medium text-slate-700 dark:text-white">كلمة المرور الجديدة</span>
+                <span className={`text-sm font-medium text-slate-700 dark:text-white ${textStart}`}>
+                  {t("resetPassword.newPassword")}
+                </span>
 
                 <div className="relative flex items-center">
                   <input
-                    className="w-full h-12 pr-4 pl-12 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base text-right"
-                    placeholder="أدخل كلمة المرور الجديدة"
+                    className={`w-full h-12 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base ${textStart} ${passwordPadding}`}
+                    placeholder={t("resetPassword.newPassword")}
                     type={showNew ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => {
@@ -101,7 +113,7 @@ const ResetPasswordPage = () => {
 
                   <button
                     aria-label="Toggle password visibility"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded focus-visible-ring"
+                    className={`absolute ${passwordTogglePosition} top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded focus-visible-ring`}
                     type="button"
                     onClick={() => setShowNew((p) => !p)}
                   >
@@ -113,17 +125,19 @@ const ResetPasswordPage = () => {
 
                 <div className="flex items-center gap-1 mt-1 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300">
                   <span className="material-symbols-outlined text-[14px] text-text-secondary">info</span>
-                  <span className="text-xs text-text-secondary">يجب أن تتكون من 8 خانات على الأقل.</span>
+                  <span className="text-xs text-text-secondary">{t("resetPassword.helper")}</span>
                 </div>
               </label>
 
               <label className="flex flex-col gap-2 group">
-                <span className="text-sm font-medium text-slate-700 dark:text-white">تأكيد كلمة المرور</span>
+                <span className={`text-sm font-medium text-slate-700 dark:text-white ${textStart}`}>
+                  {t("resetPassword.confirmPassword")}
+                </span>
 
                 <div className="relative flex items-center">
                   <input
-                    className="w-full h-12 pr-4 pl-12 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base text-right"
-                    placeholder="أعد إدخال كلمة المرور"
+                    className={`w-full h-12 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base ${textStart} ${passwordPadding}`}
+                    placeholder={t("resetPassword.confirmPassword")}
                     type={showConfirm ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => {
@@ -135,7 +149,7 @@ const ResetPasswordPage = () => {
 
                   <button
                     aria-label="Toggle password visibility"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded focus-visible-ring"
+                    className={`absolute ${passwordTogglePosition} top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded focus-visible-ring`}
                     type="button"
                     onClick={() => setShowConfirm((p) => !p)}
                   >
@@ -167,16 +181,16 @@ const ResetPasswordPage = () => {
                 type="submit"
                 disabled={isLoading || !token}
               >
-                <span>{isLoading ? "جاري التغيير..." : "تغيير كلمة المرور"}</span>
-                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                <span>{isLoading ? t("resetPassword.submitting") : t("resetPassword.submit")}</span>
+                <span className="material-symbols-outlined text-[18px]">{arrowIcon}</span>
               </button>
             </form>
 
             <div className="bg-slate-50 dark:bg-black/40 px-8 py-5 border-t border-border-light dark:border-border-dark text-center">
-              <p className="text-sm text-slate-500 dark:text-text-secondary">
-                رجوع إلى{" "}
+              <p className={`text-sm text-slate-500 dark:text-text-secondary ${textStart}`}>
+                {t("resetPassword.backText")} {" "}
                 <Link to="/login" className="font-bold text-primary hover:text-primary-hover hover:underline focus-visible-ring rounded mr-1">
-                  تسجيل الدخول
+                  {t("resetPassword.backLink")}
                 </Link>
               </p>
             </div>

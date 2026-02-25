@@ -4,10 +4,15 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import { useHistory } from '../contexts/HistoryContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import avatarSrc from '../assets/avatar.png';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
+  const { t, language, dir } = useLanguage();
+  const isRtl = language === 'ar';
+  const textStart = isRtl ? 'text-right' : 'text-left';
+  const iconDir = isRtl ? 'flex-row-reverse' : 'flex-row';
   const [mode, setMode] = useState('sign-to-voice'); // 'sign-to-voice' or 'voice-to-avatar'
   const [inputMode, setInputMode] = useState('voice'); // 'voice' or 'text' (for voice-to-avatar)
   const [textInput, setTextInput] = useState(''); // typed text for text-to-avatar
@@ -27,6 +32,12 @@ const DashboardPage = () => {
   const fileInputRef = useRef(null);
   const [uploadedVideo, setUploadedVideo] = useState(null);
   const [isAvatarPlaying, setIsAvatarPlaying] = useState(false);
+
+  const formatDurationWithUnit = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = (seconds % 60).toString().padStart(2, '0');
+    return `${minutes}:${secs} ${t('dashboard.history.durationUnit')}`;
+  };
 
   const handleVideoUpload = (e) => {
     const file = e.target.files[0];
@@ -137,9 +148,9 @@ const DashboardPage = () => {
     if (duration > 1) { // Only record sessions longer than 1 second
       addHistoryItem({
         type: 'sign-to-voice',
-        duration: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')} دقيقة`,
-        label: 'إشارة إلى صوت',
-        preview: outputText || 'ترجمة لغة إشارة'
+        duration: formatDurationWithUnit(duration),
+        label: t('dashboard.history.label.signToVoice'),
+        preview: outputText || t('dashboard.history.preview.sign')
       });
     }
   };
@@ -157,9 +168,9 @@ const DashboardPage = () => {
       const duration = startTimeRef.current ? Math.round((Date.now() - startTimeRef.current) / 1000) : 0;
       addHistoryItem({
         type: mode,
-        duration: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')} دقيقة`,
-        label: mode === 'sign-to-voice' ? 'إشارة إلى صوت' : 'صوت إلى إشارة',
-        preview: outputText || 'ترجمة صوتية'
+        duration: formatDurationWithUnit(duration),
+        label: mode === 'sign-to-voice' ? t('dashboard.history.label.signToVoice') : t('dashboard.history.label.voiceToAvatar'),
+        preview: outputText || (mode === 'sign-to-voice' ? t('dashboard.history.preview.voice') : t('dashboard.history.preview.sign'))
       });
     } else {
       setOutputText('');
@@ -174,7 +185,7 @@ const DashboardPage = () => {
           console.error("Error starting recognition:", e);
         }
       } else {
-        alert("المتصفح لا يدعم التعرف على الصوت.");
+        alert(t('dashboard.errors.speechUnsupported'));
       }
     }
   };
@@ -198,7 +209,10 @@ const DashboardPage = () => {
 
   return (
     <ThemeProvider>
-      <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex flex-col overflow-x-hidden selection:bg-primary selection:text-white">
+      <div
+        dir={dir}
+        className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex flex-col overflow-x-hidden selection:bg-primary selection:text-white"
+      >
         <Navbar
           variant="dashboard"
           logo="SignaryAI"
@@ -214,14 +228,14 @@ const DashboardPage = () => {
                   onClick={() => setMode('sign-to-voice')}
                   className={`text-lg font-bold px-6 py-2 rounded-xl transition-colors ${mode === 'sign-to-voice' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
                 >
-                  إشارة / صوت
+                  {t('dashboard.mode.signToVoice')}
                 </button>
               </div>
 
               <button
                 onClick={toggleMode}
                 className="p-3 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors mx-4 group relative"
-                title="تبديل الاتجاه"
+                title={t('dashboard.mode.swap')}
               >
                 <span className={`material-symbols-outlined text-slate-500 group-hover:text-primary transition-colors text-2xl transform duration-500 ${mode === 'voice-to-avatar' ? 'rotate-180' : ''}`}>swap_horiz</span>
               </button>
@@ -231,7 +245,7 @@ const DashboardPage = () => {
                   onClick={() => setMode('voice-to-avatar')}
                   className={`text-lg font-bold px-6 py-2 rounded-xl transition-colors ${mode === 'voice-to-avatar' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
                 >
-                  صوت / إشارة
+                  {t('dashboard.mode.voiceToAvatar')}
                 </button>
               </div>
             </div>
@@ -284,8 +298,8 @@ const DashboardPage = () => {
                           <circle cx="55" cy="47" r="9" fill="none" stroke="white" strokeWidth="2.5" />
                         </svg>
                           <div className="text-center">
-                            <p className="text-slate-600 dark:text-slate-300 font-semibold text-sm sm:text-base">الكاميرا متوقفة</p>
-                            <p className="text-slate-400 dark:text-slate-500 text-xs sm:text-sm mt-1">اضغط على "تشغيل الكاميرا" للبدء</p>
+                            <p className="text-slate-600 dark:text-slate-300 font-semibold text-sm sm:text-base">{t('dashboard.camera.placeholderTitle')}</p>
+                            <p className="text-slate-400 dark:text-slate-500 text-xs sm:text-sm mt-1">{t('dashboard.camera.placeholderSubtitle')}</p>
                           </div>
                         </div>
                       </div>
@@ -293,12 +307,12 @@ const DashboardPage = () => {
                     <div className="absolute top-6 right-6 flex gap-3">
                       <div className={`bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 border border-slate-200 dark:border-slate-700 shadow-sm transition-opacity ${(isCameraActive || uploadedVideo) ? 'opacity-100' : 'opacity-50'}`}>
                         <span className={`material-symbols-outlined text-green-500 text-sm filled ${isCameraActive ? 'animate-pulse' : ''}`}>radio_button_checked</span>
-                        {isCameraActive ? 'تتبع نشط' : uploadedVideo ? 'فيديو مرفوع' : 'الكاميرا متوقفة'}
+                        {isCameraActive ? t('dashboard.camera.tracking') : uploadedVideo ? t('dashboard.camera.upload') : t('dashboard.camera.off')}
                       </div>
                       {isRecording && (
                         <div className="bg-red-500/90 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 border border-red-600 shadow-sm animate-pulse">
                           <span className="material-symbols-outlined text-white text-sm">fiber_manual_record</span>
-                          جاري التسجيل
+                          {t('dashboard.recording.active')}
                         </div>
                       )}
                     </div>
@@ -331,10 +345,10 @@ const DashboardPage = () => {
                   <div className="w-full mx-auto bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <button
                       onClick={isCameraActive ? stopCamera : startCamera}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-base transition-all shadow-md hover:shadow-lg ${isCameraActive ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100' : 'bg-primary text-white border border-primary hover:bg-primary-hover'}`}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-base transition-all shadow-md hover:shadow-lg ${iconDir} ${isCameraActive ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100' : 'bg-primary text-white border border-primary hover:bg-primary-hover'}`}
                     >
                       <span className="material-symbols-outlined text-2xl">{isCameraActive ? 'videocam_off' : 'videocam'}</span>
-                      <span>{isCameraActive ? 'إيقاف الكاميرا' : 'تشغيل الكاميرا'}</span>
+                      <span>{isCameraActive ? t('dashboard.controls.stopCamera') : t('dashboard.controls.startCamera')}</span>
                     </button>
                     <input
                       ref={fileInputRef}
@@ -345,10 +359,10 @@ const DashboardPage = () => {
                     />
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-base transition-all shadow-md hover:shadow-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600"
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-base transition-all shadow-md hover:shadow-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600 ${iconDir}`}
                     >
                       <span className="material-symbols-outlined text-2xl">upload_file</span>
-                      <span>رفع فيديو</span>
+                      <span>{t('dashboard.controls.upload')}</span>
                     </button>
                   </div>
                 </div>
@@ -358,18 +372,18 @@ const DashboardPage = () => {
                   <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-700/50">
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-primary">translate</span>
-                      <h3 className="font-bold text-slate-800 dark:text-white">النص المباشر</h3>
+                        <h3 className="font-bold text-slate-800 dark:text-white">{t('dashboard.transcript.title')}</h3>
                     </div>
                     <div className="flex gap-1">
                       <button
                         onClick={() => navigator.clipboard.writeText(outputText)}
-                        className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" title="نسخ النص"
+                          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" title={t('dashboard.controls.copy')}
                       >
                         <span className="material-symbols-outlined text-lg">content_copy</span>
                       </button>
                       <button
                         onClick={() => setOutputText('')}
-                        className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors" title="مسح"
+                          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors" title={t('dashboard.controls.clear')}
                       >
                         <span className="material-symbols-outlined text-lg">delete_sweep</span>
                       </button>
@@ -389,21 +403,21 @@ const DashboardPage = () => {
                               <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce delay-75"></div>
                               <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce delay-150"></div>
                             </div>
-                            <span className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">جاري الترجمة</span>
+                            <span className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('dashboard.transcript.translating')}</span>
                           </div>
                         )}
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50">
                         <span className="material-symbols-outlined text-4xl mb-2">subtitles</span>
-                        <p>سيظهر النص المترجم هنا...</p>
+                        <p>{t('dashboard.transcript.empty')}</p>
                       </div>
                     )}
                   </div>
                   <div className="p-5 border-t border-slate-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-700/80">
-                    <button className="w-full flex items-center justify-center gap-3 bg-primary hover:bg-[#d93d20] text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98]">
+                    <button className={`w-full flex items-center justify-center gap-3 bg-primary hover:bg-[#d93d20] text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] ${iconDir}`}>
                       <span className="material-symbols-outlined">volume_up</span>
-                      تشغيل الصوت
+                      {t('dashboard.controls.playAudio')}
                     </button>
                   </div>
                 </div>
@@ -441,9 +455,9 @@ const DashboardPage = () => {
                       {/* Mic Info + Visualizer */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">تسجيل صوتي</span>
+                          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{t('dashboard.voice.title')}</span>
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${isRecording ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600'}`}>
-                            {isRecording ? 'جاري الاستماع...' : 'اضغط الميكروفون'}
+                            {isRecording ? t('dashboard.recording.listening') : t('dashboard.recording.tapMic')}
                           </span>
                         </div>
                         <div className={`flex items-end gap-1 h-8 transition-opacity ${isRecording ? 'opacity-100' : 'opacity-30'}`}>
@@ -464,7 +478,7 @@ const DashboardPage = () => {
                     {/* OR Divider */}
                     <div className="flex items-center gap-3 px-5 py-2 bg-slate-50 dark:bg-slate-700/40">
                       <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600"></div>
-                      <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">أو</span>
+                      <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t('dashboard.text.divider')}</span>
                       <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600"></div>
                     </div>
 
@@ -476,23 +490,23 @@ const DashboardPage = () => {
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
                           <span className="material-symbols-outlined text-base text-primary">edit_note</span>
-                          كتابة نص
+                          {t('dashboard.text.title')}
                         </span>
                         {textInput && (
                           <button
                             onClick={(e) => { e.stopPropagation(); setTextInput(''); }}
                             className="text-xs text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1"
                           >
-                            <span className="material-symbols-outlined text-sm">close</span> مسح
+                            <span className="material-symbols-outlined text-sm">close</span> {t('dashboard.text.clear')}
                           </button>
                         )}
                       </div>
                       <textarea
                         value={textInput}
                         onChange={(e) => { setTextInput(e.target.value); setInputMode('text'); if (isRecording) { recognitionRef.current?.stop(); setIsRecording(false); setIsTranslating(false); } }}
-                        placeholder="اكتب النص هنا لتحويله إلى إشارة..."
+                        placeholder={t('dashboard.text.placeholder')}
                         rows={4}
-                        className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-slate-800 dark:text-white text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-right transition-shadow"
+                        className={`w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-slate-800 dark:text-white text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 dark:placeholder:text-slate-500 ${textStart} transition-shadow`}
                         onClick={(e) => e.stopPropagation()}
                       />
                     </div>
@@ -501,10 +515,10 @@ const DashboardPage = () => {
                     <div className="px-5 pb-5">
                       <button
                         disabled={!textInput.trim()}
-                        className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98]"
+                        className={`w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] ${iconDir}`}
                       >
                         <span className="material-symbols-outlined">smart_toy</span>
-                        تحويل إلى إشارة
+                        {t('dashboard.text.convert')}
                       </button>
                     </div>
                   </div>
@@ -515,7 +529,7 @@ const DashboardPage = () => {
                   <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden flex flex-col">
                     <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-700">
                       <div className="flex gap-2">
-                        <button className="p-2 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600" title="ملء الشاشة">
+                        <button className="p-2 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600" title={t('dashboard.avatar.fullscreen')}>
                           <span className="material-symbols-outlined">fullscreen</span>
                         </button>
                       </div>
@@ -525,7 +539,7 @@ const DashboardPage = () => {
                       {!isAvatarPlaying && (
                         <img
                           src={avatarSrc}
-                          alt="أفاتار"
+                          alt={t('dashboard.avatar.alt')}
                           className="absolute inset-0 w-full h-full object-contain bg-slate-100 dark:bg-slate-700"
                         />
                       )}
@@ -556,7 +570,7 @@ const DashboardPage = () => {
                           className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 border border-primary"
                         >
                           <span className="material-symbols-outlined">{isAvatarPlaying ? 'pause' : 'play_arrow'}</span>
-                          <span>{isAvatarPlaying ? 'إيقاف' : 'تشغيل'}</span>
+                          <span>{isAvatarPlaying ? t('dashboard.avatar.pause') : t('dashboard.avatar.play')}</span>
                         </button>
                       </div>
                     </div>
@@ -568,19 +582,19 @@ const DashboardPage = () => {
 
           <section className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">النشاط الأخير</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('dashboard.history.title')}</h3>
               <Link to="/history" className="text-sm font-medium text-primary hover:text-primary-hover flex items-center gap-1">
-                عرض السجل الكامل <span className="material-symbols-outlined text-sm">chevron_left</span>
+                {t('dashboard.history.viewAll')} <span className="material-symbols-outlined text-sm">{isRtl ? 'chevron_left' : 'chevron_right'}</span>
               </Link>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-right border-collapse">
+              <table className={`w-full border-collapse ${textStart}`}>
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-700">
-                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">النوع</th>
-                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">المدة/الحجم</th>
-                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">التاريخ</th>
-                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-left">الحالة</th>
+                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('dashboard.history.headers.type')}</th>
+                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('dashboard.history.headers.duration')}</th>
+                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('dashboard.history.headers.date')}</th>
+                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-left">{t('dashboard.history.headers.status')}</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
@@ -598,14 +612,14 @@ const DashboardPage = () => {
                       <td className="py-4 px-2 text-slate-500 dark:text-slate-400">{item.date}</td>
                       <td className="py-4 px-2 text-left">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${item.status === 'completed' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}`}>
-                          {item.status === 'completed' ? 'مكتمل' : 'مؤرشف'}
+                          {item.status === 'completed' ? t('dashboard.history.status.completed') : t('dashboard.history.status.archived')}
                         </span>
                       </td>
                     </tr>
                   ))}
                   {historyItems.length === 0 && (
                     <tr>
-                      <td colSpan="4" className="py-8 text-center text-slate-400">لا يوجد نشاط أخير</td>
+                      <td colSpan="4" className="py-8 text-center text-slate-400">{t('dashboard.history.empty')}</td>
                     </tr>
                   )}
                 </tbody>
