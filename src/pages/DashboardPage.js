@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import { useHistory } from '../contexts/HistoryContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/authContext';
 
 const DashboardPage = () => {
-  const navigate = useNavigate();
+  const { api } = useAuth();
   const { t, language, dir } = useLanguage();
   const isRtl = language === 'ar';
   const textStart = isRtl ? 'text-right' : 'text-left';
@@ -26,9 +27,16 @@ const DashboardPage = () => {
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
+  const audioPlayerRef = useRef(null);
   const recognitionRef = useRef(null);
   const fileInputRef = useRef(null);
   const [uploadedVideo, setUploadedVideo] = useState(null);
+  const [audioUrl, setAudioUrl] = useState('');
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [translationError, setTranslationError] = useState('');
   const [isAvatarPlaying, setIsAvatarPlaying] = useState(false);
 
   const formatDurationWithUnit = (seconds) => {
@@ -37,17 +45,172 @@ const DashboardPage = () => {
     return `${minutes}:${secs} ${t('dashboard.history.durationUnit')}`;
   };
 
+  const parseApiBody = (rawBody) => {
+    if (!rawBody) return {};
+    if (typeof rawBody === 'object') return rawBody;
+    if (typeof rawBody === 'string') {
+      try {
+        return JSON.parse(rawBody);
+      } catch (_error) {
+        return {};
+      }
+    }
+    return {};
+  };
+
+  const firstFilledValue = (obj, keys) => {
+    for (const key of keys) {
+      const value = obj?.[key];
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+    return '';
+  };
+
+  const extractTranscript = (translation) => {
+    const direct = firstFilledValue(translation, ['text', 'transcript', 'original_text', language]);
+    if (direct) return direct;
+
+    if (!translation || typeof translation !== 'object') return '';
+    for (const value of Object.values(translation)) {
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+    return '';
+  };
+
+  const extractAudioUrl = (translation) => {
+    return firstFilledValue(translation, ['audio_url', 'audioUrl']);
+  };
+
+  const extractApiErrorMessage = (error, fallback = 'Translation failed. Please try again.') => {
+    const data = error?.response?.data;
+    const body = parseApiBody(data);
+    const message = body?.detail || body?.message || body?.title || error?.message || fallback;
+    const text = String(message || '').trim();
+
+    if (!text || /<!doctype|<html|<body|<pre/i.test(text)) {
+      return fallback;
+    }
+    return text;
+  };
+
+  const resetAudioPlayer = () => {
+    if (!audioPlayerRef.current) return;
+    audioPlayerRef.current.pause();
+    audioPlayerRef.current.src = '';
+    audioPlayerRef.current.onended = null;
+    audioPlayerRef.current.onplaying = null;
+    audioPlayerRef.current.onpause = null;
+    audioPlayerRef.current = null;
+    setIsAudioPlaying(false);
+    setIsAudioLoading(false);
+  };
+
+  const translateSignVideo = async (videoFile) => {
+    if (!videoFile) return;
+
+    const languageCode = language === 'ar' ? 'ar' : 'en';
+    setIsTranslating(true);
+    setTranslationError('');
+    resetAudioPlayer();
+    setAudioUrl('');
+
+    try {
+      const signToTextForm = new FormData();
+      signToTextForm.append('video_file', videoFile, videoFile.name || `video-${Date.now()}.webm`);
+      signToTextForm.append('language', languageCode);
+      signToTextForm.append('include_audio', 'true');
+
+      const signToTextResponse = await api.post('/api/v1/Translate/sign-to-text', signToTextForm, {
+        headers: { Accept: 'text/plain' },
+      });
+      const signToTextBody = parseApiBody(signToTextResponse.data);
+      const signToTextTranslation = signToTextBody?.translation || {};
+
+      const transcript = extractTranscript(signToTextTranslation);
+      let nextAudioUrl = extractAudioUrl(signToTextTranslation);
+
+      if (!nextAudioUrl) {
+        const signToAudioForm = new FormData();
+        signToAudioForm.append('video_file', videoFile, videoFile.name || `video-${Date.now()}.webm`);
+        signToAudioForm.append('language', languageCode);
+        signToAudioForm.append('include_audio', 'true');
+
+        const signToAudioResponse = await api.post('/api/v1/Translate/audio-to-sign', signToAudioForm, {
+          headers: { Accept: 'text/plain' },
+        });
+        const signToAudioBody = parseApiBody(signToAudioResponse.data);
+        nextAudioUrl = extractAudioUrl(signToAudioBody?.translation || {});
+      }
+
+      if (!transcript) {
+        throw new Error('No transcript returned from API.');
+      }
+
+      setOutputText(transcript);
+      setAudioUrl(nextAudioUrl || '');
+    } catch (error) {
+      const message = extractApiErrorMessage(error);
+      setTranslationError(message);
+      setOutputText('');
+      setAudioUrl('');
+      console.error('Sign-to-voice translation failed:', error);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const stopRecorder = (processRecordedVideo = true) => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recorder.state === 'inactive') {
+      recordedChunksRef.current = [];
+      mediaRecorderRef.current = null;
+      return;
+    }
+
+    recorder.onstop = () => {
+      const chunks = [...recordedChunksRef.current];
+      recordedChunksRef.current = [];
+      mediaRecorderRef.current = null;
+
+      if (!processRecordedVideo || chunks.length === 0) return;
+
+      const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
+      if (!blob.size) return;
+
+      const fileName = `camera-${Date.now()}.webm`;
+      const recordedFile = new File([blob], fileName, { type: blob.type || 'video/webm' });
+      void translateSignVideo(recordedFile);
+    };
+
+    try {
+      recorder.requestData();
+    } catch (_error) {
+      // Some browsers do not support forcing a data flush.
+    }
+    recorder.stop();
+  };
+
   const handleVideoUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
-    stopCamera();
+    stopCamera({ processRecordedVideo: false, addSessionToHistory: false });
+    setOutputText('');
+    setTranslationError('');
+    resetAudioPlayer();
+    setAudioUrl('');
     setUploadedVideo(url);
     if (videoRef.current) {
       videoRef.current.srcObject = null;
       videoRef.current.src = url;
       videoRef.current.play();
     }
+    void translateSignVideo(file);
+    e.target.value = '';
   };
 
   // Ensure model-viewer is loaded for dashboard previews
@@ -65,6 +228,7 @@ const DashboardPage = () => {
     };
   }, []);
   // Initialize Speech Recognition
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -105,7 +269,7 @@ const DashboardPage = () => {
     } else {
       console.log('Speech Recognition Not Supported');
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Camera Handling
   const startCamera = async () => {
@@ -115,19 +279,55 @@ const DashboardPage = () => {
         setUploadedVideo(null);
         if (videoRef.current) videoRef.current.src = '';
       }
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setOutputText('');
+      setTranslationError('');
+      resetAudioPlayer();
+      setAudioUrl('');
+
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
         setIsCameraActive(true);
+        setIsRecording(true);
         startTimeRef.current = Date.now();
+      }
+
+      if (typeof MediaRecorder !== 'undefined') {
+        try {
+          const preferredMimeTypes = [
+            'video/webm;codecs=vp9',
+            'video/webm;codecs=vp8',
+            'video/webm',
+          ];
+          const supportedMimeType = preferredMimeTypes.find((type) => MediaRecorder.isTypeSupported?.(type));
+          const recorder = supportedMimeType
+            ? new MediaRecorder(stream, { mimeType: supportedMimeType })
+            : new MediaRecorder(stream);
+
+          recordedChunksRef.current = [];
+          recorder.ondataavailable = (event) => {
+            if (event.data && event.data.size > 0) {
+              recordedChunksRef.current.push(event.data);
+            }
+          };
+          recorder.start(300);
+          mediaRecorderRef.current = recorder;
+        } catch (recordError) {
+          console.error('Error starting video recorder:', recordError);
+          setIsRecording(false);
+        }
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
+      setIsRecording(false);
+      setTranslationError('Unable to access camera.');
     }
   };
 
-  const stopCamera = () => {
+  const stopCamera = ({ processRecordedVideo = true, addSessionToHistory = true } = {}) => {
+    stopRecorder(processRecordedVideo);
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -143,16 +343,53 @@ const DashboardPage = () => {
       }
     }
     setIsCameraActive(false);
+    setIsRecording(false);
 
-    // Add to history
-    const duration = startTimeRef.current ? Math.round((Date.now() - startTimeRef.current) / 1000) : 0;
-    if (duration > 1) { // Only record sessions longer than 1 second
-      addHistoryItem({
-        type: 'sign-to-voice',
-        duration: formatDurationWithUnit(duration),
-        label: t('dashboard.history.label.signToVoice'),
-        preview: outputText || t('dashboard.history.preview.sign')
-      });
+    if (addSessionToHistory) {
+      const duration = startTimeRef.current ? Math.round((Date.now() - startTimeRef.current) / 1000) : 0;
+      if (duration > 1) {
+        addHistoryItem({
+          type: 'sign-to-voice',
+          duration: formatDurationWithUnit(duration),
+          label: t('dashboard.history.label.signToVoice'),
+          preview: outputText || t('dashboard.history.preview.sign')
+        });
+      }
+    }
+  };
+
+  const toggleAudioPlayback = async () => {
+    if (!audioUrl) return;
+
+    try {
+      if (audioPlayerRef.current && audioPlayerRef.current.src === audioUrl) {
+        if (isAudioPlaying) {
+          audioPlayerRef.current.pause();
+          return;
+        }
+
+        setIsAudioLoading(true);
+        await audioPlayerRef.current.play();
+        return;
+      }
+
+      resetAudioPlayer();
+      const player = new Audio(audioUrl);
+      player.onplaying = () => {
+        setIsAudioLoading(false);
+        setIsAudioPlaying(true);
+      };
+      player.onpause = () => setIsAudioPlaying(false);
+      player.onended = () => setIsAudioPlaying(false);
+
+      audioPlayerRef.current = player;
+      setIsAudioLoading(true);
+      await player.play();
+    } catch (error) {
+      console.error('Audio playback failed:', error);
+      setIsAudioLoading(false);
+      setIsAudioPlaying(false);
+      setTranslationError('Unable to play audio output.');
     }
   };
 
@@ -192,11 +429,13 @@ const DashboardPage = () => {
   };
 
   // Clean up on unmount or mode change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     return () => {
-      stopCamera();
+      stopCamera({ addSessionToHistory: false });
+      resetAudioPlayer();
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleMode = () => {
     setMode(prev => prev === 'sign-to-voice' ? 'voice-to-avatar' : 'sign-to-voice');
@@ -205,7 +444,10 @@ const DashboardPage = () => {
     setOutputText('');
     setInputMode('voice');
     setTextInput('');
-    stopCamera(); // Ensure camera stops when switching modes manually
+    setTranslationError('');
+    resetAudioPlayer();
+    setAudioUrl('');
+    stopCamera({ addSessionToHistory: false });
   };
 
   return (
@@ -378,12 +620,18 @@ const DashboardPage = () => {
                     <div className="flex gap-1">
                       <button
                         onClick={() => navigator.clipboard.writeText(outputText)}
-                          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" title={t('dashboard.controls.copy')}
+                          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed" title={t('dashboard.controls.copy')}
+                          disabled={!outputText}
                       >
                         <span className="material-symbols-outlined text-lg">content_copy</span>
                       </button>
                       <button
-                        onClick={() => setOutputText('')}
+                        onClick={() => {
+                          setOutputText('');
+                          setTranslationError('');
+                          resetAudioPlayer();
+                          setAudioUrl('');
+                        }}
                           className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors" title={t('dashboard.controls.clear')}
                       >
                         <span className="material-symbols-outlined text-lg">delete_sweep</span>
@@ -408,6 +656,10 @@ const DashboardPage = () => {
                           </div>
                         )}
                       </div>
+                    ) : translationError ? (
+                      <div className="h-full rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-600 dark:border-red-800/70 dark:bg-red-900/20 dark:text-red-300">
+                        {translationError}
+                      </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50">
                         <span className="material-symbols-outlined text-4xl mb-2">subtitles</span>
@@ -416,8 +668,14 @@ const DashboardPage = () => {
                     )}
                   </div>
                   <div className="p-5 border-t border-slate-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-700/80">
-                    <button className={`w-full flex items-center justify-center gap-3 bg-primary hover:bg-[#d93d20] text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] ${iconDir}`}>
-                      <span className="material-symbols-outlined">volume_up</span>
+                    <button
+                      onClick={toggleAudioPlayback}
+                      disabled={!audioUrl || isAudioLoading}
+                      className={`w-full flex items-center justify-center gap-3 bg-primary hover:bg-[#d93d20] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] ${iconDir}`}
+                    >
+                      <span className="material-symbols-outlined">
+                        {isAudioLoading ? 'hourglass_top' : isAudioPlaying ? 'pause' : 'volume_up'}
+                      </span>
                       {t('dashboard.controls.playAudio')}
                     </button>
                   </div>
@@ -623,3 +881,4 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+
