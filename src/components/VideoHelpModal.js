@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const POPOVER_W = 288;
 const POPOVER_H = 310;
@@ -13,7 +14,8 @@ const GAP = 10;
  *   title      - string
  *   anchorRect - DOMRect of the button that triggered the popup
  */
-const VideoHelpModal = ({ open, onClose, videoSrc = '/videos/hello.mp4', title = 'مثال توضيحي', anchorRect = null }) => {
+const VideoHelpModal = ({ open, onClose, videoSrc = '/videos/hello.mp4', title, anchorRect = null }) => {
+  const { t, dir } = useLanguage();
   const videoRef  = useRef(null);
   const popoverRef = useRef(null);
 
@@ -44,6 +46,8 @@ const VideoHelpModal = ({ open, onClose, videoSrc = '/videos/hello.mp4', title =
   }, [open, onClose]);
 
   if (!open || !anchorRect) return null;
+
+  const resolvedTitle = title || t('help.exampleTitle');
 
   // ── positioning ─────────────────────────────────────────────────────────────
   const vw = window.innerWidth;
@@ -85,6 +89,7 @@ const VideoHelpModal = ({ open, onClose, videoSrc = '/videos/hello.mp4', title =
       {/* popover card */}
       <div
         ref={popoverRef}
+        dir={dir}
         className="fixed z-50 bg-surface-light dark:bg-surface-dark rounded-2xl shadow-2xl border border-border-light dark:border-border-dark overflow-visible"
         style={{ left, top, width: POPOVER_W }}
       >
@@ -97,12 +102,12 @@ const VideoHelpModal = ({ open, onClose, videoSrc = '/videos/hello.mp4', title =
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-light dark:border-border-dark">
             <div className="flex items-center gap-2">
               <i className="fa-solid fa-hands-asl-interpreting text-lg text-primary" />
-              <span className="text-sm font-semibold text-slate-800 dark:text-white">{title}</span>
+              <span className="text-sm font-semibold text-slate-800 dark:text-white">{resolvedTitle}</span>
             </div>
             <button
               onClick={onClose}
               className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-              aria-label="إغلاق"
+              aria-label={t('help.close')}
             >
               <span className="material-symbols-outlined text-[18px]">close</span>
             </button>

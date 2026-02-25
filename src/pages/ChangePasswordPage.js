@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
-import { useAuth } from '../contexts/authContext'; // 1. استيراد الـ Hook
+import { useAuth } from '../contexts/authContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const ChangePasswordPage = () => {
-    const { changePassword } = useAuth(); // 2. الحصول على دالة التغيير من الـ Context
+    const { changePassword } = useAuth();
+    const { t, language, dir } = useLanguage();
+    const isRtl = language === 'ar';
+    const textStart = isRtl ? 'text-right' : 'text-left';
     const [formData, setFormData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -28,19 +32,18 @@ const ChangePasswordPage = () => {
         e.preventDefault();
         const { currentPassword, newPassword, confirmPassword } = formData;
 
-        // Validations
         if (!currentPassword || !newPassword || !confirmPassword) {
-            setError('يرجى ملء جميع الحقول.');
+            setError(t('changePassword.errors.required'));
             return;
         }
 
         if (newPassword.length < 8) {
-            setError('يجب أن تتكون كلمة المرور الجديدة من 8 أحرف على الأقل.');
+            setError(t('changePassword.errors.short'));
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            setError('كلمة المرور الجديدة غير متطابقة.');
+            setError(t('changePassword.errors.mismatch'));
             return;
         }
 
@@ -50,14 +53,14 @@ const ChangePasswordPage = () => {
         try {
             await changePassword(currentPassword, newPassword, confirmPassword);
             
-            setSuccess('تم تغيير كلمة المرور بنجاح.');
+            setSuccess(t('changePassword.success'));
             setFormData({
                 currentPassword: '',
                 newPassword: '',
                 confirmPassword: ''
             });
         } catch (err) {
-            setError(err.message || 'حدث خطأ أثناء تغيير كلمة المرور.');
+            setError(err.message || t('common.error'));
         } finally {
             setIsLoading(false); 
         }
@@ -65,16 +68,21 @@ const ChangePasswordPage = () => {
 
     return (
         <ThemeProvider>
-            <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex flex-col overflow-x-hidden selection:bg-primary selection:text-white">
+            <div
+                dir={dir}
+                className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex flex-col overflow-x-hidden selection:bg-primary selection:text-white"
+            >
                 <Navbar
                     variant="dashboard"
-                    logo="مترجم الإشارة"
+                    logo="SignaryAI"
                     userProfile="https://lh3.googleusercontent.com/aida-public/AB6AXuDGZQ2Lpmsf2wWPOWbV1NwlSV8apne6XJ1_XsdsDMPhMvbqdiB66HO7PwhmU_DZTGa6XlUQi5NVf0ujJTsRg4xtUU-6Wpwu1Szn_yfiAymfFaKdYMd8GtdBtqSVa2dEtUo31mAq1yjcN548LRNthF2qQ3SvvYs8XgIPbGqY_6lqeleuYwzMPOEvLLIY7inFcwQ0YfJMkt5hTPtZRHcnrLG52YPO27f3HamgyAdtmNaRMhqerd6BtQXWBQd7qpEIe_cy5RZwIEhYib8"
                 />
                 <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
 
                     <div className="max-w-xl mx-auto">
-                        <h1 className="text-2xl font-bold mb-6 text-slate-900 dark:text-white text-center">تغيير كلمة المرور</h1>
+                        <h1 className={`text-2xl font-bold mb-6 text-slate-900 dark:text-white text-center ${textStart}`}>
+                            {t('changePassword.title')}
+                        </h1>
 
                         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
                             {error && (
@@ -92,8 +100,8 @@ const ChangePasswordPage = () => {
 
                             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        كلمة المرور الحالية
+                                    <label className={`block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 ${textStart}`}>
+                                        {t('changePassword.fields.current')}
                                     </label>
                                     <input
                                         type="password"
@@ -101,14 +109,14 @@ const ChangePasswordPage = () => {
                                         value={formData.currentPassword}
                                         onChange={handleChange}
                                         disabled={isLoading}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50"
-                                        placeholder="أدخل كلمة المرور الحالية"
+                                        className={`w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50 ${textStart}`}
+                                        placeholder={t('changePassword.placeholders.current')}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        كلمة المرور الجديدة
+                                    <label className={`block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 ${textStart}`}>
+                                        {t('changePassword.fields.new')}
                                     </label>
                                     <input
                                         type="password"
@@ -116,14 +124,14 @@ const ChangePasswordPage = () => {
                                         value={formData.newPassword}
                                         onChange={handleChange}
                                         disabled={isLoading}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50"
-                                        placeholder="أدخل كلمة المرور الجديدة (8 أحرف على الأقل)"
+                                        className={`w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50 ${textStart}`}
+                                        placeholder={t('changePassword.placeholders.new')}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        تأكيد كلمة المرور
+                                    <label className={`block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 ${textStart}`}>
+                                        {t('changePassword.fields.confirm')}
                                     </label>
                                     <input
                                         type="password"
@@ -131,8 +139,8 @@ const ChangePasswordPage = () => {
                                         value={formData.confirmPassword}
                                         onChange={handleChange}
                                         disabled={isLoading}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50"
-                                        placeholder="أعد إدخال كلمة المرور الجديدة"
+                                        className={`w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50 ${textStart}`}
+                                        placeholder={t('changePassword.placeholders.confirm')}
                                     />
                                 </div>
 
@@ -141,7 +149,7 @@ const ChangePasswordPage = () => {
                                     disabled={isLoading}
                                     className="w-full py-3.5 px-4 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
-                                    {isLoading ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                                    {isLoading ? t('changePassword.submitting') : t('changePassword.submit')}
                                 </button>
                             </form>
                         </div>
