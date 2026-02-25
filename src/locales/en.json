@@ -1,0 +1,773 @@
+{
+  "language": {
+    "english": "English",
+    "arabic": "Arabic",
+    "shortEn": "EN",
+    "shortAr": "AR",
+    "toggle": "Switch language"
+  },
+  "common": {
+    "error": "An error occurred. Please try again."
+  },
+  "navbar": {
+    "features": "Features",
+    "about": "About",
+    "pricing": "Pricing",
+    "dashboard": "Dashboard",
+    "history": "History",
+    "settings": "Settings",
+    "accessibility": "Accessibility options",
+    "login": "Login"
+  },
+  "login": {
+    "welcome": "Welcome Back",
+    "subtitle": "Log in to access your account.",
+    "loginTab": "Login",
+    "signupTab": "Create Account",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "forgot": "Forgot Password?",
+    "errorEmptyEmail": "Please enter your email.",
+    "errorInvalidEmail": "Please enter a valid email address.",
+    "errorEmptyPassword": "Please enter your password.",
+    "errorShortPassword": "Password must be at least 8 characters.",
+    "errorServer": "Server connection error. Please try again.",
+    "errorIncorrect": "Incorrect email or password.",
+    "errorUnauthorized": "Unauthorized. Please check your email.",
+    "errorUnavailable": "Server unavailable (503). Try again later.",
+    "errorInternal": "Internal server error.",
+    "errorGoogle": "Google login failed.",
+    "submit": "Login",
+    "submitting": "Signing in...",
+    "or": "Or continue with",
+    "google": "Google",
+    "facebook": "Facebook",
+    "noAccount": "Don't have an account?",
+    "signupLink": "Sign up free",
+    "helpLogin": "Login",
+    "helpSignup": "Signup",
+    "helpEmail": "Email",
+    "helpPassword": "Password"
+  },
+  "home": {
+    "hero": {
+      "title": "Bridge communication: from sign to voice and voice to avatar.",
+      "subtitle": "Real-time AI translation that enables seamless conversations between signers and the hearing world using advanced motion tracking and avatar rendering.",
+      "ctaPrimary": "Start translating now",
+      "ctaSecondary": "Contact us",
+      "helpTitle": "Start translating now"
+    },
+    "features": {
+      "eyebrow": "Features",
+      "title": "Core capabilities",
+      "description": "Our platform bridges the gap with advanced AI translation tools built for real-world interactions."
+    },
+    "featureCards": [
+      {
+        "icon": "sign_language",
+        "title": "Sign to voice",
+        "description": "Instantly translate sign-language gestures captured by the camera into clear spoken audio."
+      },
+      {
+        "icon": "record_voice_over",
+        "title": "Voice to sign",
+        "description": "Turn spoken words or text into a realistic 3D avatar translating in real time with expressive accuracy."
+      },
+      {
+        "icon": "videocam",
+        "title": "Video integration",
+        "description": "Works with popular video platforms like Zoom and Teams via a virtual webcam output."
+      }
+    ],
+    "howItWorks": {
+      "title": "How the platform works",
+      "subtitle": "A smooth path from input to understanding.",
+      "steps": [
+        {
+          "icon": "videocam",
+          "title": "Input source",
+          "description": "Capture video via webcam or audio from microphone. The system auto-detects the medium."
+        },
+        {
+          "icon": "psychology",
+          "title": "AI processing",
+          "description": "Neural networks analyze hand shapes, facial expressions, and body language to convert sign to text or speech semantics to sign rules."
+        },
+        {
+          "icon": "record_voice_over",
+          "title": "Instant translation",
+          "description": "Receivers get output in their preferred format: synthesized voice or high-fidelity 3D sign avatar."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Ready to break the silence barrier?",
+      "description": "Join thousands of users and communicate freely without walls. Start your free experience today.",
+      "primary": "Start free",
+      "secondary": "Contact us"
+    }
+  },
+  "about": {
+    "hero": {
+      "eyebrow": "About",
+      "title": "We believe communication is for everyone",
+      "subtitle": "SignaryAI is an innovative platform that breaks language barriers between the Deaf community and the hearing world using state-of-the-art AI."
+    },
+    "missionVision": {
+      "missionTitle": "Our mission",
+      "missionDescription": "Empower people with hearing impairments to communicate freely and confidently across work, education, and social life through smart, accessible translation tools.",
+      "visionTitle": "Our vision",
+      "visionDescription": "A world with no language barriers, where everyone can express themselves regardless of sensory or linguistic abilities."
+    },
+    "values": {
+      "title": "Our values",
+      "description": "The principles guiding every decision we make.",
+      "items": [
+        {
+          "icon": "favorite",
+          "title": "Inclusion",
+          "description": "Accessibility is at the core of everything we build because technology must serve everyone."
+        },
+        {
+          "icon": "science",
+          "title": "Innovation",
+          "description": "We keep researching and iterating to deliver more accurate, natural translation."
+        },
+        {
+          "icon": "shield",
+          "title": "Privacy",
+          "description": "User data is sacred to us; we do not share personal data with third parties."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Be part of the change",
+      "description": "Join us today and help build a more inclusive, connected world.",
+      "primary": "Start free"
+    }
+  },
+  "featuresPage": {
+    "hero": {
+      "eyebrow": "Features",
+      "title": "Everything you need to communicate without barriers",
+      "subtitle": "SignaryAI combines advanced AI with motion tracking to provide instant, seamless translation."
+    },
+    "featureCards": [
+      {
+        "icon": "sign_language",
+        "title": "Sign to voice",
+        "description": "Instantly translate camera-captured sign-language gestures into clear spoken audio using advanced neural nets."
+      },
+      {
+        "icon": "record_voice_over",
+        "title": "Voice to sign",
+        "description": "Turn spoken words or text into a realistic 3D avatar signing in real time with accurate expressions."
+      },
+      {
+        "icon": "videocam",
+        "title": "Video integration",
+        "description": "Seamlessly integrates with Zoom and Teams via a virtual webcam device."
+      },
+      {
+        "icon": "psychology",
+        "title": "Advanced AI",
+        "description": "Models trained on thousands of hours of sign-language data to ensure high translation accuracy."
+      },
+      {
+        "icon": "accessibility_new",
+        "title": "Inclusive by design",
+        "description": "Built from the ground up to meet accessibility standards (WCAG 2.1)."
+      },
+      {
+        "icon": "bolt",
+        "title": "Real-time performance",
+        "description": "Sub-200ms latency for natural, uninterrupted conversations."
+      }
+    ],
+    "howItWorks": {
+      "title": "How the platform works",
+      "subtitle": "A smooth path from input to understanding.",
+      "steps": [
+        {
+          "icon": "videocam",
+          "title": "Input source",
+          "description": "Capture video via webcam or audio from microphone. The system auto-detects the medium."
+        },
+        {
+          "icon": "psychology",
+          "title": "AI engine",
+          "description": "Neural networks analyze hand shapes, facial expressions, and body language to convert sign to text."
+        },
+        {
+          "icon": "record_voice_over",
+          "title": "Instant translation",
+          "description": "Receivers get the output immediately: synthesized voice or a 3D signing avatar."
+        }
+      ]
+    }
+  },
+  "pricing": {
+    "hero": {
+      "eyebrow": "Pricing",
+      "title": "Plans that fit your needs",
+      "subtitle": "Start free and scale as you grow. No credit card required."
+    },
+    "toggle": {
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "save": "Save 20%"
+    },
+    "plans": [
+      {
+        "name": "Free",
+        "desc": "Perfect for trying things out and limited personal use.",
+        "cta": "Start free",
+        "highlight": false,
+        "features": [
+          "Up to 30 minutes of translation per month",
+          "Sign to voice",
+          "Basic avatar quality",
+          "Email support"
+        ]
+      },
+      {
+        "name": "Pro",
+        "desc": "For individuals and pros who need unlimited translation.",
+        "cta": "Start free trial",
+        "highlight": true,
+        "features": [
+          "Unlimited translation",
+          "Both directions (Sign ↔ Voice)",
+          "High-fidelity 3D avatar",
+          "Zoom and Teams integration",
+          "Conversation history",
+          "Priority support"
+        ]
+      },
+      {
+        "name": "Enterprise",
+        "desc": "For organizations that need tailored solutions.",
+        "cta": "Contact us",
+        "highlight": false,
+        "features": [
+          "Everything in Pro",
+          "Custom API integration",
+          "Admin dashboard",
+          "Team onboarding",
+          "SLA guarantee",
+          "Dedicated account manager"
+        ]
+      }
+    ],
+    "badges": {
+      "popular": "Most popular"
+    },
+    "faq": {
+      "title": "FAQs",
+      "items": [
+        {
+          "q": "Can I cancel anytime?",
+          "a": "Yes, you can cancel your subscription at any time with no extra fees."
+        },
+        {
+          "q": "Is my data protected?",
+          "a": "Yes. All data is encrypted and protected with top security standards. We never share your data with third parties."
+        },
+        {
+          "q": "Which sign languages are supported?",
+          "a": "We currently support Arabic Sign Language and are adding more languages."
+        },
+        {
+          "q": "Does it work on mobile?",
+          "a": "The platform runs in the browser on desktop and mobile. Mobile apps are coming soon."
+        }
+      ]
+    }
+  },
+  "footer": {
+    "tagline": "Making the world more accessible, one gesture at a time.",
+    "product": "Product",
+    "company": "Company",
+    "legal": "Legal",
+    "features": "Features",
+    "pricing": "Pricing",
+    "about": "About us",
+    "contact": "Contact us",
+    "privacy": "Privacy policy",
+    "terms": "Terms of service",
+    "auth": {
+      "privacy": "Privacy policy",
+      "terms": "Terms of service",
+      "help": "Help center",
+      "copyright": "© 2025 SignaryAI Inc. All rights reserved."
+    },
+    "copyright": "© 2025 SignaryAI Inc. All rights reserved."
+  },
+  "help": {
+    "exampleTitle": "Example demo",
+    "close": "Close",
+    "openExample": "Show sign language example"
+  },
+  "contact": {
+    "hero": {
+      "eyebrow": "Contact",
+      "title": "How can we help?",
+      "subtitle": "Our team is ready to answer your questions. We reply within 24 hours."
+    },
+    "infoCards": [
+      { "icon": "email", "title": "Email", "value": "support@signaryai.com" },
+      { "icon": "schedule", "title": "Hours", "value": "Sunday - Thursday, 9am - 5pm" },
+      { "icon": "location_on", "title": "Location", "value": "Cairo, Egypt" }
+    ],
+    "form": {
+      "title": "Send us a message",
+      "name": "Name",
+      "email": "Email",
+      "subject": "Subject",
+      "select": "Choose a subject",
+      "subjects": {
+        "support": "Tech support",
+        "billing": "Billing & subscriptions",
+        "enterprise": "Enterprise inquiry",
+        "feedback": "Suggestion or feedback",
+        "other": "Other"
+      },
+      "message": "Message",
+      "placeholders": {
+        "name": "Your full name",
+        "email": "example@email.com",
+        "message": "Write your message here..."
+      },
+      "submit": "Send message"
+    },
+    "submitted": {
+      "title": "Your message has been sent!",
+      "subtitle": "We will get back to you soon at your email.",
+      "cta": "Send another message"
+    }
+  },
+  "terms": {
+    "hero": {
+      "eyebrow": "Legal",
+      "title": "Terms of Service",
+      "updated": "Last updated: February 2026"
+    },
+    "sections": [
+      {
+        "title": "1. Acceptance of terms",
+        "body": "By using the SignaryAI platform, you agree to these terms. If you disagree with any part, please stop using the service."
+      },
+      {
+        "title": "2. Service description",
+        "body": "SignaryAI provides sign-to-voice and voice-to-sign translation using AI. The service is for lawful personal and professional use only."
+      },
+      {
+        "title": "3. User account",
+        "body": "You are responsible for keeping your login details confidential. Notify us immediately if you suspect unauthorized use. SignaryAI is not liable for losses resulting from failing to protect your account."
+      },
+      {
+        "title": "4. Acceptable use",
+        "body": "You may not use the platform for:",
+        "list": [
+          "Any illegal or harmful activity",
+          "Infringing intellectual property rights",
+          "Sharing offensive or discriminatory content",
+          "Attempting to hack or disrupt the service"
+        ]
+      },
+      {
+        "title": "5. Intellectual property",
+        "body": "All IP in the platform and its content is owned by SignaryAI. You may not copy, distribute, or modify any part without prior written permission."
+      },
+      {
+        "title": "6. Disclaimer",
+        "body": "The service is provided \"as is\" without warranties. SignaryAI does not guarantee translation accuracy at all times and is not liable for damages from using or relying on the service in scenarios requiring absolute accuracy."
+      },
+      {
+        "title": "7. Changes to terms",
+        "body": "SignaryAI may update these terms at any time. We will notify you of material changes via email or in-app notice. Continuing to use the service after changes means you accept them."
+      },
+      {
+        "title": "8. Contact us",
+        "body": "For any questions about these terms, please reach us via the Contact page.",
+        "linkText": "Contact us"
+      }
+    ]
+  },
+  "privacy": {
+    "hero": {
+      "eyebrow": "Legal",
+      "title": "Privacy Policy",
+      "updated": "Last updated: February 2026"
+    },
+    "sections": [
+      {
+        "title": "1. Introduction",
+        "body": "SignaryAI is committed to protecting your privacy. This policy explains how we collect, use, and safeguard your data."
+      },
+      {
+        "title": "2. Data we collect",
+        "body": "We collect the following data:",
+        "list": [
+          "Account data: name, email, password (hashed)",
+          "Usage data: translation logs, session duration",
+          "Technical data: IP address, browser type, OS"
+        ]
+      },
+      {
+        "title": "3. How we use your data",
+        "body": "We use collected data to:",
+        "list": [
+          "Provide and improve translation services",
+          "Personalize user experience",
+          "Send important notifications and updates",
+          "Analyze performance and detect issues"
+        ]
+      },
+      {
+        "title": "4. Data sharing",
+        "body": "We do not sell or rent your data. We may share data only when:",
+        "list": [
+          "You give explicit consent",
+          "Required by law",
+          "With trusted service providers under strict confidentiality"
+        ]
+      },
+      {
+        "title": "5. Data security",
+        "body": "We apply TLS for data in transit and AES-256 for sensitive data at rest. We run periodic security reviews to keep your data safe."
+      },
+      {
+        "title": "6. Your rights",
+        "body": "You have the right to:",
+        "list": [
+          "Access your personal data",
+          "Correct inaccurate data",
+          "Request deletion of your data (right to be forgotten)",
+          "Object to processing your data"
+        ]
+      },
+      {
+        "title": "7. Cookies",
+        "body": "We use cookies to improve your experience and save preferences. You can manage them in your browser settings."
+      },
+      {
+        "title": "8. Contact us",
+        "body": "To exercise your rights or ask about privacy, reach us via the Contact page.",
+        "linkText": "Contact us"
+      }
+    ]
+  },
+  "forgotPassword": {
+    "title": "Forgot your password?",
+    "subtitle": "Enter your email and we'll send you a reset link/code.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "name@example.com",
+    "submit": "Send reset link/code",
+    "submitting": "Sending...",
+    "success": "If the email exists, a reset link/code will arrive in minutes.",
+    "errorEmpty": "Please enter your email.",
+    "errorInvalid": "Please enter a valid email address.",
+    "backText": "Back to",
+    "backLink": "Login"
+  },
+  "resetPassword": {
+    "title": "Reset password",
+    "subtitle": "Enter a new password for your account.",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "helper": "Must be at least 8 characters.",
+    "invalidToken": "Reset link is invalid or missing (token).",
+    "submit": "Change password",
+    "submitting": "Changing...",
+    "success": "Password changed successfully. You can now log in.",
+    "backText": "Back to",
+    "backLink": "Login",
+    "errors": {
+      "noToken": "Reset link is invalid or missing (token).",
+      "empty": "Please enter a new password.",
+      "short": "Password must be at least 8 characters.",
+      "mismatch": "Passwords do not match."
+    }
+  },
+  "changePassword": {
+    "title": "Change password",
+    "fields": {
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm password"
+    },
+    "placeholders": {
+      "current": "Enter your current password",
+      "new": "Enter a new password (min 8 chars)",
+      "confirm": "Re-enter the new password"
+    },
+    "errors": {
+      "required": "Please fill in all fields.",
+      "short": "New password must be at least 8 characters.",
+      "mismatch": "New passwords do not match."
+    },
+    "submit": "Save changes",
+    "submitting": "Saving...",
+    "success": "Password updated successfully."
+  },
+  "verifyEmail": {
+    "title": "Verify your email",
+    "subtitle": "Enter the 6-digit code we sent to",
+    "emailPlaceholder": "your email",
+    "errorLength": "Please enter the full code (6 digits).",
+    "errorInvalid": "Code is incorrect or expired.",
+    "success": "Verified! You can now log in.",
+    "resend": "Resend code",
+    "resendSending": "Sending a new code...",
+    "resendSuccess": "A new code has been sent to your email.",
+    "resendFailed": "Failed to resend code.",
+    "noCode": "Didn't get the code?",
+    "resendCountdown": "Resend after ({countdown})s",
+    "backTo": "Back to",
+    "login": "Login",
+    "submit": "Confirm code"
+  },
+  "signUp": {
+    "hero": {
+      "title": "Create an account",
+      "subtitle": "Create your account to translate to and from sign language."
+    },
+    "tabs": {
+      "login": "Login",
+      "signup": "Create account"
+    },
+    "fields": {
+      "displayName": "Full name",
+      "userName": "Username",
+      "email": "Email",
+      "phoneNumber": "Phone number",
+      "gender": "Gender",
+      "dateOfBirth": "Date of birth",
+      "userType": "User type",
+      "usesSignLanguage": "I use sign language",
+      "signLanguage": "Sign language",
+      "password": "Password",
+      "confirmPassword": "Confirm password"
+    },
+    "placeholders": {
+      "displayName": "Enter your full name",
+      "userName": "Enter your username",
+      "email": "Enter your email",
+      "phoneNumber": "e.g. 01012345678",
+      "password": "Enter a strong password",
+      "confirmPassword": "Re-enter password"
+    },
+    "options": {
+      "choose": "Choose",
+      "male": "Male",
+      "female": "Female",
+      "userDeaf": "Deaf / HoH user",
+      "userHearing": "Hearing user",
+      "defaultSignLanguage": "Default (1)"
+    },
+    "required": "(Required)",
+    "optional": "(Optional)",
+    "actions": {
+      "submit": "Create account",
+      "submitting": "Creating account..."
+    },
+    "footer": {
+      "prompt": "Already have an account?",
+      "login": "Login"
+    },
+    "togglePassword": "Show/Hide password",
+    "toggleConfirm": "Show/Hide confirm password",
+    "errors": {
+      "displayNameRequired": "Full name is required.",
+      "emailRequired": "Email is required.",
+      "emailInvalid": "Please enter a valid email.",
+      "dobRequired": "Date of birth is required.",
+      "dobInvalid": "Date of birth is invalid.",
+      "phoneRequired": "Phone number is required.",
+      "phoneInvalid": "Invalid phone number (e.g. 01012345678).",
+      "passwordRequired": "Password is required.",
+      "passwordShort": "Password must be at least 8 characters.",
+      "passwordUpper": "Include at least one uppercase letter.",
+      "passwordLower": "Include at least one lowercase letter.",
+      "passwordDigit": "Include at least one number.",
+      "passwordSpecial": "Include at least one special character (@$!%*?&#).",
+      "confirmMismatch": "Passwords do not match.",
+      "unexpected": "An unexpected error occurred. Please try again.",
+      "serverUnavailable": "Server unavailable. Please try again later.",
+      "emailDup": "Email is already in use. Try logging in.",
+      "phoneDup": "Phone number is already in use. Try another.",
+      "badRequest": "Some fields are missing or invalid. Please check and try again.",
+      "invalidData": "Invalid data. Please review the fields and try again."
+    }
+  },
+  "history": {
+    "title": "Translation history",
+    "subtitle": "Review and manage your past translations.",
+    "filters": {
+      "all": "All",
+      "signToVoice": "Sign to voice",
+      "voiceToAvatar": "Voice to sign"
+    },
+    "table": {
+      "activity": "Activity",
+      "date": "Date",
+      "preview": "Preview",
+      "status": "Status",
+      "actions": "Actions",
+      "view": "View details",
+      "delete": "Delete"
+    },
+    "status": {
+      "completed": "Completed",
+      "archived": "Archived",
+      "failed": "Failed"
+    },
+    "empty": {
+      "noRecords": "No records yet",
+      "noFilter": "No records match the selected filter.",
+      "hint": "Records appear here after you use the dashboard.",
+      "hintFilter": "Try changing the filter to see more records."
+    },
+    "pagination": {
+      "showing": "Showing {count} of {total} records",
+      "prev": "Previous",
+      "next": "Next"
+    },
+    "confirmDelete": "Are you sure you want to delete this record?"
+  },
+  "profile": {
+    "title": "Profile & settings",
+    "subtitle": "Manage your identity, preferences, and accessibility options to tailor your SignaryAI experience.",
+    "planCard": {
+      "title": "Pro plan",
+      "subtitle": "Annual renewal",
+      "status": "Active"
+    },
+    "usage": {
+      "title": "Usage this month",
+      "minutes": "Translation minutes",
+      "quota": "{used} / {total}"
+    },
+    "sections": {
+      "general": "General preferences",
+      "accessibility": "Accessibility & interface",
+      "security": "Account security"
+    },
+    "fields": {
+      "signLanguage": "Primary sign language",
+      "signLanguageOptions": {
+        "asl": "American Sign Language (ASL)",
+        "arsl": "Unified Arabic Sign Language"
+      },
+      "spokenLanguage": "Speech output language",
+      "spokenLanguageOptions": {
+        "enUS": "English (United States)",
+        "ar": "Arabic (Fusha)"
+      }
+    },
+    "darkMode": {
+      "title": "Dark mode",
+      "description": "Switch the UI to dark colors to reduce eye strain."
+    },
+    "password": {
+      "title": "Password",
+      "lastChanged": "Last changed 3 months ago",
+      "change": "Change password"
+    },
+    "logout": {
+      "title": "Log out",
+      "description": "Securely sign out of your account on this device.",
+      "button": "Logout"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "saving": "Saving..."
+    },
+    "avatar": {
+      "edit": "Edit avatar"
+    },
+    "toast": {
+      "saveSuccess": "Changes saved successfully!",
+      "logoutError": "Failed to log out. Please try again."
+    }
+  },
+  "dashboard": {
+    "mode": {
+      "signToVoice": "Sign to Voice",
+      "voiceToAvatar": "Voice to Sign",
+      "swap": "Swap direction"
+    },
+    "camera": {
+      "off": "Camera off",
+      "upload": "Video uploaded",
+      "tracking": "Tracking on",
+      "placeholderTitle": "Camera is off",
+      "placeholderSubtitle": "Press \"Start camera\" to begin"
+    },
+    "recording": {
+      "listening": "Listening...",
+      "tapMic": "Tap the mic",
+      "active": "Recording..."
+    },
+    "controls": {
+      "startCamera": "Start camera",
+      "stopCamera": "Stop camera",
+      "upload": "Upload video",
+      "playAudio": "Play audio",
+      "copy": "Copy text",
+      "clear": "Clear"
+    },
+    "transcript": {
+      "title": "Live transcript",
+      "empty": "Translated text will appear here...",
+      "translating": "Translating..."
+    },
+    "voice": {
+      "title": "Voice recording"
+    },
+    "text": {
+      "divider": "or",
+      "title": "Type text",
+      "placeholder": "Type text here to convert to sign...",
+      "clear": "Clear",
+      "convert": "Convert to sign"
+    },
+    "avatar": {
+      "fullscreen": "Fullscreen",
+      "play": "Play",
+      "pause": "Pause",
+      "alt": "Avatar preview"
+    },
+    "history": {
+      "title": "Recent activity",
+      "viewAll": "View full history",
+      "headers": {
+        "type": "Type",
+        "duration": "Duration/Size",
+        "date": "Date",
+        "status": "Status"
+      },
+      "label": {
+        "signToVoice": "Sign to voice",
+        "voiceToAvatar": "Voice to sign"
+      },
+      "status": {
+        "completed": "Completed",
+        "archived": "Archived"
+      },
+      "preview": {
+        "sign": "Sign translation",
+        "voice": "Voice translation"
+      },
+      "durationUnit": "min",
+      "empty": "No recent activity"
+    },
+    "errors": {
+      "speechUnsupported": "This browser does not support speech recognition."
+    }
+  }
+}

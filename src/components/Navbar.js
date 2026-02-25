@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import logoSrc from '../assets/logo_s2s.png';
 
 const Navbar = ({
@@ -9,14 +10,21 @@ const Navbar = ({
   navItems = [],
   showAccessibility = true,
   showThemeToggle = true,
+  showLanguageToggle = true,
   userProfile = null,
   onLoginClick = null,
   onMenuClick = null
 }) => {
   const { isDark, toggleTheme } = useTheme();
+  const { language, toggleLanguage, t, dir } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const languageLabel = language === 'ar' ? t('language.shortEn', 'EN') : t('language.shortAr', 'AR');
+  const languageTitle = language === 'ar' ? t('language.english', 'English') : t('language.arabic', 'Arabic');
+  const isRtl = language === 'ar';
+  const iconDir = isRtl ? 'flex-row-reverse' : 'flex-row';
 
   // Handle links that contain a hash (e.g. /#features)
   const handleHashNav = (e, href) => {
@@ -39,14 +47,14 @@ const Navbar = ({
   // Default navigation items based on variant
   const defaultNavItems = {
     default: [
-      { label: 'المميزات', href: '/#features' },
-      { label: 'من نحن', href: '/about' },
-      { label: 'الأسعار', href: '/pricing' }
+      { label: t('navbar.features'), href: '/#features' },
+      { label: t('navbar.about'), href: '/about' },
+      { label: t('navbar.pricing'), href: '/pricing' }
     ],
     dashboard: [
-      { label: 'لوحة التحكم', href: '/dashboard' },
-      { label: 'السجل', href: '/history' },
-      { label: 'الإعدادات', href: '/profile-settings' }
+      { label: t('navbar.dashboard'), href: '/dashboard' },
+      { label: t('navbar.history'), href: '/history' },
+      { label: t('navbar.settings'), href: '/profile-settings' }
     ],
     auth: []
   };
@@ -61,7 +69,7 @@ const Navbar = ({
   // Render based on variant
   if (variant === 'auth') {
     return (
-      <header className="w-full border-b border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-3 sm:px-10 sticky top-0 z-50 transition-colors">
+      <header dir={dir} className="w-full border-b border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-3 sm:px-10 sticky top-0 z-50 transition-colors">
         <div className="max-w-[1280px] mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
             <div className="size-12 flex items-center justify-center">
@@ -71,9 +79,19 @@ const Navbar = ({
           </Link>
           <div className="flex items-center gap-3">
             {showAccessibility && (
-              <button className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-semibold transition-colors focus-visible-ring">
+              <button className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-semibold transition-colors focus-visible-ring ${iconDir}`}>
                 <span className="material-symbols-outlined text-[20px]">accessibility_new</span>
-                <span className="text-sm">خيارات الوصول</span>
+                <span className="text-sm">{t('navbar.accessibility')}</span>
+              </button>
+            )}
+            {showLanguageToggle && (
+              <button
+                aria-label={t('language.toggle')}
+                title={languageTitle}
+                onClick={toggleLanguage}
+                className="flex items-center justify-center size-10 rounded-lg bg-background-light dark:bg-[#2a2a2a] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#333] transition-colors focus-visible-ring"
+              >
+                <span className="text-xs font-bold">{languageLabel}</span>
               </button>
             )}
             {showThemeToggle && (
@@ -93,7 +111,7 @@ const Navbar = ({
 
   if (variant === 'dashboard') {
     return (
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-md border-b border-slate-200 dark:border-border-dark shadow-sm transition-colors duration-300">
+      <header dir={dir} className="sticky top-0 z-50 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-md border-b border-slate-200 dark:border-border-dark shadow-sm transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-3">
@@ -134,10 +152,20 @@ const Navbar = ({
               {showAccessibility && (
                 <button
                   aria-label="Accessibility Options"
-                  className="hidden sm:flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  className={`hidden sm:flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors ${iconDir}`}
                 >
                   <span className="material-symbols-outlined text-xl">accessibility_new</span>
-                  <span className="hidden lg:inline">إمكانية الوصول</span>
+                  <span className="hidden lg:inline">{t('navbar.accessibility')}</span>
+                </button>
+              )}
+              {showLanguageToggle && (
+                <button
+                  aria-label={t('language.toggle')}
+                  title={languageTitle}
+                  onClick={toggleLanguage}
+                  className="flex items-center justify-center size-10 rounded-lg bg-slate-100 dark:bg-[#2a2a2a] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#333] transition-colors"
+                >
+                  <span className="text-xs font-bold">{languageLabel}</span>
                 </button>
               )}
               {showThemeToggle && (
@@ -167,7 +195,7 @@ const Navbar = ({
 
   // Default variant (home page)
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-100 dark:border-border-dark bg-white/95 dark:bg-surface-dark/95 backdrop-blur transition-colors">
+    <header dir={dir} className="sticky top-0 z-50 w-full border-b border-gray-100 dark:border-border-dark bg-white/95 dark:bg-surface-dark/95 backdrop-blur transition-colors">
       <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6 lg:px-10">
         <Link to="/" className="flex items-center gap-4 text-text-main dark:text-white">
           <div className="size-12">
@@ -215,15 +243,25 @@ const Navbar = ({
                 to="/login"
                 className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary-dark transition-colors"
               >
-                <span className="truncate">تسجيل الدخول</span>
+                <span className="truncate">{t('navbar.login')}</span>
               </Link>
             ) : null}
             {showAccessibility && (
               <button
                 aria-label="Accessibility Options"
-                className="flex cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-text-main dark:text-slate-300 gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-3 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                className={`flex cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-text-main dark:text-slate-300 gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-3 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors ${iconDir}`}
               >
                 <span className="material-symbols-outlined text-[20px]">accessibility_new</span>
+              </button>
+            )}
+            {showLanguageToggle && (
+              <button
+                aria-label={t('language.toggle')}
+                title={languageTitle}
+                onClick={toggleLanguage}
+                className="flex items-center justify-center size-10 rounded-lg bg-gray-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                <span className="text-xs font-bold">{languageLabel}</span>
               </button>
             )}
             {showThemeToggle && (
@@ -290,9 +328,19 @@ const Navbar = ({
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center justify-center rounded-xl h-11 px-4 bg-primary text-white text-sm font-bold hover:bg-primary-dark transition-colors"
             >
-              تسجيل الدخول
+              {t('navbar.login')}
             </Link>
             <div className="flex gap-2">
+              {showLanguageToggle && (
+                <button
+                  aria-label={t('language.toggle')}
+                  title={languageTitle}
+                  onClick={toggleLanguage}
+                  className="flex items-center justify-center size-10 rounded-lg bg-gray-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <span className="text-xs font-bold">{languageLabel}</span>
+                </button>
+              )}
               {showThemeToggle && (
                 <button
                   aria-label="Toggle Theme"

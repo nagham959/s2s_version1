@@ -4,6 +4,7 @@ import { ThemeProvider } from "../contexts/ThemeContext";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useAuth } from "../contexts/authContext";
+import { useLanguage } from "../contexts/LanguageContext";
 
 // validation
 function isValidEmail(email) {
@@ -13,6 +14,10 @@ function isValidEmail(email) {
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
   const { forgotPassword } = useAuth();
+  const { t, language, dir } = useLanguage();
+  const isRtl = language === "ar";
+  const textStart = isRtl ? "text-right" : "text-left";
+  const arrowIcon = isRtl ? 'arrow_back' : 'arrow_forward';
 
   const [email, setEmail] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -25,17 +30,17 @@ const ForgotPasswordPage = () => {
     setSuccessMessage("");
 
     const cleanEmail = email.trim();
-    if (!cleanEmail) return setErrorMessage("يرجى إدخال البريد الإلكتروني.");
-    if (!isValidEmail(cleanEmail)) return setErrorMessage("يرجى إدخال بريد إلكتروني صالح.");
+    if (!cleanEmail) return setErrorMessage(t("forgotPassword.errorEmpty"));
+    if (!isValidEmail(cleanEmail)) return setErrorMessage(t("forgotPassword.errorInvalid"));
 
     setIsLoading(true);
     try {
       await forgotPassword(cleanEmail);
 
-      setSuccessMessage("إذا كان البريد مسجلًا لدينا، سيتم إرسال رابط/كود لإعادة تعيين كلمة المرور خلال دقائق.");
+      setSuccessMessage(t("forgotPassword.success"));
       setTimeout(() => navigate("/login"), 2500);
     } catch (err) {
-      setErrorMessage(err?.message || "حدث خطأ، حاول مرة أخرى.");
+      setErrorMessage(err?.message || t("common.error"));
     } finally {
       setIsLoading(false);
     }
@@ -43,7 +48,10 @@ const ForgotPasswordPage = () => {
 
   return (
     <ThemeProvider>
-      <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display antialiased transition-colors duration-300">
+      <div
+        dir={dir}
+        className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display antialiased transition-colors duration-300"
+      >
         <Navbar variant="auth" logo="SignaryAI" />
 
         <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
@@ -54,22 +62,24 @@ const ForgotPasswordPage = () => {
 
           <div className="relative w-full max-w-[440px] bg-surface-light dark:bg-surface-dark rounded-2xl shadow-2xl border border-border-light dark:border-border-dark z-10 overflow-hidden flex flex-col transition-colors">
             <div className="pt-8 px-8 pb-2 text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
-                نسيت كلمة المرور؟
+              <h2 className={`text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2 ${textStart}`}>
+                {t("forgotPassword.title")}
               </h2>
-              <p className="text-slate-500 dark:text-text-secondary text-sm">
-                اكتب بريدك الإلكتروني وسنرسل لك رابط/كود لإعادة تعيين كلمة المرور.
+              <p className={`text-slate-500 dark:text-text-secondary text-sm ${textStart}`}>
+                {t("forgotPassword.subtitle")}
               </p>
             </div>
 
             <form className="p-8 flex flex-col gap-5" onSubmit={handleSubmit}>
               <label className="flex flex-col gap-2 group">
-                <span className="text-sm font-medium text-slate-700 dark:text-white">البريد الإلكتروني</span>
+                <span className={`text-sm font-medium text-slate-700 dark:text-white ${textStart}`}>
+                  {t("forgotPassword.emailLabel")}
+                </span>
 
                 <div className="relative">
                   <input
-                    className="w-full h-12 pr-10 pl-4 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base text-right"
-                    placeholder="name@example.com"
+                    className={`w-full h-12 pr-10 pl-4 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base ${textStart}`}
+                    placeholder={t("forgotPassword.emailPlaceholder")}
                     type="email"
                     value={email}
                     onChange={(e) => {
@@ -78,7 +88,7 @@ const ForgotPasswordPage = () => {
                       if (successMessage) setSuccessMessage("");
                     }}
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                  <div className={`absolute ${isRtl ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none`}>
                     <span className="material-symbols-outlined text-[20px]">mail</span>
                   </div>
                 </div>
@@ -105,16 +115,16 @@ const ForgotPasswordPage = () => {
                 type="submit"
                 disabled={isLoading}
               >
-                <span>{isLoading ? "جاري الإرسال..." : "إرسال رابط/كود"}</span>
-                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                <span>{isLoading ? t("forgotPassword.submitting") : t("forgotPassword.submit")}</span>
+                <span className="material-symbols-outlined text-[18px]">{arrowIcon}</span>
               </button>
             </form>
 
             <div className="bg-slate-50 dark:bg-black/40 px-8 py-5 border-t border-border-light dark:border-border-dark text-center">
-              <p className="text-sm text-slate-500 dark:text-text-secondary">
-                رجوع إلى{" "}
+              <p className={`text-sm text-slate-500 dark:text-text-secondary ${textStart}`}>
+                {t("forgotPassword.backText")} {" "}
                 <Link to="/login" className="font-bold text-primary hover:text-primary-hover hover:underline focus-visible-ring rounded mr-1">
-                  تسجيل الدخول
+                  {t("forgotPassword.backLink")}
                 </Link>
               </p>
             </div>

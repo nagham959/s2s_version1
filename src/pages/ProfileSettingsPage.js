@@ -2,12 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/authContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 
 const ProfileSettingsContent = () => {
   const { isDark, toggleTheme } = useTheme();
   const { logout, user } = useAuth();  // استخدم بيانات اليوزر من الـ context
+  const { t, language, dir } = useLanguage();
+  const isRtl = language === 'ar';
+  const textStart = isRtl ? 'text-right' : 'text-left';
+  const iconDir = isRtl ? 'flex-row-reverse' : 'flex-row';
   const navigate = useNavigate();
 
   // State for user profile and settings
@@ -63,7 +68,7 @@ const ProfileSettingsContent = () => {
     setTimeout(() => {
       localStorage.setItem('userProfile', JSON.stringify(profile));
       setIsSaving(false);
-      setNotification({ type: 'success', message: 'تم حفظ التغييرات بنجاح!' });
+      setNotification({ type: 'success', message: t('profile.toast.saveSuccess') });
 
       // Hide notification after 3 seconds
       setTimeout(() => setNotification(null), 3000);
@@ -75,13 +80,13 @@ const ProfileSettingsContent = () => {
       await logout();
       navigate('/login');
     } catch (error) {
-      setNotification({ type: 'error', message: 'فشل تسجيل الخروج. حاول مرة أخرى.' });
+      setNotification({ type: 'error', message: t('profile.toast.logoutError') });
       setTimeout(() => setNotification(null), 3000);
     }
   };
 
   return (
-    <div className="bg-background-subtle dark:bg-background-dark font-display text-text-main dark:text-white antialiased min-h-screen flex flex-col relative">
+    <div dir={dir} className="bg-background-subtle dark:bg-background-dark font-display text-text-main dark:text-white antialiased min-h-screen flex flex-col relative">
       <Navbar variant="dashboard" logo="SignaryAI" />
 
       {/* Toast Notification */}
@@ -96,8 +101,8 @@ const ProfileSettingsContent = () => {
       <main className="flex-grow py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-text-main dark:text-white tracking-tight mb-3">الملف الشخصي والإعدادات</h1>
-            <p className="text-text-muted dark:text-slate-400 text-lg max-w-2xl leading-relaxed">قم بإدارة هويتك وتفضيلاتك وخيارات إمكانية الوصول لتخصيص تجربتك في SignaryAI</p>
+            <h1 className={`text-3xl md:text-4xl font-extrabold text-text-main dark:text-white tracking-tight mb-3 ${textStart}`}>{t('profile.title')}</h1>
+            <p className={`text-text-muted dark:text-slate-400 text-lg max-w-2xl leading-relaxed ${textStart}`}>{t('profile.subtitle')}</p>
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -117,7 +122,7 @@ const ProfileSettingsContent = () => {
                 />
                 <button
                   onClick={() => fileInputRef.current.click()}
-                  aria-label="تعديل الصورة الرمزية"
+                  aria-label={t('profile.avatar.edit')}
                   className="absolute bottom-1 right-1 bg-primary text-white p-2.5 rounded-full shadow-lg hover:bg-[#d6452b] transition-all hover:scale-110 focus:ring-4 focus:ring-primary/30 border-2 border-surface-light dark:border-slate-800"
                 >
                   <span className="material-symbols-outlined text-[20px]">edit</span>
@@ -146,29 +151,29 @@ const ProfileSettingsContent = () => {
 
               <div className="w-full space-y-4">
                 <div className="flex items-center justify-between px-5 py-4 bg-gray-50 dark:bg-slate-700 rounded-xl border border-gray-100 dark:border-slate-600">
-                  <div className="flex items-center gap-3">
+                  <div className={`flex items-center gap-3 ${iconDir}`}>
                     <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 rounded-lg">
                       <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-text-main dark:text-white">الخطة الاحترافية</p>
-                      <p className="text-xs text-text-muted dark:text-slate-400">تجديد سنوي</p>
+                    <div className={`${textStart}`}>
+                      <p className="text-sm font-bold text-text-main dark:text-white">{t('profile.planCard.title')}</p>
+                      <p className="text-xs text-text-muted dark:text-slate-400">{t('profile.planCard.subtitle')}</p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 text-xs font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20 rounded-full">نشط</span>
+                  <span className="px-2.5 py-1 text-xs font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20 rounded-full">{t('profile.planCard.status')}</span>
                 </div>
               </div>
             </div>
             <div className="bg-surface-light dark:bg-slate-800 rounded-2xl p-6 border border-border-light dark:border-slate-700 shadow-sm">
               <h3 className="font-bold text-text-main dark:text-white mb-6 flex items-center gap-2 text-lg">
                 <span className="material-symbols-outlined text-primary">insights</span>
-                الاستخدام هذا الشهر
+                {t('profile.usage.title')}
               </h3>
               <div className="space-y-5">
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-text-muted dark:text-slate-400 font-medium">دقائق الترجمة</span>
-                    <span className="font-bold text-text-main dark:text-white">240 <span className="text-text-muted dark:text-slate-400 font-normal">/ 500</span></span>
+                    <span className="text-text-muted dark:text-slate-400 font-medium">{t('profile.usage.minutes')}</span>
+                    <span className="font-bold text-text-main dark:text-white">{t('profile.usage.quota', { used: 240, total: 500 })}</span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
                     <div className="bg-primary h-full rounded-full transition-all duration-500" style={{ width: '48%' }}></div>
@@ -182,11 +187,11 @@ const ProfileSettingsContent = () => {
             <section className="bg-surface-light dark:bg-slate-800 rounded-2xl shadow-sm border border-border-light dark:border-slate-700 overflow-hidden">
               <div className="px-8 py-5 border-b border-border-light dark:border-slate-700 flex items-center gap-3 bg-gray-50 dark:bg-slate-700">
                 <span className="material-symbols-outlined text-primary text-[24px]">settings</span>
-                <h2 className="text-lg font-bold text-text-main dark:text-white">التفضيلات العامة</h2>
+                <h2 className="text-lg font-bold text-text-main dark:text-white">{t('profile.sections.general')}</h2>
               </div>
               <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-bold text-text-main dark:text-white mb-1" htmlFor="sign-lang">لغة الإشارة الأساسية</label>
+                  <label className="text-sm font-bold text-text-main dark:text-white mb-1" htmlFor="sign-lang">{t('profile.fields.signLanguage')}</label>
                   <div className="relative">
                     <select
                       className="appearance-none w-full bg-input-bg dark:bg-slate-700 border border-border-light dark:border-slate-600 text-text-main dark:text-white rounded-xl h-12 px-4 pl-10 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none font-medium cursor-pointer"
@@ -194,8 +199,8 @@ const ProfileSettingsContent = () => {
                       value={profile.signLanguage}
                       onChange={(e) => handleChange('signLanguage', e.target.value)}
                     >
-                      <option value="asl">لغة الإشارة الانجليزية (ASL)</option>
-                      <option value="arsl">لغة الإشارة العربية الموحدة</option>
+                      <option value="asl">{t('profile.fields.signLanguageOptions.asl')}</option>
+                      <option value="arsl">{t('profile.fields.signLanguageOptions.arsl')}</option>
                     </select>
                     <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none text-text-muted dark:text-slate-400">
                       <span className="material-symbols-outlined">expand_more</span>
@@ -203,7 +208,7 @@ const ProfileSettingsContent = () => {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-bold text-text-main dark:text-white mb-1" htmlFor="spoken-lang">لغة الإخراج الصوتي</label>
+                  <label className="text-sm font-bold text-text-main dark:text-white mb-1" htmlFor="spoken-lang">{t('profile.fields.spokenLanguage')}</label>
                   <div className="relative">
                     <select
                       className="appearance-none w-full bg-input-bg dark:bg-slate-700 border border-border-light dark:border-slate-600 text-text-main dark:text-white rounded-xl h-12 px-4 pl-10 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none font-medium cursor-pointer"
@@ -211,8 +216,8 @@ const ProfileSettingsContent = () => {
                       value={profile.spokenLanguage}
                       onChange={(e) => handleChange('spokenLanguage', e.target.value)}
                     >
-                      <option value="en-us">الإنجليزية (الولايات المتحدة)</option>
-                      <option value="ar">العربية (فصحى) - رسمي</option>
+                      <option value="en-us">{t('profile.fields.spokenLanguageOptions.enUS')}</option>
+                      <option value="ar">{t('profile.fields.spokenLanguageOptions.ar')}</option>
                     </select>
                     <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none text-text-muted dark:text-slate-400">
                       <span className="material-symbols-outlined">expand_more</span>
@@ -224,7 +229,7 @@ const ProfileSettingsContent = () => {
             <section className="bg-surface-light dark:bg-slate-800 rounded-2xl shadow-sm border border-border-light dark:border-slate-700 overflow-hidden">
               <div className="px-8 py-5 border-b border-border-light dark:border-slate-700 flex items-center gap-3 bg-gray-50 dark:bg-slate-700">
                 <span className="material-symbols-outlined text-primary text-[24px]">accessibility_new</span>
-                <h2 className="text-lg font-bold text-text-main dark:text-white">إمكانية الوصول والواجهة</h2>
+                <h2 className="text-lg font-bold text-text-main dark:text-white">{t('profile.sections.accessibility')}</h2>
               </div>
               <div className="p-8 space-y-8">
                 <div className="flex items-center justify-between group">
@@ -233,8 +238,8 @@ const ProfileSettingsContent = () => {
                       <span className="material-symbols-outlined text-gray-500 dark:text-slate-400">dark_mode</span>
                     </div>
                     <div>
-                      <p className="font-bold text-text-main dark:text-white text-base">الوضع الداكن</p>
-                      <p className="text-sm text-text-muted dark:text-slate-400 mt-0.5">تبديل واجهة المستخدم إلى ألوان داكنة لتقليل إجهاد العين.</p>
+                      <p className="font-bold text-text-main dark:text-white text-base">{t('profile.darkMode.title')}</p>
+                      <p className="text-sm text-text-muted dark:text-slate-400 mt-0.5">{t('profile.darkMode.description')}</p>
                     </div>
                   </div>
                   <button
@@ -256,33 +261,33 @@ const ProfileSettingsContent = () => {
             <section className="bg-surface-light dark:bg-slate-800 rounded-2xl shadow-sm border border-border-light dark:border-slate-700 overflow-hidden">
               <div className="px-8 py-5 border-b border-border-light dark:border-slate-700 flex items-center gap-3 bg-gray-50 dark:bg-slate-700">
                 <span className="material-symbols-outlined text-primary text-[24px]">manage_accounts</span>
-                <h2 className="text-lg font-bold text-text-main dark:text-white">أمان الحساب</h2>
+                <h2 className="text-lg font-bold text-text-main dark:text-white">{t('profile.sections.security')}</h2>
               </div>
               <div className="p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div className="flex flex-col gap-1 w-full">
-                  <p className="font-bold text-text-main dark:text-white text-base">كلمة المرور</p>
+                  <p className="font-bold text-text-main dark:text-white text-base">{t('profile.password.title')}</p>
                   <div className="flex items-center gap-2 text-sm text-text-muted dark:text-slate-400">
                     <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                    <span>تم التغيير آخر مرة منذ 3 أشهر</span>
+                    <span>{t('profile.password.lastChanged')}</span>
                   </div>
                 </div>
                 <div className="flex gap-3 w-full sm:w-auto">
                   <Link to="/change-password" className="flex-1 sm:flex-none whitespace-nowrap px-5 py-2.5 bg-transparent border border-border-light dark:border-slate-600 rounded-xl text-sm font-bold text-text-main dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700 hover:border-gray-400 dark:hover:border-slate-500 transition-all shadow-sm">
-                    تغيير كلمة المرور
+                    {t('profile.password.change')}
                   </Link>
                 </div>
               </div>
               <div className="bg-red-50 dark:bg-red-900/20 px-8 py-6 border-t border-red-100 dark:border-red-800 flex items-center justify-between flex-wrap gap-4">
                 <div>
-                  <p className="text-sm font-bold text-red-600 dark:text-red-400">تسجيل الخروج</p>
-                  <p className="text-xs text-red-500 dark:text-red-400 mt-1">تسجيل الخروج بشكل آمن من حسابك على هذا الجهاز.</p>
+                  <p className="text-sm font-bold text-red-600 dark:text-red-400">{t('profile.logout.title')}</p>
+                  <p className="text-xs text-red-500 dark:text-red-400 mt-1">{t('profile.logout.description')}</p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="px-5 py-2.5 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm font-bold hover:bg-red-50 dark:hover:bg-red-900/30 hover:border-red-300 dark:hover:border-red-700 transition-all flex items-center gap-2 shadow-sm"
+                  className={`px-5 py-2.5 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm font-bold hover:bg-red-50 dark:hover:bg-red-900/30 hover:border-red-300 dark:hover:border-red-700 transition-all flex items-center gap-2 shadow-sm ${iconDir}`}
                 >
-                  <span className="material-symbols-outlined text-[18px] transform scale-x-[-1]">logout</span>
-                  خروج
+                  <span className={`material-symbols-outlined text-[18px] ${isRtl ? '' : 'transform scale-x-[-1]'}`}>logout</span>
+                  {t('profile.logout.button')}
                 </button>
               </div>
             </section>
@@ -291,19 +296,19 @@ const ProfileSettingsContent = () => {
                 className="px-6 py-3 rounded-xl text-text-muted dark:text-slate-400 font-bold hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-text-main dark:hover:text-white transition-colors"
                 onClick={() => window.location.reload()}
               >
-                إلغاء
+                {t('profile.buttons.cancel')}
               </button>
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className={`px-8 py-3 rounded-xl bg-primary hover:bg-[#d6452b] text-white font-bold shadow-lg shadow-orange-500/20 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2 ${isSaving ? 'opacity-75 cursor-not-allowed' : ''}`}
+                className={`px-8 py-3 rounded-xl bg-primary hover:bg-[#d6452b] text-white font-bold shadow-lg shadow-orange-500/20 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2 ${isSaving ? 'opacity-75 cursor-not-allowed' : ''} ${iconDir}`}
               >
                 {isSaving ? (
                   <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-white border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></span>
                 ) : (
                   <span className="material-symbols-outlined text-[20px]">save</span>
                 )}
-                {isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                {isSaving ? t('profile.buttons.saving') : t('profile.buttons.save')}
               </button>
             </div>
           </div>
