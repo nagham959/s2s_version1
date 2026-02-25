@@ -879,6 +879,5 @@ const DashboardPage = () => {
     </ThemeProvider>
   );
 };
-
 export default DashboardPage;
 
