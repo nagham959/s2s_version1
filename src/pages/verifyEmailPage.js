@@ -4,12 +4,16 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://s2s-1d5c94958ff6.herokuapp.com';
 
 const VerifyEmailPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t, language, dir } = useLanguage();
+  const isRtl = language === 'ar';
+  const textStart = isRtl ? 'text-right' : 'text-left';
 
   // جيب الإيميل من الـ state (من صفحة Register) أو من query param
   const email = location.state?.email || new URLSearchParams(location.search).get('email') || '';
@@ -74,7 +78,7 @@ const VerifyEmailPage = () => {
     setSuccessMessage('');
 
     const code = otp.join('');
-    if (code.length !== 6) return setErrorMessage('يرجى إدخال الكود كاملاً (6 أرقام)');
+    if (code.length !== 6) return setErrorMessage(t('verifyEmail.errorLength'));
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/Auth/VerifyEmail`, {
@@ -85,13 +89,13 @@ const VerifyEmailPage = () => {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message || 'الكود غير صحيح أو منتهي الصلاحية');
+        throw new Error(data.message || t('verifyEmail.errorInvalid'));
       }
 
-      setSuccessMessage('تم التحقق بنجاح! يمكنك الآن تسجيل الدخول.');
+      setSuccessMessage(t('verifyEmail.success'));
       setTimeout(() => navigate('/login'), 2500);
     } catch (err) {
-      setErrorMessage(err.message || 'حدث خطأ، حاول مرة أخرى');
+      setErrorMessage(err.message || t('common.error'));
     }
   };
 
@@ -100,25 +104,28 @@ const VerifyEmailPage = () => {
 
     setResendDisabled(true);
     setErrorMessage('');
-    setSuccessMessage('جاري إرسال كود جديد...');
+    setSuccessMessage(t('verifyEmail.resendSending'));
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/Auth/ResendOtp?email=${encodeURIComponent(email)}`, {
         method: 'POST',
       });
 
-      if (!res.ok) throw new Error('فشل إعادة الإرسال');
+      if (!res.ok) throw new Error(t('verifyEmail.resendFailed'));
 
-      setSuccessMessage('تم إرسال كود جديد إلى بريدك الإلكتروني');
+      setSuccessMessage(t('verifyEmail.resendSuccess'));
     } catch (err) {
-      setErrorMessage(err.message || 'حدث خطأ أثناء إعادة الإرسال');
+      setErrorMessage(err.message || t('common.error'));
       setResendDisabled(false);
     }
   };
 
   return (
     <ThemeProvider>
-      <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display antialiased transition-colors duration-300">
+      <div
+        dir={dir}
+        className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display antialiased transition-colors duration-300"
+      >
         <Navbar variant="auth" logo="SignaryAI" />
 
         <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
@@ -130,11 +137,13 @@ const VerifyEmailPage = () => {
 
           <div className="relative w-full max-w-[440px] bg-surface-light dark:bg-surface-dark rounded-2xl shadow-2xl border border-border-light dark:border-border-dark z-10 overflow-hidden flex flex-col transition-colors">
             <div className="pt-8 px-8 pb-2 text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">تأكيد البريد الإلكتروني</h2>
-              <p className="text-slate-500 dark:text-text-secondary text-sm">
-                أدخل الكود المكون من 6 أرقام الذي أرسلناه إلى
+              <h2 className={`text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2 ${textStart}`}>
+                {t('verifyEmail.title')}
+              </h2>
+              <p className={`text-slate-500 dark:text-text-secondary text-sm ${textStart}`}>
+                {t('verifyEmail.subtitle')}
                 <br />
-                <strong>{email || 'بريدك الإلكتروني'}</strong>
+                <strong>{email || t('verifyEmail.emailPlaceholder')}</strong>
               </p>
             </div>
 
@@ -173,29 +182,29 @@ const VerifyEmailPage = () => {
                 className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-[#F2593D]/20 hover:shadow-[#F2593D]/40 transition-all active:scale-[0.98] focus-visible-ring flex items-center justify-center gap-2 disabled:opacity-60"
                 disabled={otp.join('').length !== 6}
               >
-                تأكيد الكود
+                {t('verifyEmail.submit')}
               </button>
 
-              <div className="text-center text-sm text-slate-500 dark:text-text-secondary">
-                لم يصلك الكود؟{' '}
+              <div className={`text-center text-sm text-slate-500 dark:text-text-secondary ${textStart}`}>
+                {t('verifyEmail.noCode')}{' '}
                 <button
                   type="button"
                   onClick={handleResend}
                   disabled={resendDisabled}
                   className={`font-bold text-primary hover:text-primary-hover focus-visible-ring ${resendDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  {resendDisabled ? `إعادة إرسال بعد (${countdown}) ث` : 'إعادة إرسال الكود'}
+                  {resendDisabled ? t('verifyEmail.resendCountdown', { countdown }) : t('verifyEmail.resend')}
                 </button>
               </div>
             </form>
 
-            <div className="bg-slate-50 dark:bg-black/40 px-8 py-5 border-t border-border-light dark:border-border-dark text-center text-sm text-slate-500 dark:text-text-secondary">
-              العودة إلى{' '}
+            <div className={`bg-slate-50 dark:bg-black/40 px-8 py-5 border-t border-border-light dark:border-border-dark text-center text-sm text-slate-500 dark:text-text-secondary ${textStart}`}>
+              {t('verifyEmail.backTo')}{' '}
               <button
                 onClick={() => navigate('/login')}
                 className="font-bold text-primary hover:text-primary-hover hover:underline focus-visible-ring"
               >
-                تسجيل الدخول
+                {t('verifyEmail.login')}
               </button>
             </div>
           </div>

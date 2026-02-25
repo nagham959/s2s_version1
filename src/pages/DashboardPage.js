@@ -1,14 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import { useHistory } from '../contexts/HistoryContext';
-import avatarSrc from '../assets/avatar.png';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/authContext';
 
 const DashboardPage = () => {
-  const navigate = useNavigate();
+  const { api } = useAuth();
+  const { t, language, dir } = useLanguage();
+  const isRtl = language === 'ar';
+  const textStart = isRtl ? 'text-right' : 'text-left';
+  const iconDir = isRtl ? 'flex-row-reverse' : 'flex-row';
   const [mode, setMode] = useState('sign-to-voice'); // 'sign-to-voice' or 'voice-to-avatar'
+  const [inputMode, setInputMode] = useState('voice'); // 'voice' or 'text' (for voice-to-avatar)
+  const [textInput, setTextInput] = useState(''); // typed text for text-to-avatar
 
   // Interactivity States
   const [isRecording, setIsRecording] = useState(false);
@@ -20,22 +27,208 @@ const DashboardPage = () => {
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
+  const audioPlayerRef = useRef(null);
   const recognitionRef = useRef(null);
-  const avatarVideoRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [uploadedVideo, setUploadedVideo] = useState(null);
+  const [audioUrl, setAudioUrl] = useState('');
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [translationError, setTranslationError] = useState('');
   const [isAvatarPlaying, setIsAvatarPlaying] = useState(false);
 
-  const toggleAvatarVideo = () => {
-    const vid = avatarVideoRef.current;
-    if (!vid) return;
-    if (isAvatarPlaying) {
-      vid.pause();
-      setIsAvatarPlaying(false);
-    } else {
-      vid.play();
-      setIsAvatarPlaying(true);
+  const formatDurationWithUnit = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = (seconds % 60).toString().padStart(2, '0');
+    return `${minutes}:${secs} ${t('dashboard.history.durationUnit')}`;
+  };
+
+  const parseApiBody = (rawBody) => {
+    if (!rawBody) return {};
+    if (typeof rawBody === 'object') return rawBody;
+    if (typeof rawBody === 'string') {
+      try {
+        return JSON.parse(rawBody);
+      } catch (_error) {
+        return {};
+      }
+    }
+    return {};
+  };
+
+  const firstFilledValue = (obj, keys) => {
+    for (const key of keys) {
+      const value = obj?.[key];
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+    return '';
+  };
+
+  const extractTranscript = (translation) => {
+    const direct = firstFilledValue(translation, ['text', 'transcript', 'original_text', language]);
+    if (direct) return direct;
+
+    if (!translation || typeof translation !== 'object') return '';
+    for (const value of Object.values(translation)) {
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+    return '';
+  };
+
+  const extractAudioUrl = (translation) => {
+    return firstFilledValue(translation, ['audio_url', 'audioUrl']);
+  };
+
+  const extractApiErrorMessage = (error, fallback = 'Translation failed. Please try again.') => {
+    const data = error?.response?.data;
+    const body = parseApiBody(data);
+    const message = body?.detail || body?.message || body?.title || error?.message || fallback;
+    const text = String(message || '').trim();
+
+    if (!text || /<!doctype|<html|<body|<pre/i.test(text)) {
+      return fallback;
+    }
+    return text;
+  };
+
+  const resetAudioPlayer = () => {
+    if (!audioPlayerRef.current) return;
+    audioPlayerRef.current.pause();
+    audioPlayerRef.current.src = '';
+    audioPlayerRef.current.onended = null;
+    audioPlayerRef.current.onplaying = null;
+    audioPlayerRef.current.onpause = null;
+    audioPlayerRef.current = null;
+    setIsAudioPlaying(false);
+    setIsAudioLoading(false);
+  };
+
+  const translateSignVideo = async (videoFile) => {
+    if (!videoFile) return;
+
+    const languageCode = language === 'ar' ? 'ar' : 'en';
+    setIsTranslating(true);
+    setTranslationError('');
+    resetAudioPlayer();
+    setAudioUrl('');
+
+    try {
+      const signToTextForm = new FormData();
+      signToTextForm.append('video_file', videoFile, videoFile.name || `video-${Date.now()}.webm`);
+      signToTextForm.append('language', languageCode);
+      signToTextForm.append('include_audio', 'true');
+
+      const signToTextResponse = await api.post('/api/v1/Translate/sign-to-text', signToTextForm, {
+        headers: { Accept: 'text/plain' },
+      });
+      const signToTextBody = parseApiBody(signToTextResponse.data);
+      const signToTextTranslation = signToTextBody?.translation || {};
+
+      const transcript = extractTranscript(signToTextTranslation);
+      let nextAudioUrl = extractAudioUrl(signToTextTranslation);
+
+      if (!nextAudioUrl) {
+        const signToAudioForm = new FormData();
+        signToAudioForm.append('video_file', videoFile, videoFile.name || `video-${Date.now()}.webm`);
+        signToAudioForm.append('language', languageCode);
+        signToAudioForm.append('include_audio', 'true');
+
+        const signToAudioResponse = await api.post('/api/v1/Translate/audio-to-sign', signToAudioForm, {
+          headers: { Accept: 'text/plain' },
+        });
+        const signToAudioBody = parseApiBody(signToAudioResponse.data);
+        nextAudioUrl = extractAudioUrl(signToAudioBody?.translation || {});
+      }
+
+      if (!transcript) {
+        throw new Error('No transcript returned from API.');
+      }
+
+      setOutputText(transcript);
+      setAudioUrl(nextAudioUrl || '');
+    } catch (error) {
+      const message = extractApiErrorMessage(error);
+      setTranslationError(message);
+      setOutputText('');
+      setAudioUrl('');
+      console.error('Sign-to-voice translation failed:', error);
+    } finally {
+      setIsTranslating(false);
     }
   };
+
+  const stopRecorder = (processRecordedVideo = true) => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recorder.state === 'inactive') {
+      recordedChunksRef.current = [];
+      mediaRecorderRef.current = null;
+      return;
+    }
+
+    recorder.onstop = () => {
+      const chunks = [...recordedChunksRef.current];
+      recordedChunksRef.current = [];
+      mediaRecorderRef.current = null;
+
+      if (!processRecordedVideo || chunks.length === 0) return;
+
+      const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
+      if (!blob.size) return;
+
+      const fileName = `camera-${Date.now()}.webm`;
+      const recordedFile = new File([blob], fileName, { type: blob.type || 'video/webm' });
+      void translateSignVideo(recordedFile);
+    };
+
+    try {
+      recorder.requestData();
+    } catch (_error) {
+      // Some browsers do not support forcing a data flush.
+    }
+    recorder.stop();
+  };
+
+  const handleVideoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    stopCamera({ processRecordedVideo: false, addSessionToHistory: false });
+    setOutputText('');
+    setTranslationError('');
+    resetAudioPlayer();
+    setAudioUrl('');
+    setUploadedVideo(url);
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+      videoRef.current.src = url;
+      videoRef.current.play();
+    }
+    void translateSignVideo(file);
+    e.target.value = '';
+  };
+
+  // Ensure model-viewer is loaded for dashboard previews
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.customElements?.get('model-viewer')) return;
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
+    document.head.appendChild(script);
+    return () => {
+      if (script && script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
+  }, []);
   // Initialize Speech Recognition
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -45,21 +238,19 @@ const DashboardPage = () => {
       recognitionRef.current.lang = 'ar-SA';
 
       recognitionRef.current.onresult = (event) => {
+        let allFinal = '';
         let interimTranscript = '';
-        let finalTranscript = '';
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
+        for (let i = 0; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
+            allFinal += event.results[i][0].transcript + ' ';
           } else {
             interimTranscript += event.results[i][0].transcript;
           }
         }
 
-        // Append new final results to existing text, or show interim
-        if (finalTranscript) {
-          setOutputText(prev => prev + ' ' + finalTranscript);
-        }
+        // Show all finalized text + current interim in textarea in real-time
+        setTextInput((allFinal + interimTranscript).trim());
       };
 
       recognitionRef.current.onerror = (event) => {
@@ -78,42 +269,127 @@ const DashboardPage = () => {
     } else {
       console.log('Speech Recognition Not Supported');
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Camera Handling
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (uploadedVideo) {
+        URL.revokeObjectURL(uploadedVideo);
+        setUploadedVideo(null);
+        if (videoRef.current) videoRef.current.src = '';
+      }
+      setOutputText('');
+      setTranslationError('');
+      resetAudioPlayer();
+      setAudioUrl('');
+
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
         setIsCameraActive(true);
+        setIsRecording(true);
         startTimeRef.current = Date.now();
+      }
+
+      if (typeof MediaRecorder !== 'undefined') {
+        try {
+          const preferredMimeTypes = [
+            'video/webm;codecs=vp9',
+            'video/webm;codecs=vp8',
+            'video/webm',
+          ];
+          const supportedMimeType = preferredMimeTypes.find((type) => MediaRecorder.isTypeSupported?.(type));
+          const recorder = supportedMimeType
+            ? new MediaRecorder(stream, { mimeType: supportedMimeType })
+            : new MediaRecorder(stream);
+
+          recordedChunksRef.current = [];
+          recorder.ondataavailable = (event) => {
+            if (event.data && event.data.size > 0) {
+              recordedChunksRef.current.push(event.data);
+            }
+          };
+          recorder.start(300);
+          mediaRecorderRef.current = recorder;
+        } catch (recordError) {
+          console.error('Error starting video recorder:', recordError);
+          setIsRecording(false);
+        }
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
+      setIsRecording(false);
+      setTranslationError('Unable to access camera.');
     }
   };
 
-  const stopCamera = () => {
+  const stopCamera = ({ processRecordedVideo = true, addSessionToHistory = true } = {}) => {
+    stopRecorder(processRecordedVideo);
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
       if (videoRef.current) {
         videoRef.current.srcObject = null;
       }
-      setIsCameraActive(false);
+    }
+    if (uploadedVideo) {
+      URL.revokeObjectURL(uploadedVideo);
+      setUploadedVideo(null);
+      if (videoRef.current) {
+        videoRef.current.src = '';
+      }
+    }
+    setIsCameraActive(false);
+    setIsRecording(false);
 
-      // Add to history
+    if (addSessionToHistory) {
       const duration = startTimeRef.current ? Math.round((Date.now() - startTimeRef.current) / 1000) : 0;
-      if (duration > 1) { // Only record sessions longer than 1 second
+      if (duration > 1) {
         addHistoryItem({
           type: 'sign-to-voice',
-          duration: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')} دقيقة`,
-          label: 'إشارة إلى صوت',
-          preview: outputText || 'ترجمة لغة إشارة'
+          duration: formatDurationWithUnit(duration),
+          label: t('dashboard.history.label.signToVoice'),
+          preview: outputText || t('dashboard.history.preview.sign')
         });
       }
+    }
+  };
+
+  const toggleAudioPlayback = async () => {
+    if (!audioUrl) return;
+
+    try {
+      if (audioPlayerRef.current && audioPlayerRef.current.src === audioUrl) {
+        if (isAudioPlaying) {
+          audioPlayerRef.current.pause();
+          return;
+        }
+
+        setIsAudioLoading(true);
+        await audioPlayerRef.current.play();
+        return;
+      }
+
+      resetAudioPlayer();
+      const player = new Audio(audioUrl);
+      player.onplaying = () => {
+        setIsAudioLoading(false);
+        setIsAudioPlaying(true);
+      };
+      player.onpause = () => setIsAudioPlaying(false);
+      player.onended = () => setIsAudioPlaying(false);
+
+      audioPlayerRef.current = player;
+      setIsAudioLoading(true);
+      await player.play();
+    } catch (error) {
+      console.error('Audio playback failed:', error);
+      setIsAudioLoading(false);
+      setIsAudioPlaying(false);
+      setTranslationError('Unable to play audio output.');
     }
   };
 
@@ -130,12 +406,13 @@ const DashboardPage = () => {
       const duration = startTimeRef.current ? Math.round((Date.now() - startTimeRef.current) / 1000) : 0;
       addHistoryItem({
         type: mode,
-        duration: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')} دقيقة`,
-        label: mode === 'sign-to-voice' ? 'إشارة إلى صوت' : 'صوت إلى إشارة',
-        preview: outputText || 'ترجمة صوتية'
+        duration: formatDurationWithUnit(duration),
+        label: mode === 'sign-to-voice' ? t('dashboard.history.label.signToVoice') : t('dashboard.history.label.voiceToAvatar'),
+        preview: outputText || (mode === 'sign-to-voice' ? t('dashboard.history.preview.voice') : t('dashboard.history.preview.sign'))
       });
     } else {
-      setOutputText(''); // Reset text on new recording
+      setOutputText('');
+      setTextInput(''); // Reset textarea on new recording
       startTimeRef.current = Date.now();
       if (recognitionRef.current) {
         try {
@@ -146,29 +423,39 @@ const DashboardPage = () => {
           console.error("Error starting recognition:", e);
         }
       } else {
-        alert("المتصفح لا يدعم التعرف على الصوت.");
+        alert(t('dashboard.errors.speechUnsupported'));
       }
     }
   };
 
   // Clean up on unmount or mode change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     return () => {
-      stopCamera();
+      stopCamera({ addSessionToHistory: false });
+      resetAudioPlayer();
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleMode = () => {
     setMode(prev => prev === 'sign-to-voice' ? 'voice-to-avatar' : 'sign-to-voice');
     setIsRecording(false);
     setIsTranslating(false);
     setOutputText('');
-    stopCamera(); // Ensure camera stops when switching modes manually
+    setInputMode('voice');
+    setTextInput('');
+    setTranslationError('');
+    resetAudioPlayer();
+    setAudioUrl('');
+    stopCamera({ addSessionToHistory: false });
   };
 
   return (
     <ThemeProvider>
-      <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex flex-col overflow-x-hidden selection:bg-primary selection:text-white">
+      <div
+        dir={dir}
+        className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex flex-col overflow-x-hidden selection:bg-primary selection:text-white"
+      >
         <Navbar
           variant="dashboard"
           logo="SignaryAI"
@@ -178,20 +465,20 @@ const DashboardPage = () => {
 
           {/* Translation Mode Toggle Header */}
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
-            <div className="flex items-center justify-between p-4">
+            <div className=" flex items-center justify-between p-4">
               <div className="flex-1 text-center">
                 <button
                   onClick={() => setMode('sign-to-voice')}
                   className={`text-lg font-bold px-6 py-2 rounded-xl transition-colors ${mode === 'sign-to-voice' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
                 >
-                  لغة الإشارة
+                  {t('dashboard.mode.signToVoice')}
                 </button>
               </div>
 
               <button
                 onClick={toggleMode}
                 className="p-3 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors mx-4 group relative"
-                title="تبديل الاتجاه"
+                title={t('dashboard.mode.swap')}
               >
                 <span className={`material-symbols-outlined text-slate-500 group-hover:text-primary transition-colors text-2xl transform duration-500 ${mode === 'voice-to-avatar' ? 'rotate-180' : ''}`}>swap_horiz</span>
               </button>
@@ -201,7 +488,7 @@ const DashboardPage = () => {
                   onClick={() => setMode('voice-to-avatar')}
                   className={`text-lg font-bold px-6 py-2 rounded-xl transition-colors ${mode === 'voice-to-avatar' ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
                 >
-                  صوت / إشارة
+                  {t('dashboard.mode.voiceToAvatar')}
                 </button>
               </div>
             </div>
@@ -226,48 +513,49 @@ const DashboardPage = () => {
                       autoPlay
                       playsInline
                       muted
-                      className={`absolute inset-0 w-full h-full object-cover transform scale-x-[-1] ${isCameraActive ? 'opacity-100' : 'opacity-0'}`}
+                      controls={!!uploadedVideo}
+                      className={`absolute inset-0 w-full h-full object-cover ${uploadedVideo ? '' : 'transform scale-x-[-1]'} ${(isCameraActive || uploadedVideo) ? 'opacity-100' : 'opacity-0'}`}
                     />
 
                     {/* Fallback Placeholder if Camera Not Active */}
-                    {!isCameraActive && (
+                    {!isCameraActive && !uploadedVideo && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
                         <div className="flex flex-col items-center gap-4">
-                        <svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg" className="w-24 h-20 sm:w-32 sm:h-28 md:w-40 md:h-32 opacity-80">
-                          {/* Camera body */}
-                          <rect x="5" y="20" width="90" height="55" rx="10" ry="10" fill="#E8624A" />
-                          {/* Viewfinder hump */}
-                          <rect x="30" y="10" width="25" height="14" rx="5" ry="5" fill="#E8624A" />
-                          {/* Flash dot */}
-                          <circle cx="18" cy="30" r="5" fill="white" />
-                          {/* Lens outer ring */}
-                          <circle cx="55" cy="47" r="20" fill="#D4503A" />
-                          {/* Lens middle ring */}
-                          <circle cx="55" cy="47" r="14" fill="#E8624A" />
-                          {/* Lens inner */}
-                          <circle cx="55" cy="47" r="9" fill="#D4503A" />
-                          {/* Lens center */}
-                          <circle cx="55" cy="47" r="5" fill="#E8624A" />
-                          {/* White ring highlight */}
-                          <circle cx="55" cy="47" r="20" fill="none" stroke="white" strokeWidth="3" />
-                          <circle cx="55" cy="47" r="9" fill="none" stroke="white" strokeWidth="2.5" />
-                        </svg>
+                          <svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg" className="w-24 h-20 sm:w-32 sm:h-28 md:w-40 md:h-32 opacity-80">
+                            {/* Camera body */}
+                            <rect x="5" y="20" width="90" height="55" rx="10" ry="10" fill="#E8624A" />
+                            {/* Viewfinder hump */}
+                            <rect x="30" y="10" width="25" height="14" rx="5" ry="5" fill="#E8624A" />
+                            {/* Flash dot */}
+                            <circle cx="18" cy="30" r="5" fill="white" />
+                            {/* Lens outer ring */}
+                            <circle cx="55" cy="47" r="20" fill="#D4503A" />
+                            {/* Lens middle ring */}
+                            <circle cx="55" cy="47" r="14" fill="#E8624A" />
+                            {/* Lens inner */}
+                            <circle cx="55" cy="47" r="9" fill="#D4503A" />
+                            {/* Lens center */}
+                            <circle cx="55" cy="47" r="5" fill="#E8624A" />
+                            {/* White ring highlight */}
+                            <circle cx="55" cy="47" r="20" fill="none" stroke="white" strokeWidth="3" />
+                            <circle cx="55" cy="47" r="9" fill="none" stroke="white" strokeWidth="2.5" />
+                          </svg>
                           <div className="text-center">
-                            <p className="text-slate-600 dark:text-slate-300 font-semibold text-sm sm:text-base">الكاميرا متوقفة</p>
-                            <p className="text-slate-400 dark:text-slate-500 text-xs sm:text-sm mt-1">اضغط على "تشغيل الكاميرا" للبدء</p>
+                            <p className="text-slate-600 dark:text-slate-300 font-semibold text-sm sm:text-base">{t('dashboard.camera.placeholderTitle')}</p>
+                            <p className="text-slate-400 dark:text-slate-500 text-xs sm:text-sm mt-1">{t('dashboard.camera.placeholderSubtitle')}</p>
                           </div>
                         </div>
                       </div>
                     )}
                     <div className="absolute top-6 right-6 flex gap-3">
-                      <div className={`bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 border border-slate-200 dark:border-slate-700 shadow-sm transition-opacity ${isCameraActive ? 'opacity-100' : 'opacity-50'}`}>
+                      <div className={`bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 border border-slate-200 dark:border-slate-700 shadow-sm transition-opacity ${(isCameraActive || uploadedVideo) ? 'opacity-100' : 'opacity-50'}`}>
                         <span className={`material-symbols-outlined text-green-500 text-sm filled ${isCameraActive ? 'animate-pulse' : ''}`}>radio_button_checked</span>
-                        {isCameraActive ? 'تتبع نشط' : 'الكاميرا متوقفة'}
+                        {isCameraActive ? t('dashboard.camera.tracking') : uploadedVideo ? t('dashboard.camera.upload') : t('dashboard.camera.off')}
                       </div>
                       {isRecording && (
                         <div className="bg-red-500/90 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 border border-red-600 shadow-sm animate-pulse">
                           <span className="material-symbols-outlined text-white text-sm">fiber_manual_record</span>
-                          جاري التسجيل
+                          {t('dashboard.recording.active')}
                         </div>
                       )}
                     </div>
@@ -297,13 +585,27 @@ const DashboardPage = () => {
                   </div>
 
                   {/* Controls */}
-                  <div className="w-full bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center">
+                  <div className="w-full mx-auto bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <button
                       onClick={isCameraActive ? stopCamera : startCamera}
-                      className={`flex items-center gap-3 px-8 py-3 rounded-xl font-bold text-lg transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ${isCameraActive ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100' : 'bg-primary text-white border border-primary hover:bg-primary-hover'}`}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-base transition-all shadow-md hover:shadow-lg ${iconDir} ${isCameraActive ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100' : 'bg-primary text-white border border-primary hover:bg-primary-hover'}`}
                     >
                       <span className="material-symbols-outlined text-2xl">{isCameraActive ? 'videocam_off' : 'videocam'}</span>
-                      <span>{isCameraActive ? 'إيقاف الكاميرا' : 'تشغيل الكاميرا'}</span>
+                      <span>{isCameraActive ? t('dashboard.controls.stopCamera') : t('dashboard.controls.startCamera')}</span>
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={handleVideoUpload}
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-base transition-all shadow-md hover:shadow-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600 ${iconDir}`}
+                    >
+                      <span className="material-symbols-outlined text-2xl">upload_file</span>
+                      <span>{t('dashboard.controls.upload')}</span>
                     </button>
                   </div>
                 </div>
@@ -313,18 +615,24 @@ const DashboardPage = () => {
                   <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-700/50">
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-primary">translate</span>
-                      <h3 className="font-bold text-slate-800 dark:text-white">النص المباشر</h3>
+                        <h3 className="font-bold text-slate-800 dark:text-white">{t('dashboard.transcript.title')}</h3>
                     </div>
                     <div className="flex gap-1">
                       <button
                         onClick={() => navigator.clipboard.writeText(outputText)}
-                        className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" title="نسخ النص"
+                          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed" title={t('dashboard.controls.copy')}
+                          disabled={!outputText}
                       >
                         <span className="material-symbols-outlined text-lg">content_copy</span>
                       </button>
                       <button
-                        onClick={() => setOutputText('')}
-                        className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors" title="مسح"
+                        onClick={() => {
+                          setOutputText('');
+                          setTranslationError('');
+                          resetAudioPlayer();
+                          setAudioUrl('');
+                        }}
+                          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors" title={t('dashboard.controls.clear')}
                       >
                         <span className="material-symbols-outlined text-lg">delete_sweep</span>
                       </button>
@@ -344,21 +652,31 @@ const DashboardPage = () => {
                               <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce delay-75"></div>
                               <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce delay-150"></div>
                             </div>
-                            <span className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">جاري الترجمة</span>
+                            <span className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('dashboard.transcript.translating')}</span>
                           </div>
                         )}
+                      </div>
+                    ) : translationError ? (
+                      <div className="h-full rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-600 dark:border-red-800/70 dark:bg-red-900/20 dark:text-red-300">
+                        {translationError}
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50">
                         <span className="material-symbols-outlined text-4xl mb-2">subtitles</span>
-                        <p>سيظهر النص المترجم هنا...</p>
+                        <p>{t('dashboard.transcript.empty')}</p>
                       </div>
                     )}
                   </div>
                   <div className="p-5 border-t border-slate-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-700/80">
-                    <button className="w-full flex items-center justify-center gap-3 bg-primary hover:bg-[#d93d20] text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98]">
-                      <span className="material-symbols-outlined">volume_up</span>
-                      تشغيل الصوت
+                    <button
+                      onClick={toggleAudioPlayback}
+                      disabled={!audioUrl || isAudioLoading}
+                      className={`w-full flex items-center justify-center gap-3 bg-primary hover:bg-[#d93d20] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] ${iconDir}`}
+                    >
+                      <span className="material-symbols-outlined">
+                        {isAudioLoading ? 'hourglass_top' : isAudioPlaying ? 'pause' : 'volume_up'}
+                      </span>
+                      {t('dashboard.controls.playAudio')}
                     </button>
                   </div>
                 </div>
@@ -369,124 +687,137 @@ const DashboardPage = () => {
             {mode === 'voice-to-avatar' && (
               <>
                 <div className="lg:col-span-5 flex flex-col gap-6">
-                  {/* Mic / Input */}
-                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-8 shadow-lg flex flex-col items-center gap-8 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-full h-1 bg-gradient-to-l from-primary to-primary-light"></div>
-                    <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-                    <div className="flex flex-col items-center gap-4 mt-2">
-                      <span className="text-xs font-bold uppercase tracking-widest text-primary">{isRecording ? 'جاري الاستماع...' : 'جاهز للتسجيل'}</span>
-                      <div className="relative group cursor-pointer" onClick={toggleRecording}>
-                        <button className={`relative z-10 flex h-24 w-24 items-center justify-center rounded-full text-white shadow-[0_0_30px_rgba(242,89,61,0.3)] transition-all duration-300 border-4 ${isRecording ? 'bg-red-500 border-red-200 scale-110' : 'bg-primary border-white dark:border-slate-800 hover:bg-primary-light hover:scale-105'}`}>
-                          <span className="material-symbols-outlined text-5xl">{isRecording ? 'stop' : 'mic'}</span>
+                  {/* Unified Input Panel */}
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden">
+
+                    {/* Mic Section */}
+                    <div
+                      className={`p-5 flex items-center gap-5 cursor-pointer transition-colors border-b border-slate-200 dark:border-slate-700 ${inputMode === 'voice' ? 'bg-primary/5 dark:bg-primary/10' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
+                      onClick={() => {
+                        if (inputMode !== 'voice') {
+                          setInputMode('voice');
+                          setTextInput('');
+                          if (isRecording) { recognitionRef.current?.stop(); setIsRecording(false); setIsTranslating(false); }
+                        }
+                      }}
+                    >
+                      {/* Mic Button */}
+                      <div className="relative flex-shrink-0" onClick={(e) => { e.stopPropagation(); setInputMode('voice'); toggleRecording(); }}>
+                        <button className={`relative z-10 flex h-16 w-16 items-center justify-center rounded-full text-white shadow-lg transition-all duration-300 border-4 ${isRecording ? 'bg-red-500 border-red-200 scale-110' : 'bg-primary border-white dark:border-slate-700 hover:bg-primary-light hover:scale-105'}`}>
+                          <span className="material-symbols-outlined text-3xl">{isRecording ? 'stop' : 'mic'}</span>
                         </button>
                         {isRecording && (
                           <div className="absolute top-0 left-0 h-full w-full rounded-full bg-primary/30 animate-[ping_1.5s_ease-in-out_infinite] opacity-75"></div>
                         )}
-                        {!isRecording && (
-                          <div className="absolute top-0 left-0 h-full w-full rounded-full bg-primary/10 group-hover:animate-ping opacity-50 delay-75"></div>
+                      </div>
+
+                      {/* Mic Info + Visualizer */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{t('dashboard.voice.title')}</span>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${isRecording ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600'}`}>
+                            {isRecording ? t('dashboard.recording.listening') : t('dashboard.recording.tapMic')}
+                          </span>
+                        </div>
+                        <div className={`flex items-end gap-1 h-8 transition-opacity ${isRecording ? 'opacity-100' : 'opacity-30'}`}>
+                          {[...Array(12)].map((_, i) => (
+                            <div
+                              key={i}
+                              className={`w-1 bg-primary/70 rounded-full ${isRecording ? 'animate-[pulse_0.5s_ease-in-out_infinite]' : ''}`}
+                              style={{ height: `${isRecording ? Math.random() * 2 + 0.5 : 0.5}rem`, animationDelay: `${i * 80}ms` }}
+                            ></div>
+                          ))}
+                        </div>
+                        {outputText && inputMode === 'voice' && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">"{outputText}"</p>
                         )}
                       </div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">{isRecording ? 'تحدث الآن' : 'اضغط للبدء في التحدث'}</p>
                     </div>
 
-                    {/* Audio Visualizer Mockup */}
-                    <div className={`flex items-end justify-center gap-1.5 h-16 w-full px-8 transition-opacity duration-300 ${isRecording ? 'opacity-100' : 'opacity-30'}`}>
-                      {[...Array(9)].map((_, i) => (
-                        <div
-                          key={i}
-                          className={`w-1.5 bg-primary/80 rounded-full ${isRecording ? 'animate-[pulse_0.5s_ease-in-out_infinite]' : ''}`}
-                          style={{ height: `${isRecording ? Math.random() * 3 + 1 : 1}rem`, animationDelay: `${i * 100}ms` }}
-                        ></div>
-                      ))}
+                    {/* OR Divider */}
+                    <div className="flex items-center gap-3 px-5 py-2 bg-slate-50 dark:bg-slate-700/40">
+                      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600"></div>
+                      <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t('dashboard.text.divider')}</span>
+                      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600"></div>
                     </div>
-                  </div>
 
-                  {/* Live Text Output for Voice */}
-                  <div className="flex flex-col gap-3">
-                    <div className="flex justify-between items-center px-1">
-                      <h3 className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">النص المباشر</h3>
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium border flex items-center gap-1.5 transition-colors ${isRecording ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isRecording ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></span>
-                        {isRecording ? 'نشط' : 'خامل'}
-                      </span>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-sm min-h-[220px] relative bg-slate-50/50 dark:bg-slate-700/50">
-                      {outputText ? (
-                        <p className="text-slate-700 dark:text-slate-300 text-lg leading-relaxed font-light text-right animate-fade-in">
-                          "{outputText}"
-                          {isRecording && <span className="inline-block w-1 h-5 mr-1 align-middle bg-primary animate-pulse"></span>}
-                        </p>
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-slate-400 opacity-50 text-sm">
-                          تحدث ليظهر النص هنا...
-                        </div>
-                      )}
-
-                      <div className="absolute bottom-4 left-4 flex gap-2">
-                        <button
-                          onClick={() => setOutputText('')}
-                          className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-lg transition-all shadow-sm"
-                        >
-                          <span className="material-symbols-outlined text-sm">restart_alt</span> إعادة تعيين
-                        </button>
-                        <button
-                          onClick={() => navigator.clipboard.writeText(outputText)}
-                          className="text-xs font-medium text-primary hover:text-primary-dark flex items-center gap-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-lg transition-all shadow-sm"
-                        >
-                          <span className="material-symbols-outlined text-sm">content_copy</span> نسخ
-                        </button>
+                    {/* Text Section */}
+                    <div
+                      className={`p-5 transition-colors ${inputMode === 'text' ? 'bg-primary/5 dark:bg-primary/10' : ''}`}
+                      onClick={() => { if (inputMode !== 'text') { setInputMode('text'); setOutputText(''); if (isRecording) { recognitionRef.current?.stop(); setIsRecording(false); setIsTranslating(false); } } }}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                          <span className="material-symbols-outlined text-base text-primary">edit_note</span>
+                          {t('dashboard.text.title')}
+                        </span>
+                        {textInput && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setTextInput(''); }}
+                            className="text-xs text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-sm">close</span> {t('dashboard.text.clear')}
+                          </button>
+                        )}
                       </div>
+                      <textarea
+                        value={textInput}
+                        onChange={(e) => { setTextInput(e.target.value); setInputMode('text'); if (isRecording) { recognitionRef.current?.stop(); setIsRecording(false); setIsTranslating(false); } }}
+                        placeholder={t('dashboard.text.placeholder')}
+                        rows={4}
+                        className={`w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-slate-800 dark:text-white text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 dark:placeholder:text-slate-500 ${textStart} transition-shadow`}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+
+                    {/* Convert Button */}
+                    <div className="px-5 pb-5">
+                      <button
+                        disabled={!textInput.trim()}
+                        className={`w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] ${iconDir}`}
+                      >
+                        <span className="material-symbols-outlined">smart_toy</span>
+                        {t('dashboard.text.convert')}
+                      </button>
                     </div>
                   </div>
                 </div>
 
                 <div className="lg:col-span-7 flex flex-col gap-6">
-                  {/* Avatar Preview */}
+                  {/* Avatar Preview replaced with model-viewer */}
                   <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden flex flex-col">
                     <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-700">
                       <div className="flex gap-2">
-                        <button className="p-2 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600" title="ملء الشاشة">
+                        <button className="p-2 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600" title={t('dashboard.avatar.fullscreen')}>
                           <span className="material-symbols-outlined">fullscreen</span>
                         </button>
                       </div>
                     </div>
-                    <div className="relative aspect-video w-full bg-black overflow-hidden">
-                      {/* Thumbnail shown before play */}
-                      {!isAvatarPlaying && (
-                        <img
-                          src={avatarSrc}
-                          alt="أفاتار"
-                          className="absolute inset-0 w-full h-full object-contain bg-slate-100 dark:bg-slate-700"
-                        />
-                      )}
-                      {/* Video */}
-                      <video
-                        ref={avatarVideoRef}
-                        src="/videos/hello.mp4"
-                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 scale-[1.3] ${isAvatarPlaying ? 'opacity-100' : 'opacity-0'}`}
-                        onEnded={() => setIsAvatarPlaying(false)}
-                        playsInline
-                      />
-                      {/* Play overlay */}
-                      {!isAvatarPlaying && (
-                        <div
-                          className="absolute inset-0 flex items-center justify-center cursor-pointer bg-black/10 hover:bg-black/20 transition-colors z-10"
-                          onClick={toggleAvatarVideo}
-                        >
-                          <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full p-5 shadow-2xl border border-white/50 dark:border-slate-700">
-                            <span className="material-symbols-outlined text-5xl text-primary">play_arrow</span>
-                          </div>
-                        </div>
-                      )}
+                    <div className="relative aspect-video w-full bg-white dark:bg-slate-900 overflow-hidden">
+                      <model-viewer
+                        src="/base_basic_shaded.glb"
+                        camera-controls
+                        disable-tap
+                        camera-orbit="0deg 90deg 2.6m"
+                        min-camera-orbit="-20deg 75deg 2.2m"
+                        max-camera-orbit="20deg 105deg 3m"
+                        camera-target="0m 1.45m 0m"
+                        field-of-view="28deg"
+                        style={{ width: '100%', height: '100%' }}
+                        className="absolute inset-0"
+                        ar
+                        ar-modes="webxr scene-viewer quick-look"
+                        exposure="1"
+                      ></model-viewer>
                     </div>
                     <div className="p-4 bg-white dark:bg-slate-800 flex flex-col md:flex-row items-center justify-center gap-4 border-t border-slate-200 dark:border-slate-700">
                       <div className="flex items-center gap-3 w-full md:w-auto">
                         <button
-                          onClick={toggleAvatarVideo}
-                          className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 border border-primary"
+                          onClick={() => setIsAvatarPlaying(prev => !prev)}
+                          className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 border border-primary"
                         >
                           <span className="material-symbols-outlined">{isAvatarPlaying ? 'pause' : 'play_arrow'}</span>
-                          <span>{isAvatarPlaying ? 'إيقاف' : 'تشغيل'}</span>
+                          <span>{isAvatarPlaying ? t('dashboard.avatar.pause') : t('dashboard.avatar.play')}</span>
                         </button>
                       </div>
                     </div>
@@ -498,19 +829,19 @@ const DashboardPage = () => {
 
           <section className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">النشاط الأخير</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('dashboard.history.title')}</h3>
               <Link to="/history" className="text-sm font-medium text-primary hover:text-primary-hover flex items-center gap-1">
-                عرض السجل الكامل <span className="material-symbols-outlined text-sm">chevron_left</span>
+                {t('dashboard.history.viewAll')} <span className="material-symbols-outlined text-sm">{isRtl ? 'chevron_left' : 'chevron_right'}</span>
               </Link>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-right border-collapse">
+              <table className={`w-full border-collapse ${textStart}`}>
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-700">
-                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">النوع</th>
-                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">المدة/الحجم</th>
-                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">التاريخ</th>
-                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-left">الحالة</th>
+                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('dashboard.history.headers.type')}</th>
+                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('dashboard.history.headers.duration')}</th>
+                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('dashboard.history.headers.date')}</th>
+                    <th className="py-3 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 text-left">{t('dashboard.history.headers.status')}</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
@@ -528,14 +859,14 @@ const DashboardPage = () => {
                       <td className="py-4 px-2 text-slate-500 dark:text-slate-400">{item.date}</td>
                       <td className="py-4 px-2 text-left">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${item.status === 'completed' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}`}>
-                          {item.status === 'completed' ? 'مكتمل' : 'مؤرشف'}
+                          {item.status === 'completed' ? t('dashboard.history.status.completed') : t('dashboard.history.status.archived')}
                         </span>
                       </td>
                     </tr>
                   ))}
                   {historyItems.length === 0 && (
                     <tr>
-                      <td colSpan="4" className="py-8 text-center text-slate-400">لا يوجد نشاط أخير</td>
+                      <td colSpan="4" className="py-8 text-center text-slate-400">{t('dashboard.history.empty')}</td>
                     </tr>
                   )}
                 </tbody>
@@ -550,3 +881,4 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+
