@@ -5,7 +5,6 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import { useHistory } from '../contexts/HistoryContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import avatarSrc from '../assets/avatar.png';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -28,7 +27,6 @@ const DashboardPage = () => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const recognitionRef = useRef(null);
-  const avatarVideoRef = useRef(null);
   const fileInputRef = useRef(null);
   const [uploadedVideo, setUploadedVideo] = useState(null);
   const [isAvatarPlaying, setIsAvatarPlaying] = useState(false);
@@ -52,17 +50,20 @@ const DashboardPage = () => {
     }
   };
 
-  const toggleAvatarVideo = () => {
-    const vid = avatarVideoRef.current;
-    if (!vid) return;
-    if (isAvatarPlaying) {
-      vid.pause();
-      setIsAvatarPlaying(false);
-    } else {
-      vid.play();
-      setIsAvatarPlaying(true);
-    }
-  };
+  // Ensure model-viewer is loaded for dashboard previews
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.customElements?.get('model-viewer')) return;
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
+    document.head.appendChild(script);
+    return () => {
+      if (script && script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
+  }, []);
   // Initialize Speech Recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -278,25 +279,25 @@ const DashboardPage = () => {
                     {!isCameraActive && !uploadedVideo && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
                         <div className="flex flex-col items-center gap-4">
-                        <svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg" className="w-24 h-20 sm:w-32 sm:h-28 md:w-40 md:h-32 opacity-80">
-                          {/* Camera body */}
-                          <rect x="5" y="20" width="90" height="55" rx="10" ry="10" fill="#E8624A" />
-                          {/* Viewfinder hump */}
-                          <rect x="30" y="10" width="25" height="14" rx="5" ry="5" fill="#E8624A" />
-                          {/* Flash dot */}
-                          <circle cx="18" cy="30" r="5" fill="white" />
-                          {/* Lens outer ring */}
-                          <circle cx="55" cy="47" r="20" fill="#D4503A" />
-                          {/* Lens middle ring */}
-                          <circle cx="55" cy="47" r="14" fill="#E8624A" />
-                          {/* Lens inner */}
-                          <circle cx="55" cy="47" r="9" fill="#D4503A" />
-                          {/* Lens center */}
-                          <circle cx="55" cy="47" r="5" fill="#E8624A" />
-                          {/* White ring highlight */}
-                          <circle cx="55" cy="47" r="20" fill="none" stroke="white" strokeWidth="3" />
-                          <circle cx="55" cy="47" r="9" fill="none" stroke="white" strokeWidth="2.5" />
-                        </svg>
+                          <svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg" className="w-24 h-20 sm:w-32 sm:h-28 md:w-40 md:h-32 opacity-80">
+                            {/* Camera body */}
+                            <rect x="5" y="20" width="90" height="55" rx="10" ry="10" fill="#E8624A" />
+                            {/* Viewfinder hump */}
+                            <rect x="30" y="10" width="25" height="14" rx="5" ry="5" fill="#E8624A" />
+                            {/* Flash dot */}
+                            <circle cx="18" cy="30" r="5" fill="white" />
+                            {/* Lens outer ring */}
+                            <circle cx="55" cy="47" r="20" fill="#D4503A" />
+                            {/* Lens middle ring */}
+                            <circle cx="55" cy="47" r="14" fill="#E8624A" />
+                            {/* Lens inner */}
+                            <circle cx="55" cy="47" r="9" fill="#D4503A" />
+                            {/* Lens center */}
+                            <circle cx="55" cy="47" r="5" fill="#E8624A" />
+                            {/* White ring highlight */}
+                            <circle cx="55" cy="47" r="20" fill="none" stroke="white" strokeWidth="3" />
+                            <circle cx="55" cy="47" r="9" fill="none" stroke="white" strokeWidth="2.5" />
+                          </svg>
                           <div className="text-center">
                             <p className="text-slate-600 dark:text-slate-300 font-semibold text-sm sm:text-base">{t('dashboard.camera.placeholderTitle')}</p>
                             <p className="text-slate-400 dark:text-slate-500 text-xs sm:text-sm mt-1">{t('dashboard.camera.placeholderSubtitle')}</p>
@@ -525,7 +526,7 @@ const DashboardPage = () => {
                 </div>
 
                 <div className="lg:col-span-7 flex flex-col gap-6">
-                  {/* Avatar Preview */}
+                  {/* Avatar Preview replaced with model-viewer */}
                   <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden flex flex-col">
                     <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-700">
                       <div className="flex gap-2">
@@ -534,40 +535,28 @@ const DashboardPage = () => {
                         </button>
                       </div>
                     </div>
-                    <div className="relative aspect-video w-full bg-black overflow-hidden">
-                      {/* Thumbnail shown before play */}
-                      {!isAvatarPlaying && (
-                        <img
-                          src={avatarSrc}
-                          alt={t('dashboard.avatar.alt')}
-                          className="absolute inset-0 w-full h-full object-contain bg-slate-100 dark:bg-slate-700"
-                        />
-                      )}
-                      {/* Video */}
-                      <video
-                        ref={avatarVideoRef}
-                        src="/videos/hello.mp4"
-                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 scale-[1.3] ${isAvatarPlaying ? 'opacity-100' : 'opacity-0'}`}
-                        onEnded={() => setIsAvatarPlaying(false)}
-                        playsInline
-                      />
-                      {/* Play overlay */}
-                      {!isAvatarPlaying && (
-                        <div
-                          className="absolute inset-0 flex items-center justify-center cursor-pointer bg-black/10 hover:bg-black/20 transition-colors z-10"
-                          onClick={toggleAvatarVideo}
-                        >
-                          <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full p-5 shadow-2xl border border-white/50 dark:border-slate-700">
-                            <span className="material-symbols-outlined text-5xl text-primary">play_arrow</span>
-                          </div>
-                        </div>
-                      )}
+                    <div className="relative aspect-video w-full bg-white dark:bg-slate-900 overflow-hidden">
+                      <model-viewer
+                        src="/base_basic_shaded.glb"
+                        camera-controls
+                        disable-tap
+                        camera-orbit="0deg 90deg 2.6m"
+                        min-camera-orbit="-20deg 75deg 2.2m"
+                        max-camera-orbit="20deg 105deg 3m"
+                        camera-target="0m 1.45m 0m"
+                        field-of-view="28deg"
+                        style={{ width: '100%', height: '100%' }}
+                        className="absolute inset-0"
+                        ar
+                        ar-modes="webxr scene-viewer quick-look"
+                        exposure="1"
+                      ></model-viewer>
                     </div>
                     <div className="p-4 bg-white dark:bg-slate-800 flex flex-col md:flex-row items-center justify-center gap-4 border-t border-slate-200 dark:border-slate-700">
                       <div className="flex items-center gap-3 w-full md:w-auto">
                         <button
-                          onClick={toggleAvatarVideo}
-                          className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 border border-primary"
+                          onClick={() => setIsAvatarPlaying(prev => !prev)}
+                          className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 border border-primary"
                         >
                           <span className="material-symbols-outlined">{isAvatarPlaying ? 'pause' : 'play_arrow'}</span>
                           <span>{isAvatarPlaying ? t('dashboard.avatar.pause') : t('dashboard.avatar.play')}</span>
