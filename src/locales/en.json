@@ -556,7 +556,7 @@
       "displayName": "Enter your full name",
       "userName": "Enter your username",
       "email": "Enter your email",
-      "phoneNumber": "e.g. 01012345678",
+      "phoneNumber": "Enter your phone number",
       "password": "Enter a strong password",
       "confirmPassword": "Re-enter password"
     },
