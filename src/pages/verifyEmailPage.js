@@ -6,7 +6,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useLanguage } from '../contexts/LanguageContext';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://s2s-1d5c94958ff6.herokuapp.com';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.s2sai.online';
 
 const VerifyEmailPage = () => {
   const location = useLocation();
