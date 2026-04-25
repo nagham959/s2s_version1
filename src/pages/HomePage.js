@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import VideoHelpModal from '../components/VideoHelpModal';
+import CWASAAvatarPlayer from '../components/CWASAAvatarPlayer';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const HomePage = () => {
@@ -18,20 +19,6 @@ const HomePage = () => {
     setHelpModal({ open: true, title, videoSrc, anchorRect: rect });
   };
   const closeHelp = () => setHelpModal(prev => ({ ...prev, open: false, anchorRect: null }));
-
-  // Load model-viewer web component for GLB preview
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.customElements?.get('model-viewer')) return;
-    const script = document.createElement('script');
-    script.type = 'module';
-    script.src = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
-    document.head.appendChild(script);
-    return () => {
-      if (script && script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
-  }, []);
 
   return (
     <ThemeProvider>
@@ -84,21 +71,7 @@ const HomePage = () => {
                 {/* Visual Area (Video) */}
                 <div className="w-full lg:w-1/2">
                   <div className="relative w-full aspect-square md:aspect-[4/3] rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white dark:border-slate-700 bg-slate-100 dark:bg-slate-800">
-                    <model-viewer
-                      src="/base_basic_shaded.glb"
-                      camera-controls
-                      disable-tap
-                      camera-orbit="0deg 90deg 2.5m"
-                      min-camera-orbit="-20deg 75deg 2.2m"
-                      max-camera-orbit="20deg 105deg 3m"
-                      camera-target="0m 1.45m 0m"
-                      field-of-view="28deg"
-                      style={{ height: '100%', width: '100%' }}
-                      className="absolute inset-0"
-                      ar
-                      ar-modes="webxr scene-viewer quick-look"
-                      exposure="1"
-                    ></model-viewer>
+                    <CWASAAvatarPlayer className="absolute inset-0 h-full w-full" title="Home Avatar" />
                   </div>
                 </div>
 
