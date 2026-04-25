@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import CWASAAvatarPlayer from '../components/CWASAAvatarPlayer';
 import { useHistory } from '../contexts/HistoryContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/authContext';
@@ -37,7 +38,13 @@ const DashboardPage = () => {
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [translationError, setTranslationError] = useState('');
-  const [isAvatarPlaying, setIsAvatarPlaying] = useState(false);
+  const [avatarSigml, setAvatarSigml] = useState('');
+  const [avatarPlayNonce, setAvatarPlayNonce] = useState(0);
+
+  const isLikelySigml = (value) => {
+    const xml = (value || '').trim().toLowerCase();
+    return xml.startsWith('<sigml') || xml.includes('<sigml');
+  };
 
   const formatDurationWithUnit = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -213,20 +220,31 @@ const DashboardPage = () => {
     e.target.value = '';
   };
 
-  // Ensure model-viewer is loaded for dashboard previews
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (window.customElements?.get('model-viewer')) return;
-    const script = document.createElement('script');
-    script.type = 'module';
-    script.src = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
-    document.head.appendChild(script);
-    return () => {
-      if (script && script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
-  }, []);
+  const handlePlayAvatarFromInput = () => {
+    const xml = textInput.trim();
+    if (!xml) {
+      setTranslationError('Please paste SiGML XML before playing the avatar.');
+      return;
+    }
+
+    if (!isLikelySigml(xml)) {
+      setTranslationError('Input must be a valid SiGML XML containing a <sigml> root.');
+      return;
+    }
+
+    setTranslationError('');
+    setAvatarSigml(xml);
+    setAvatarPlayNonce((prev) => prev + 1);
+  };
+
+  const replayAvatar = () => {
+    if (!avatarSigml) {
+      setTranslationError('No SiGML loaded yet. Paste XML and press Convert first.');
+      return;
+    }
+    setTranslationError('');
+    setAvatarPlayNonce((prev) => prev + 1);
+  };
   // Initialize Speech Recognition
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -445,6 +463,8 @@ const DashboardPage = () => {
     setInputMode('voice');
     setTextInput('');
     setTranslationError('');
+    setAvatarSigml('');
+    setAvatarPlayNonce(0);
     resetAudioPlayer();
     setAudioUrl('');
     stopCamera({ addSessionToHistory: false });
@@ -773,6 +793,7 @@ const DashboardPage = () => {
                     {/* Convert Button */}
                     <div className="px-5 pb-5">
                       <button
+                        onClick={handlePlayAvatarFromInput}
                         disabled={!textInput.trim()}
                         className={`w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] ${iconDir}`}
                       >
@@ -784,7 +805,7 @@ const DashboardPage = () => {
                 </div>
 
                 <div className="lg:col-span-7 flex flex-col gap-6">
-                  {/* Avatar Preview replaced with model-viewer */}
+                  {/* Avatar preview powered by CWASA SiGML runtime */}
                   <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden flex flex-col">
                     <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-700">
                       <div className="flex gap-2">
@@ -794,30 +815,21 @@ const DashboardPage = () => {
                       </div>
                     </div>
                     <div className="relative aspect-video w-full bg-white dark:bg-slate-900 overflow-hidden">
-                      <model-viewer
-                        src="/base_basic_shaded.glb"
-                        camera-controls
-                        disable-tap
-                        camera-orbit="0deg 90deg 2.6m"
-                        min-camera-orbit="-20deg 75deg 2.2m"
-                        max-camera-orbit="20deg 105deg 3m"
-                        camera-target="0m 1.45m 0m"
-                        field-of-view="28deg"
-                        style={{ width: '100%', height: '100%' }}
-                        className="absolute inset-0"
-                        ar
-                        ar-modes="webxr scene-viewer quick-look"
-                        exposure="1"
-                      ></model-viewer>
+                      <CWASAAvatarPlayer
+                        sigml={avatarSigml}
+                        playNonce={avatarPlayNonce}
+                        className="absolute inset-0 h-full w-full"
+                        title="Dashboard Avatar"
+                      />
                     </div>
                     <div className="p-4 bg-white dark:bg-slate-800 flex flex-col md:flex-row items-center justify-center gap-4 border-t border-slate-200 dark:border-slate-700">
                       <div className="flex items-center gap-3 w-full md:w-auto">
                         <button
-                          onClick={() => setIsAvatarPlaying(prev => !prev)}
+                          onClick={replayAvatar}
                           className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 border border-primary"
                         >
-                          <span className="material-symbols-outlined">{isAvatarPlaying ? 'pause' : 'play_arrow'}</span>
-                          <span>{isAvatarPlaying ? t('dashboard.avatar.pause') : t('dashboard.avatar.play')}</span>
+                          <span className="material-symbols-outlined">play_arrow</span>
+                          <span>{t('dashboard.avatar.play')}</span>
                         </button>
                       </div>
                     </div>

@@ -21,6 +21,7 @@ import ContactPage from "./pages/ContactPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { HistoryProvider } from "./contexts/HistoryContext";
+import GlobalAvatarAssistant from "./components/GlobalAvatarAssistant";
 
 const queryClient = new QueryClient();
 
@@ -31,7 +32,7 @@ function App() {
         <HistoryProvider>
           <Router>
             <Routes>
-              <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<DashboardPage />} />
               <Route path="/home" element={<HomePage />} />
               <Route path="/features" element={<FeaturesPage />} />
               <Route path="/about" element={<AboutPage />} />
@@ -58,6 +59,7 @@ function App() {
               <Route path="/change-password" element={<ChangePasswordPage />} />
               <Route path="/history" element={<HistoryPage />} />
             </Routes>
+            <GlobalAvatarAssistant />
           </Router>
         </HistoryProvider>
       </ThemeProvider>

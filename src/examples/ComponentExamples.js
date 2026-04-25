@@ -4,11 +4,6 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Sidebar from '../components/Sidebar';
 
-/**
- * أمثلة على استخدام المكونات
- * يمكنك نسخ هذه الأمثلة واستخدامها في صفحاتك
- */
-
 // مثال 1: صفحة رئيسية (Home Page)
 export const HomePageExample = () => {
   return (

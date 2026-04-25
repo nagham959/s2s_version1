@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import CWASAAvatarPlayer from './CWASAAvatarPlayer';
 
 const POPOVER_W = 288;
 const POPOVER_H = 310;
@@ -17,21 +18,6 @@ const GAP = 10;
 const VideoHelpModal = ({ open, onClose, videoSrc = '/videos/hello.mp4', title, anchorRect = null }) => {
   const { t, dir } = useLanguage();
   const popoverRef = useRef(null);
-
-  // ensure model-viewer is available for the embedded preview
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (window.customElements?.get('model-viewer')) return;
-    const script = document.createElement('script');
-    script.type = 'module';
-    script.src = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
-    document.head.appendChild(script);
-    return () => {
-      if (script && script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
-  }, []);
 
   // close on Escape
   useEffect(() => {
@@ -118,23 +104,13 @@ const VideoHelpModal = ({ open, onClose, videoSrc = '/videos/hello.mp4', title, 
             </button>
           </div>
 
-          {/* model preview — force LTR so model-viewer canvas renders correctly */}
+          {/* Embedded CWASA avatar runtime */}
           <div dir="ltr" className="bg-slate-100 dark:bg-slate-800" style={{ height: '250px' }}>
-            <model-viewer
-              src="/base_basic_shaded.glb"
-              camera-controls
-              disable-tap
-              camera-orbit="0deg 90deg 2.6m"
-              min-camera-orbit="-20deg 75deg 2.2m"
-              max-camera-orbit="20deg 105deg 3m"
-              camera-target="0m 1.45m 0m"
-              field-of-view="28deg"
-              style={{ width: '100%', height: '100%' }}
+            <CWASAAvatarPlayer
+              sigml={typeof videoSrc === 'string' && videoSrc.trim().startsWith('<') ? videoSrc : ''}
               className="w-full h-full"
-              ar
-              ar-modes="webxr scene-viewer quick-look"
-              exposure="1"
-            ></model-viewer>
+              title="Help Avatar"
+            />
           </div>
         </div>
       </div>
