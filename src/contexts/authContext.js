@@ -138,8 +138,9 @@ export function AuthProvider({ children }) {
     setUser({ email: data.email, displayName: data.displayName });
 
     if (data.refreshToken) {
-      localStorage.setItem("refreshToken", data.refreshToken);
-    }
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("refreshToken", data.refreshToken);
+  }
 
     return data;
   };
@@ -230,6 +231,63 @@ export function AuthProvider({ children }) {
     }
   };
 
+
+const translateTextToSigml = async (text, avatar = "anna", speed = "1.0", format = "sigml") => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const formData = new FormData();
+    formData.append('text', text);
+    formData.append('avatar', avatar);
+    formData.append('speed', speed);
+    formData.append('output_format', format);
+
+    const response = await api.post("/api/v1/Translate/text-to-sign", formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      }
+    });
+
+    if (response.data && response.data.translation) {
+      return response.data.translation.sigml_content;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Translation Error (401 Fix):", error);
+    if (error.response?.status === 401) {
+      throw new Error("جلسة العمل انتهت، يرجى تسجيل الدخول مرة أخرى.");
+    }
+    throw new Error(error.response?.data?.detail || "فشل التحقق من الهوية.");
+  }
+};
+
+
+const translateAudioToSigml = async (audioFile, avatar = "anna", speed = "1.0", format = "sigml") => {
+  try {
+    const formData = new FormData();
+    formData.append('audio_file', audioFile); 
+    formData.append('avatar', avatar);
+    formData.append('speed', speed);
+    formData.append('output_format', format);
+
+    const response = await api.post("/api/v1/Translate/audio-to-sign", formData, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+
+    if (response.data && response.data.translation) {
+      return response.data.translation.sigml_content;
+    }
+    return null;
+  } catch (error) {
+    console.error("Audio Translation Error:", error);
+    throw new Error(error.response?.data?.detail || "فشل تحويل الصوت إلى إشارة.");
+  }
+};
+
   return (
     <AuthContext.Provider
       value={{
@@ -243,6 +301,8 @@ export function AuthProvider({ children }) {
         resetPassword,
         loginWithGoogle,
         changePassword,
+        translateTextToSigml,
+        translateAudioToSigml,
       }}
     >
       {children}
