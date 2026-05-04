@@ -6,6 +6,8 @@ import { useLanguage } from '../contexts/LanguageContext';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 
+const DEFAULT_AVATAR = 'https://lh3.googleusercontent.com/aida-public/AB6AXuA1VSvtH1AlkzXbOETNqCK2bOSBX9zehvxrYtg-eU2kf9VmtHAZjwj4vb58SSSx7KEwA4O8dgYp9msr07NT3_4xhpmUb-HH-xn1iF9HZkOjr71J-TqS9cR9vFyvNj9LsoeVAPv4-zgWsZ4MqmTFskzH9cmweAq0KpOYbzv4vwlGjHHqKuo_zxU4zQBLSmlnPCqD-27GLkXf9mzkePEXzgr6UMDnYfI13Rtb0Jl-ns96YAhfq1eWAeHsf3cZ3UG1777wh1L3oXLuCQQ';
+
 const ProfileSettingsContent = () => {
   const { isDark, toggleTheme } = useTheme();
   const { logout, user } = useAuth();  // استخدم بيانات اليوزر من الـ context
@@ -19,33 +21,39 @@ const ProfileSettingsContent = () => {
   const [profile, setProfile] = useState({
     name: '',
     email: '',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA1VSvtH1AlkzXbOETNqCK2bOSBX9zehvxrYtg-eU2kf9VmtHAZjwj4vb58SSSx7KEwA4O8dgYp9msr07NT3_4xhpmUb-HH-xn1iF9HZkOjr71J-TqS9cR9vFyvNj9LsoeVAPv4-zgWsZ4MqmTFskzH9cmweAq0KpOYbzv4vwlGjHHqKuo_zxU4zQBLSmlnPCqD-27GLkXf9mzkePEXzgr6UMDnYfI13Rtb0Jl-ns96YAhfq1eWAeHsf3cZ3UG1777wh1L3oXLuCQQ',
-    signLanguage: 'asl',
-    spokenLanguage: 'en-us'
+    avatar: DEFAULT_AVATAR,
   });
+
+  const [savedProfile, setSavedProfile] = useState(null);
+  const [isEditing, setIsEditing] = useState(true);
 
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Load user data from auth context when available
+  // Load user data from auth context and local storage when available
   useEffect(() => {
-    if (user) {
-      setProfile(prev => ({
-        ...prev,
-        name: user.displayName || '',
-        email: user.email || ''
-      }));
+    const storedProfileRaw = localStorage.getItem('userProfile');
+    let storedProfile = {};
+    if (storedProfileRaw) {
+      try {
+        storedProfile = JSON.parse(storedProfileRaw);
+      } catch (_error) {
+        storedProfile = {};
+      }
     }
-  }, [user]);
 
-  // Load from localStorage on mount if you want to keep local changes
-  useEffect(() => {
-    const savedProfile = localStorage.getItem('userProfile');
-    if (savedProfile) {
-      setProfile(prev => ({ ...prev, ...JSON.parse(savedProfile) }));
-    }
-  }, []);
+    const nextProfile = {
+      ...storedProfile,
+      name: user?.displayName || storedProfile.name || '',
+      email: user?.email || storedProfile.email || '',
+      avatar: user?.photoURL || storedProfile.avatar || DEFAULT_AVATAR,
+    };
+
+    setProfile(nextProfile);
+    setSavedProfile(nextProfile);
+    setIsEditing(false);
+  }, [user]);
 
   const handleChange = (field, value) => {
     setProfile(prev => ({ ...prev, [field]: value }));
@@ -64,15 +72,23 @@ const ProfileSettingsContent = () => {
 
   const handleSave = () => {
     setIsSaving(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
       localStorage.setItem('userProfile', JSON.stringify(profile));
-      setIsSaving(false);
+      setSavedProfile(profile);
+      setIsEditing(false);
       setNotification({ type: 'success', message: t('profile.toast.saveSuccess') });
 
-      // Hide notification after 3 seconds
       setTimeout(() => setNotification(null), 3000);
-    }, 1000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdits = () => {
+    if (savedProfile) {
+      setProfile(savedProfile);
+    }
+    setIsEditing(false);
   };
 
   const handleLogout = async () => {
@@ -129,103 +145,45 @@ const ProfileSettingsContent = () => {
                 </button>
               </div>
 
-              {/* Editable Name */}
-              <div className="w-full mb-1">
-                <input
-                  type="text"
-                  value={profile.name}
-                  onChange={(e) => handleChange('name', e.target.value)}
-                  className="text-2xl font-bold text-text-main dark:text-white text-center bg-transparent border-b-2 border-transparent hover:border-gray-200 focus:border-primary focus:outline-none w-full transition-colors pb-1"
-                />
-              </div>
-
-              {/* Editable Email */}
-              <div className="w-full mb-8">
-                <input
-                  type="email"
-                  value={profile.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
-                  className="text-text-muted dark:text-slate-400 font-medium text-center bg-transparent border-b-2 border-transparent hover:border-gray-200 focus:border-primary focus:outline-none w-full transition-colors pb-1 dir-ltr"
-                />
-              </div>
-
               <div className="w-full space-y-4">
-                <div className="flex items-center justify-between px-5 py-4 bg-gray-50 dark:bg-slate-700 rounded-xl border border-gray-100 dark:border-slate-600">
-                  <div className={`flex items-center gap-3 ${iconDir}`}>
-                    <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 rounded-lg">
-                      <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
-                    </div>
-                    <div className={`${textStart}`}>
-                      <p className="text-sm font-bold text-text-main dark:text-white">{t('profile.planCard.title')}</p>
-                      <p className="text-xs text-text-muted dark:text-slate-400">{t('profile.planCard.subtitle')}</p>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 text-xs font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20 rounded-full">{t('profile.planCard.status')}</span>
-                </div>
-              </div>
-            </div>
-            <div className="bg-surface-light dark:bg-slate-800 rounded-2xl p-6 border border-border-light dark:border-slate-700 shadow-sm">
-              <h3 className="font-bold text-text-main dark:text-white mb-6 flex items-center gap-2 text-lg">
-                <span className="material-symbols-outlined text-primary">insights</span>
-                {t('profile.usage.title')}
-              </h3>
-              <div className="space-y-5">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-text-muted dark:text-slate-400 font-medium">{t('profile.usage.minutes')}</span>
-                    <span className="font-bold text-text-main dark:text-white">{t('profile.usage.quota', { used: 240, total: 500 })}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
-                    <div className="bg-primary h-full rounded-full transition-all duration-500" style={{ width: '48%' }}></div>
-                  </div>
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className={`text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 ${textStart}`}>{t('profile.sections.general')}</h2>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing((prev) => !prev)}
+                    className="inline-flex items-center gap-2 rounded-lg border border-border-light dark:border-slate-600 px-3 py-2 text-xs font-semibold text-text-main dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">{isEditing ? 'visibility' : 'edit'}</span>
+                    {isEditing ? t('profile.buttons.done') : t('profile.buttons.edit')}
+                  </button>
                 </div>
 
+                <label className={`block ${textStart}`}>
+                  <span className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">{t('profile.fields.name')}</span>
+                  <input
+                    type="text"
+                    value={profile.name}
+                    onChange={(e) => handleChange('name', e.target.value)}
+                    readOnly={!isEditing}
+                    className={`w-full rounded-xl border px-4 py-3 text-lg font-bold text-text-main dark:text-white bg-white dark:bg-slate-900/60 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${isEditing ? 'border-border-light dark:border-slate-600' : 'border-transparent cursor-default'}`}
+                  />
+                </label>
+
+                <label className={`block ${textStart}`}>
+                  <span className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">{t('profile.fields.email')}</span>
+                  <input
+                    type="email"
+                    value={profile.email}
+                    onChange={(e) => handleChange('email', e.target.value)}
+                    readOnly={!isEditing}
+                    className={`w-full rounded-xl border px-4 py-3 text-sm font-medium text-text-muted dark:text-slate-300 bg-white dark:bg-slate-900/60 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 dir-ltr ${isEditing ? 'border-border-light dark:border-slate-600' : 'border-transparent cursor-default'}`}
+                  />
+                </label>
               </div>
+
             </div>
           </div>
           <div className="lg:col-span-8 space-y-6">
-            <section className="bg-surface-light dark:bg-slate-800 rounded-2xl shadow-sm border border-border-light dark:border-slate-700 overflow-hidden">
-              <div className="px-8 py-5 border-b border-border-light dark:border-slate-700 flex items-center gap-3 bg-gray-50 dark:bg-slate-700">
-                <span className="material-symbols-outlined text-primary text-[24px]">settings</span>
-                <h2 className="text-lg font-bold text-text-main dark:text-white">{t('profile.sections.general')}</h2>
-              </div>
-              <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-bold text-text-main dark:text-white mb-1" htmlFor="sign-lang">{t('profile.fields.signLanguage')}</label>
-                  <div className="relative">
-                    <select
-                      className="appearance-none w-full bg-input-bg dark:bg-slate-700 border border-border-light dark:border-slate-600 text-text-main dark:text-white rounded-xl h-12 px-4 pl-10 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none font-medium cursor-pointer"
-                      id="sign-lang"
-                      value={profile.signLanguage}
-                      onChange={(e) => handleChange('signLanguage', e.target.value)}
-                    >
-                      <option value="asl">{t('profile.fields.signLanguageOptions.asl')}</option>
-                      <option value="arsl">{t('profile.fields.signLanguageOptions.arsl')}</option>
-                    </select>
-                    <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none text-text-muted dark:text-slate-400">
-                      <span className="material-symbols-outlined">expand_more</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-bold text-text-main dark:text-white mb-1" htmlFor="spoken-lang">{t('profile.fields.spokenLanguage')}</label>
-                  <div className="relative">
-                    <select
-                      className="appearance-none w-full bg-input-bg dark:bg-slate-700 border border-border-light dark:border-slate-600 text-text-main dark:text-white rounded-xl h-12 px-4 pl-10 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none font-medium cursor-pointer"
-                      id="spoken-lang"
-                      value={profile.spokenLanguage}
-                      onChange={(e) => handleChange('spokenLanguage', e.target.value)}
-                    >
-                      <option value="en-us">{t('profile.fields.spokenLanguageOptions.enUS')}</option>
-                      <option value="ar">{t('profile.fields.spokenLanguageOptions.ar')}</option>
-                    </select>
-                    <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none text-text-muted dark:text-slate-400">
-                      <span className="material-symbols-outlined">expand_more</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
             <section className="bg-surface-light dark:bg-slate-800 rounded-2xl shadow-sm border border-border-light dark:border-slate-700 overflow-hidden">
               <div className="px-8 py-5 border-b border-border-light dark:border-slate-700 flex items-center gap-3 bg-gray-50 dark:bg-slate-700">
                 <span className="material-symbols-outlined text-primary text-[24px]">accessibility_new</span>
@@ -294,13 +252,13 @@ const ProfileSettingsContent = () => {
             <div className="flex justify-end gap-4 pt-6 pb-12">
               <button
                 className="px-6 py-3 rounded-xl text-text-muted dark:text-slate-400 font-bold hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-text-main dark:hover:text-white transition-colors"
-                onClick={() => window.location.reload()}
+                onClick={handleCancelEdits}
               >
                 {t('profile.buttons.cancel')}
               </button>
               <button
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || !isEditing}
                 className={`px-8 py-3 rounded-xl bg-primary hover:bg-[#d6452b] text-white font-bold shadow-lg shadow-orange-500/20 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2 ${isSaving ? 'opacity-75 cursor-not-allowed' : ''} ${iconDir}`}
               >
                 {isSaving ? (

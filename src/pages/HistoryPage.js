@@ -153,7 +153,7 @@ const HistoryPage = () => {
                         {/* Pagination Mockup */}
                         <div className="border-t border-slate-100 dark:border-slate-700 p-4 flex items-center justify-between">
                             <span className={`text-sm text-slate-500 dark:text-slate-400 ${textStart}`}>
-                                {t('history.pagination.showing', { count: filteredItems.length, total: historyItems.length })}
+                                {t('history.pagination.showing', { total: historyItems.length })}
                             </span>
                             <div className="flex gap-2">
                                 <button disabled className="px-3 py-1.5 text-sm font-medium text-slate-400 border border-slate-200 dark:border-slate-700 rounded-lg cursor-not-allowed opacity-50">{t('history.pagination.prev')}</button>
