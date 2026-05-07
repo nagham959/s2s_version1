@@ -19,13 +19,32 @@ export const LanguageProvider = ({ children }) => {
   }, [language]);
 
   const t = useCallback(
-    (key, fallback) => {
+    (key, paramsOrFallback, fallbackArg) => {
+      const hasParamsObject =
+        paramsOrFallback && typeof paramsOrFallback === "object" && !Array.isArray(paramsOrFallback);
+      const params = hasParamsObject ? paramsOrFallback : null;
+      const fallback = hasParamsObject ? fallbackArg : paramsOrFallback;
+
       const parts = key.split(".");
       let value = translations[language];
       for (const part of parts) {
         value = value?.[part];
       }
-      if (value !== undefined && value !== null) return value;
+
+      if (value !== undefined && value !== null) {
+        if (typeof value === "string" && params) {
+          return value.replace(/\{\s*([\w.]+)\s*\}/g, (match, token) => {
+            const tokenValue = token
+              .split(".")
+              .reduce((acc, part) => (acc !== undefined && acc !== null ? acc[part] : undefined), params);
+
+            return tokenValue !== undefined && tokenValue !== null ? String(tokenValue) : match;
+          });
+        }
+
+        return value;
+      }
+
       return fallback || key;
     },
     [language],

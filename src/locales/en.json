@@ -632,7 +632,7 @@
       "hintFilter": "Try changing the filter to see more records."
     },
     "pagination": {
-      "showing": "Showing {count} of {total} records",
+      "showing": "Total records: {total}",
       "prev": "Previous",
       "next": "Next"
     },
@@ -649,6 +649,8 @@
     "usage": {
       "title": "Usage this month",
       "minutes": "Translation minutes",
+      "used": "Used minutes",
+      "total": "Total minutes",
       "quota": "{used} / {total}"
     },
     "sections": {
@@ -657,6 +659,8 @@
       "security": "Account security"
     },
     "fields": {
+      "name": "Name",
+      "email": "Email",
       "signLanguage": "Primary sign language",
       "signLanguageOptions": {
         "asl": "American Sign Language (ASL)",
@@ -685,7 +689,9 @@
     "buttons": {
       "cancel": "Cancel",
       "save": "Save changes",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "edit": "Edit",
+      "done": "Done"
     },
     "avatar": {
       "edit": "Edit avatar"
@@ -767,7 +773,22 @@
       "empty": "No recent activity"
     },
     "errors": {
-      "speechUnsupported": "This browser does not support speech recognition."
+      "speechUnsupported": "This browser does not support speech recognition.",
+      "arabicOnly": "Only Arabic text is allowed."
+    },
+    "upload": {
+      "cancelled": "Upload cancelled by user."
+    },
+    "videoReview": {
+      "title": "Review your video",
+      "fileName": "File Name",
+      "fileSize": "File Size",
+      "duration": "Duration",
+      "fileType": "File Type",
+      "uploading": "Uploading video...",
+      "cancel": "Cancel",
+      "stop": "Stop upload",
+      "upload": "Upload video"
     }
   }
 }
