@@ -22,6 +22,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { HistoryProvider } from "./contexts/HistoryContext";
 import GlobalAvatarAssistant from "./components/GlobalAvatarAssistant";
+import PrivateRoute from "./routes/PrivateRoute";
 
 const queryClient = new QueryClient();
 
@@ -51,13 +52,18 @@ function App() {
               <Route path="/resetPassword" element={<ResetPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route
-                path="/profile-settings"
-                element={<ProfileSettingsPage />}
-              />
-              <Route path="/change-password" element={<ChangePasswordPage />} />
-              <Route path="/history" element={<HistoryPage />} />
+              <Route element={<PrivateRoute />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route
+                  path="/profile-settings"
+                  element={<ProfileSettingsPage />}
+                />
+                <Route
+                  path="/change-password"
+                  element={<ChangePasswordPage />}
+                />
+                <Route path="/history" element={<HistoryPage />} />
+              </Route>
             </Routes>
             <GlobalAvatarAssistant />
           </Router>
