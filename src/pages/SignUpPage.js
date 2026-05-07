@@ -70,7 +70,18 @@ const SignUpPage = () => {
   }, [form]);
 
   const setValue = (key, value) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => {
+      const updated = { ...prev, [key]: value };
+      // Auto-enable sign language if user is deaf/HoH
+      if (key === 'userType' && value === 1) {
+        updated.usesSignLanguage = true;
+      }
+      // Disable sign language if user is hearing
+      if (key === 'userType' && value === 2) {
+        updated.usesSignLanguage = false;
+      }
+      return updated;
+    });
 
     if (formError) setFormError("");
 
@@ -240,7 +251,7 @@ const SignUpPage = () => {
           videoSrc={helpModal.videoSrc}
           anchorRect={helpModal.anchorRect}
         />
-        <Navbar variant="auth" logo="SignaryAI" />
+        <Navbar variant="auth" logo="S2S" />
 
         <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none opacity-40 dark:opacity-20 z-0">
@@ -434,43 +445,6 @@ const SignUpPage = () => {
                   <HelpBtn label={t("signUp.fields.userType")} videoSrc="/videos/hello.mp4" />
                 </div>
               </div>
-
-              {/* لغة الإشارة */}
-              <div className="flex items-center gap-3 mt-2">
-                <input
-                  type="checkbox"
-                  id="usesSignLanguage"
-                  checked={form.usesSignLanguage}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setValue("usesSignLanguage", checked);
-                    if (!checked) setValue("signLanguage", 1);
-                  }}
-                  className="w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-600 text-primary focus:ring-primary cursor-pointer"
-                />
-                <label
-                  htmlFor="usesSignLanguage"
-                  className={`text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer select-none ${textStart}`}
-                >
-                  {t("signUp.fields.usesSignLanguage")}
-                </label>
-              </div>
-
-              {form.usesSignLanguage && (
-                <div className="flex flex-col gap-1.5">
-                  <label className={`text-sm font-medium text-slate-700 dark:text-slate-200 ${textStart}`} htmlFor="signLanguage">
-                    {t("signUp.fields.signLanguage")}
-                  </label>
-                  <select
-                    id="signLanguage"
-                    className={`h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart} appearance-none`}
-                    value={form.signLanguage}
-                    onChange={(e) => setValue("signLanguage", Number(e.target.value))}
-                  >
-                    <option value={1}>{t("signUp.options.defaultSignLanguage")}</option>
-                  </select>
-                </div>
-              )}
 
               {/* كلمة المرور */}
               <div className="flex flex-col gap-1.5">

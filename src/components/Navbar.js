@@ -6,7 +6,7 @@ import logoSrc from '../assets/logo_s2s.png';
 
 const Navbar = ({
   variant = 'default', // 'default', 'auth', 'dashboard'
-  logo = 'SignaryAI',
+  logo = 'S2S',
   navItems = [],
   showAccessibility = true,
   showThemeToggle = true,
@@ -26,7 +26,7 @@ const Navbar = ({
 
   // Logo Image Component
   const LogoImg = ({ className = "h-full w-auto" }) => (
-    <img src={logoSrc} alt="SignaryAI Logo" className={className} />
+    <img src={logoSrc} alt="S2S Logo" className={className} />
   );
 
   // Handle links that contain a hash (e.g. /#features)
@@ -50,9 +50,9 @@ const Navbar = ({
   // Default navigation items based on variant
   const defaultNavItems = {
     default: [
-      { label: t('navbar.features'), href: '/#features' },
-      { label: t('navbar.about'), href: '/about' },
-      { label: t('navbar.pricing'), href: '/pricing' }
+      { label: t('navbar.terms'), href: '/terms' },
+      { label: t('navbar.privacy'), href: '/privacy' },
+      { label: t('navbar.faq'), href: '/faq' }
     ],
     dashboard: [
       { label: t('navbar.dashboard'), href: '/dashboard' },

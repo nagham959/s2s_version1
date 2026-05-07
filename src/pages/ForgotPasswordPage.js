@@ -52,7 +52,7 @@ const ForgotPasswordPage = () => {
         dir={dir}
         className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display antialiased transition-colors duration-300"
       >
-        <Navbar variant="auth" logo="SignaryAI" />
+        <Navbar variant="auth" logo="S2S" />
 
         <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none opacity-40 dark:opacity-20 z-0">

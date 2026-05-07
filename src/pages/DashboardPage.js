@@ -631,7 +631,7 @@ const DashboardPage = () => {
       >
         <Navbar
           variant="dashboard"
-          logo="SignaryAI"
+          logo="S2S"
           userProfile="https://lh3.googleusercontent.com/aida-public/AB6AXuDGZQ2Lpmsf2wWPOWbV1NwlSV8apne6XJ1_XsdsDMPhMvbqdiB66HO7PwhmU_DZTGa6XlUQi5NVf0ujJTsRg4xtUU-6Wpwu1Szn_yfiAymfFaKdYMd8GtdBtqSVa2dEtUo31mAq1yjcN548LRNthF2qQ3SvvYs8XgIPbGqY_6lqeleuYwzMPOEvLLIY7inFcwQ0YfJMkt5hTPtZRHcnrLG52YPO27f3HamgyAdtmNaRMhqerd6BtQXWBQd7qpEIe_cy5RZwIEhYib8"
         />
         <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -937,12 +937,27 @@ const DashboardPage = () => {
                       <textarea
                         value={textInput}
                         onChange={(e) => {
-                          const nextValue = e.target.value;
-                          const cleanedValue = keepArabicCharactersOnly(nextValue);
-                          const hasInvalidCharacters = cleanedValue !== nextValue;
+                          let nextValue = e.target.value;
+                          
+                          // Check if there are any non-Arabic characters (English, numbers, special chars, etc.)
+                          const hasNonArabic = /[a-zA-Z]/.test(nextValue);
+                          
+                          // If user tried to add non-Arabic characters, reject and show error
+                          if (hasNonArabic && nextValue.length > textInput.length) {
+                            setTextInputError(t('dashboard.errors.arabicOnly'));
+                            return;
+                          }
 
-                          setTextInput(cleanedValue);
-                          setTextInputError(hasInvalidCharacters ? t('dashboard.errors.arabicOnly') : '');
+                          // Check character limit (200 characters max)
+                          let errorMessage = '';
+                          if (nextValue.length > 200) {
+                            // Don't allow more than 200 characters
+                            nextValue = nextValue.substring(0, 200);
+                            errorMessage = t(' مسموح بحد أقصى 200 حرف فقط');
+                          }
+
+                          setTextInput(nextValue);
+                          setTextInputError(errorMessage);
                           setInputMode('text');
 
                           if (isRecording) {
