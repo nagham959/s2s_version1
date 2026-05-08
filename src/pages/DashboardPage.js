@@ -17,6 +17,7 @@ const DashboardPage = () => {
   const [mode, setMode] = useState("sign-to-voice"); // 'sign-to-voice' or 'voice-to-avatar'
   const [inputMode, setInputMode] = useState("voice"); // 'voice' or 'text' (for voice-to-avatar)
   const [textInput, setTextInput] = useState(""); // typed text for text-to-avatar
+  const [textInputError, setTextInputError] = useState(""); // error for text input
 
   // Interactivity States
   const [isRecording, setIsRecording] = useState(false);
@@ -309,7 +310,23 @@ const DashboardPage = () => {
       videoRef.current.play();
     }
     void translateSignVideo(file);
-    e.target.value = "";
+  };
+
+  const handleCancelVideoUpload = () => {
+    if (pendingVideo) {
+      URL.revokeObjectURL(pendingVideo.url);
+    }
+    setPendingVideo(null);
+    setShowVideoReviewModal(false);
+    setVideoMetadata(null);
+  };
+
+  const handleStopVideoUpload = () => {
+    if (uploadAbortControllerRef.current) {
+      uploadAbortControllerRef.current.abort();
+    }
+    setIsUploadingFile(false);
+    setUploadProgress(0);
   };
 
   const stopAudioRecorder = () => {

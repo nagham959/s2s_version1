@@ -33,6 +33,7 @@ const ProfileSettingsContent = () => {
 
   const [avatar, setAvatar] = useState('https://lh3.googleusercontent.com/aida-public/AB6AXuA1VSvtH1AlkzXbOETNqCK2bOSBX9zehvxrYtg-eU2kf9VmtHAZjwj4vb58SSSx7KEwA4O8dgYp9msr07NT3_4xhpmUb-HH-xn1iF9HZkOjr71J-TqS9cR9vFyvNj9LsoeVAPv4-zgWsZ4MqmTFskzH9cmweAq0KpOYbzv4vwlGjHHqKuo_zxU4zQBLSmlnPCqD-27GLkXf9mzkePEXzgr6UMDnYfI13Rtb0Jl-ns96YAhfq1eWAeHsf3cZ3UG1777wh1L3oXLuCQQ');
   const [notification, setNotification] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
 
   // Load user data from auth context and local storage when available
@@ -78,9 +79,7 @@ const ProfileSettingsContent = () => {
       setNotification({ type: 'success', message: t('profile.toast.saveSuccess') });
 
       setTimeout(() => setNotification(null), 3000);
-    } finally {
-      setIsSaving(false);
-    }
+    }, 1000);
   };
 
   const handleCancelEdits = () => {
@@ -286,12 +285,12 @@ const ProfileSettingsContent = () => {
                 disabled={isSaving}
                 className={`px-8 py-3 rounded-xl bg-primary hover:bg-[#d6452b] text-white font-bold shadow-lg shadow-orange-500/20 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2 ${isSaving ? 'opacity-75 cursor-not-allowed' : ''} ${iconDir}`}
               >
-                {isSubmitting ? (
+                {isSaving ? (
                   <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-white border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></span>
                 ) : (
                   <span className="material-symbols-outlined text-[20px]">save</span>
                 )}
-                {isSubmitting ? t('profile.buttons.saving') : t('profile.buttons.save')}
+                {isSaving ? t('profile.buttons.saving') : t('profile.buttons.save')}
               </button>
             </div>
           </div>
