@@ -70,7 +70,7 @@ import Sidebar from './components/Sidebar';
 
 ## Dark Mode
 
-جميع المكونات تدعم Dark Mode تلقائياً من خلال `ThemeContext`. تأكد من لف التطبيق بـ `ThemeProvider`:
+جميع المكونات تدعم Dark Mode تلقائياً من خلال `ThemeContext`. تأكد من لف الموقع بـ `ThemeProvider`:
 
 ```jsx
 import { ThemeProvider } from './contexts/ThemeContext';

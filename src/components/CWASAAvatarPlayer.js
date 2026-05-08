@@ -52,7 +52,7 @@ const CWASAAvatarPlayer = ({
   return (
     <iframe
       ref={iframeRef}
-      src="/alsl-avatar/embed.html"
+      src="/alsl-avatar/embed.html?v=marc-force"
       title={title}
       className={className}
       onLoad={() => setIsFrameReady(true)}

@@ -18,9 +18,9 @@
     }
   },
   "navbar": {
-    "features": "Features",
-    "about": "About",
-    "pricing": "Pricing",
+    "terms": "Terms & Conditions",
+    "privacy": "Privacy Policy",
+    "faq": "FAQ",
     "dashboard": "Dashboard",
     "history": "History",
     "settings": "Settings",
@@ -121,7 +121,7 @@
     "hero": {
       "eyebrow": "About",
       "title": "We believe communication is for everyone",
-      "subtitle": "SignaryAI is an innovative platform that breaks language barriers between the Deaf community and the hearing world using state-of-the-art AI."
+      "subtitle": "S2S is an innovative platform that breaks language barriers between the Deaf community and the hearing world using state-of-the-art AI."
     },
     "missionVision": {
       "missionTitle": "Our mission",
@@ -160,7 +160,7 @@
     "hero": {
       "eyebrow": "Features",
       "title": "Everything you need to communicate without barriers",
-      "subtitle": "SignaryAI combines advanced AI with motion tracking to provide instant, seamless translation."
+      "subtitle": "S2S combines advanced AI with motion tracking to provide instant, seamless translation."
     },
     "featureCards": [
       {
@@ -289,7 +289,7 @@
         },
         {
           "q": "Does it work on mobile?",
-          "a": "The platform runs in the browser on desktop and mobile. Mobile apps are coming soon."
+          "a": "The platform runs in the browser and is accessible on mobile devices."
         }
       ]
     }
@@ -309,9 +309,9 @@
       "privacy": "Privacy policy",
       "terms": "Terms of service",
       "help": "Help center",
-      "copyright": "© 2025 SignaryAI Inc. All rights reserved."
+      "copyright": "© 2025 S2S Inc. All rights reserved."
     },
-    "copyright": "© 2025 SignaryAI Inc. All rights reserved."
+    "copyright": "© 2025 S2S Inc. All rights reserved."
   },
   "help": {
     "exampleTitle": "Example demo",
@@ -325,21 +325,9 @@
       "subtitle": "Our team is ready to answer your questions. We reply within 24 hours."
     },
     "infoCards": [
-      {
-        "icon": "email",
-        "title": "Email",
-        "value": "support@signaryai.com"
-      },
-      {
-        "icon": "schedule",
-        "title": "Hours",
-        "value": "Sunday - Thursday, 9am - 5pm"
-      },
-      {
-        "icon": "location_on",
-        "title": "Location",
-        "value": "Cairo, Egypt"
-      }
+      { "icon": "email", "title": "Email", "value": "support@signaryai.com" },
+      { "icon": "schedule", "title": "Hours", "value": "Sunday - Thursday, 9am - 5pm" },
+      { "icon": "location_on", "title": "Location", "value": "Cairo, Egypt" }
     ],
     "form": {
       "title": "Send us a message",
@@ -377,15 +365,15 @@
     "sections": [
       {
         "title": "1. Acceptance of terms",
-        "body": "By using the SignaryAI platform, you agree to these terms. If you disagree with any part, please stop using the service."
+        "body": "By using the S2S platform, you agree to these terms. If you disagree with any part, please stop using the service."
       },
       {
         "title": "2. Service description",
-        "body": "SignaryAI provides sign-to-voice and voice-to-sign translation using AI. The service is for lawful personal and professional use only."
+        "body": "S2S provides sign-to-voice and voice-to-sign translation using AI. The service is for lawful personal and professional use only."
       },
       {
         "title": "3. User account",
-        "body": "You are responsible for keeping your login details confidential. Notify us immediately if you suspect unauthorized use. SignaryAI is not liable for losses resulting from failing to protect your account."
+        "body": "You are responsible for keeping your login details confidential. Notify us immediately if you suspect unauthorized use. S2S is not liable for losses resulting from failing to protect your account."
       },
       {
         "title": "4. Acceptable use",
@@ -399,15 +387,15 @@
       },
       {
         "title": "5. Intellectual property",
-        "body": "All IP in the platform and its content is owned by SignaryAI. You may not copy, distribute, or modify any part without prior written permission."
+        "body": "All IP in the platform and its content is owned by S2S. You may not copy, distribute, or modify any part without prior written permission."
       },
       {
         "title": "6. Disclaimer",
-        "body": "The service is provided \"as is\" without warranties. SignaryAI does not guarantee translation accuracy at all times and is not liable for damages from using or relying on the service in scenarios requiring absolute accuracy."
+        "body": "The service is provided \"as is\" without warranties. S2S does not guarantee translation accuracy at all times and is not liable for damages from using or relying on the service in scenarios requiring absolute accuracy."
       },
       {
         "title": "7. Changes to terms",
-        "body": "SignaryAI may update these terms at any time. We will notify you of material changes via email or in-app notice. Continuing to use the service after changes means you accept them."
+        "body": "S2S may update these terms at any time. We will notify you of material changes via email or in-website notice. Continuing to use the service after changes means you accept them."
       },
       {
         "title": "8. Contact us",
@@ -425,7 +413,7 @@
     "sections": [
       {
         "title": "1. Introduction",
-        "body": "SignaryAI is committed to protecting your privacy. This policy explains how we collect, use, and safeguard your data."
+        "body": "S2S is committed to protecting your privacy. This policy explains how we collect, use, and safeguard your data."
       },
       {
         "title": "2. Data we collect",
@@ -652,7 +640,7 @@
       "hintFilter": "Try changing the filter to see more records."
     },
     "pagination": {
-      "showing": "Showing {count} of {total} records",
+      "showing": "Total records: {total}",
       "prev": "Previous",
       "next": "Next"
     },
@@ -660,7 +648,7 @@
   },
   "profile": {
     "title": "Profile & settings",
-    "subtitle": "Manage your identity, preferences, and accessibility options to tailor your SignaryAI experience.",
+    "subtitle": "Manage your identity, preferences, and accessibility options to tailor your S2S experience.",
     "planCard": {
       "title": "Pro plan",
       "subtitle": "Annual renewal",
@@ -669,6 +657,8 @@
     "usage": {
       "title": "Usage this month",
       "minutes": "Translation minutes",
+      "used": "Used minutes",
+      "total": "Total minutes",
       "quota": "{used} / {total}"
     },
     "sections": {
@@ -677,6 +667,8 @@
       "security": "Account security"
     },
     "fields": {
+      "name": "Name",
+      "email": "Email",
       "signLanguage": "Primary sign language",
       "signLanguageOptions": {
         "asl": "American Sign Language (ASL)",
@@ -705,7 +697,9 @@
     "buttons": {
       "cancel": "Cancel",
       "save": "Save changes",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "edit": "Edit",
+      "done": "Done"
     },
     "avatar": {
       "edit": "Edit avatar"
@@ -787,7 +781,22 @@
       "empty": "No recent activity"
     },
     "errors": {
-      "speechUnsupported": "This browser does not support speech recognition."
+      "speechUnsupported": "This browser does not support speech recognition.",
+      "arabicOnly": "Only Arabic text is allowed."
+    },
+    "upload": {
+      "cancelled": "Upload cancelled by user."
+    },
+    "videoReview": {
+      "title": "Review your video",
+      "fileName": "File Name",
+      "fileSize": "File Size",
+      "duration": "Duration",
+      "fileType": "File Type",
+      "uploading": "Uploading video...",
+      "cancel": "Cancel",
+      "stop": "Stop upload",
+      "upload": "Upload video"
     }
   },
   "validation": {

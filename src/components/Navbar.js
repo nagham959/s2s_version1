@@ -6,7 +6,7 @@ import logoSrc from '../assets/logo_s2s.png';
 
 const Navbar = ({
   variant = 'default', // 'default', 'auth', 'dashboard'
-  logo = 'SignaryAI',
+  logo = 'S2S',
   navItems = [],
   showAccessibility = true,
   showThemeToggle = true,
@@ -15,7 +15,7 @@ const Navbar = ({
   onLoginClick = null,
   onMenuClick = null
 }) => {
-  const { isDark, toggleTheme } = useTheme();
+  const { toggleTheme } = useTheme();
   const { language, toggleLanguage, t, dir } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -23,8 +23,11 @@ const Navbar = ({
 
   const languageLabel = language === 'ar' ? t('language.shortEn', 'EN') : t('language.shortAr', 'AR');
   const languageTitle = language === 'ar' ? t('language.english', 'English') : t('language.arabic', 'Arabic');
-  const isRtl = language === 'ar';
-  const iconDir = isRtl ? 'flex-row-reverse' : 'flex-row';
+
+  // Logo Image Component
+  const LogoImg = ({ className = "h-full w-auto" }) => (
+    <img src={logoSrc} alt="S2S Logo" className={className} />
+  );
 
   // Handle links that contain a hash (e.g. /#features)
   const handleHashNav = (e, href) => {
@@ -47,9 +50,9 @@ const Navbar = ({
   // Default navigation items based on variant
   const defaultNavItems = {
     default: [
-      { label: t('navbar.features'), href: '/#features' },
-      { label: t('navbar.about'), href: '/about' },
-      { label: t('navbar.pricing'), href: '/pricing' }
+      { label: t('navbar.terms'), href: '/terms' },
+      { label: t('navbar.privacy'), href: '/privacy' },
+      { label: t('navbar.faq'), href: '/faq' }
     ],
     dashboard: [
       { label: t('navbar.dashboard'), href: '/dashboard' },
@@ -60,11 +63,6 @@ const Navbar = ({
   };
 
   const items = navItems.length > 0 ? navItems : (defaultNavItems[variant] || []);
-
-  // Logo Image Component
-  const LogoImg = ({ className = "h-full w-auto" }) => (
-    <img src={logoSrc} alt="SignaryAI Logo" className={className} />
-  );
 
   // Render based on variant
   if (variant === 'auth') {
@@ -78,12 +76,6 @@ const Navbar = ({
             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{logo}</h1>
           </Link>
           <div className="flex items-center gap-3">
-            {showAccessibility && (
-              <button className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-semibold transition-colors focus-visible-ring ${iconDir}`}>
-                <span className="material-symbols-outlined text-[20px]">accessibility_new</span>
-                <span className="text-sm">{t('navbar.accessibility')}</span>
-              </button>
-            )}
             {showLanguageToggle && (
               <button
                 aria-label={t('language.toggle')}
@@ -149,15 +141,6 @@ const Navbar = ({
               })}
             </nav>
             <div className="flex items-center gap-4">
-              {showAccessibility && (
-                <button
-                  aria-label="Accessibility Options"
-                  className={`hidden sm:flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors ${iconDir}`}
-                >
-                  <span className="material-symbols-outlined text-xl">accessibility_new</span>
-                  <span className="hidden lg:inline">{t('navbar.accessibility')}</span>
-                </button>
-              )}
               {showLanguageToggle && (
                 <button
                   aria-label={t('language.toggle')}
@@ -246,14 +229,6 @@ const Navbar = ({
                 <span className="truncate">{t('navbar.login')}</span>
               </Link>
             ) : null}
-            {showAccessibility && (
-              <button
-                aria-label="Accessibility Options"
-                className={`flex cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-text-main dark:text-slate-300 gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-3 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors ${iconDir}`}
-              >
-                <span className="material-symbols-outlined text-[20px]">accessibility_new</span>
-              </button>
-            )}
             {showLanguageToggle && (
               <button
                 aria-label={t('language.toggle')}

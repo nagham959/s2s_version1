@@ -10,13 +10,6 @@ import { useLanguage } from '../contexts/LanguageContext';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 
-// Extend the backend schema with UI-only fields for the form
-const profileFormSchema = updateProfileSchema.extend({
-  email: z.string().email().optional(),
-  signLanguage: z.string().optional(),
-  spokenLanguage: z.string().optional(),
-});
-
 const ProfileSettingsContent = () => {
   const { isDark, toggleTheme } = useTheme();
   const { logout, user } = useAuth();  // استخدم بيانات اليوزر من الـ context
@@ -26,42 +19,44 @@ const ProfileSettingsContent = () => {
   const iconDir = isRtl ? 'flex-row-reverse' : 'flex-row';
   const navigate = useNavigate();
 
-  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm({
-    resolver: zodResolver(profileFormSchema),
-    mode: "onTouched",
-    reValidateMode: "onChange",
-    defaultValues: {
-      displayName: '',
-      email: '',
-      signLanguage: 'asl',
-      spokenLanguage: 'en-us'
-    }
+  // State for user profile and settings
+  const [profile, setProfile] = useState({
+    name: '',
+    email: '',
+    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA1VSvtH1AlkzXbOETNqCK2bOSBX9zehvxrYtg-eU2kf9VmtHAZjwj4vb58SSSx7KEwA4O8dgYp9msr07NT3_4xhpmUb-HH-xn1iF9HZkOjr71J-TqS9cR9vFyvNj9LsoeVAPv4-zgWsZ4MqmTFskzH9cmweAq0KpOYbzv4vwlGjHHqKuo_zxU4zQBLSmlnPCqD-27GLkXf9mzkePEXzgr6UMDnYfI13Rtb0Jl-ns96YAhfq1eWAeHsf3cZ3UG1777wh1L3oXLuCQQ',
+    signLanguage: 'asl',
+    spokenLanguage: 'en-us'
   });
+
+  const [savedProfile, setSavedProfile] = useState(null);
+  const [isEditing, setIsEditing] = useState(true);
 
   const [avatar, setAvatar] = useState('https://lh3.googleusercontent.com/aida-public/AB6AXuA1VSvtH1AlkzXbOETNqCK2bOSBX9zehvxrYtg-eU2kf9VmtHAZjwj4vb58SSSx7KEwA4O8dgYp9msr07NT3_4xhpmUb-HH-xn1iF9HZkOjr71J-TqS9cR9vFyvNj9LsoeVAPv4-zgWsZ4MqmTFskzH9cmweAq0KpOYbzv4vwlGjHHqKuo_zxU4zQBLSmlnPCqD-27GLkXf9mzkePEXzgr6UMDnYfI13Rtb0Jl-ns96YAhfq1eWAeHsf3cZ3UG1777wh1L3oXLuCQQ');
   const [notification, setNotification] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Load user data from auth context when available
+  // Load user data from auth context and local storage when available
   useEffect(() => {
     if (user) {
-      setValue('displayName', user.displayName || '');
-      setValue('email', user.email || '');
+      setProfile(prev => ({
+        ...prev,
+        name: user.displayName || '',
+        email: user.email || ''
+      }));
     }
-  }, [user, setValue]);
+  }, [user]);
 
   // Load from localStorage on mount if you want to keep local changes
   useEffect(() => {
     const savedProfile = localStorage.getItem('userProfile');
     if (savedProfile) {
-      const parsed = JSON.parse(savedProfile);
-      setValue('displayName', parsed.displayName || parsed.name || '');
-      setValue('email', parsed.email || '');
-      setValue('signLanguage', parsed.signLanguage || 'asl');
-      setValue('spokenLanguage', parsed.spokenLanguage || 'en-us');
-      if (parsed.avatar) setAvatar(parsed.avatar);
+      setProfile(prev => ({ ...prev, ...JSON.parse(savedProfile) }));
     }
-  }, [setValue]);
+  }, []);
+
+  const handleChange = (field, value) => {
+    setProfile(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -74,22 +69,25 @@ const ProfileSettingsContent = () => {
     }
   };
 
-  const onSubmit = (data) => {
-    // API Contract requires DisplayName and PhoneNumber
-    const apiPayload = {
-      displayName: data.displayName,
-      phoneNumber: data.phoneNumber || undefined,
-    };
-    
+  const handleSave = () => {
+    setIsSaving(true);
     // Simulate API call
     setTimeout(() => {
-      // Save UI state locally to persist language preferences alongside API data
-      localStorage.setItem('userProfile', JSON.stringify({ ...data, avatar, ...apiPayload }));
+      localStorage.setItem('userProfile', JSON.stringify(profile));
+      setIsSaving(false);
       setNotification({ type: 'success', message: t('profile.toast.saveSuccess') });
 
-      // Hide notification after 3 seconds
       setTimeout(() => setNotification(null), 3000);
-    }, 1000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdits = () => {
+    if (savedProfile) {
+      setProfile(savedProfile);
+    }
+    setIsEditing(false);
   };
 
   const handleLogout = async () => {
@@ -104,7 +102,7 @@ const ProfileSettingsContent = () => {
 
   return (
     <div dir={dir} className="bg-background-subtle dark:bg-background-dark font-display text-text-main dark:text-white antialiased min-h-screen flex flex-col relative">
-      <Navbar variant="dashboard" logo="SignaryAI" />
+      <Navbar variant="dashboard" logo="S2S" />
 
       {/* Toast Notification */}
       {notification && (
@@ -150,59 +148,22 @@ const ProfileSettingsContent = () => {
               <div className="w-full mb-1">
                 <input
                   type="text"
-                  {...register('displayName')}
-                  className="text-2xl font-bold text-text-main dark:text-white text-center bg-transparent border-b-2 hover:border-gray-200 focus:border-primary focus:outline-none w-full transition-colors pb-1"
-                  style={{ borderColor: errors.displayName ? '#ef4444' : 'transparent' }}
+                  value={profile.name}
+                  onChange={(e) => handleChange('name', e.target.value)}
+                  className="text-2xl font-bold text-text-main dark:text-white text-center bg-transparent border-b-2 border-transparent hover:border-gray-200 focus:border-primary focus:outline-none w-full transition-colors pb-1"
                 />
-                {errors.displayName && (
-                  <p className="text-red-500 text-xs mt-1">{t(errors.displayName.message)}</p>
-                )}
               </div>
 
               {/* Editable Email */}
               <div className="w-full mb-8">
                 <input
                   type="email"
-                  {...register('email')}
+                  value={profile.email}
+                  onChange={(e) => handleChange('email', e.target.value)}
                   className="text-text-muted dark:text-slate-400 font-medium text-center bg-transparent border-b-2 border-transparent hover:border-gray-200 focus:border-primary focus:outline-none w-full transition-colors pb-1 dir-ltr"
                 />
-                {errors.email && (
-                  <p className="text-red-500 text-xs mt-1">{t(errors.email.message)}</p>
-                )}
               </div>
 
-              <div className="w-full space-y-4">
-                <div className="flex items-center justify-between px-5 py-4 bg-gray-50 dark:bg-slate-700 rounded-xl border border-gray-100 dark:border-slate-600">
-                  <div className={`flex items-center gap-3 ${iconDir}`}>
-                    <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 rounded-lg">
-                      <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
-                    </div>
-                    <div className={`${textStart}`}>
-                      <p className="text-sm font-bold text-text-main dark:text-white">{t('profile.planCard.title')}</p>
-                      <p className="text-xs text-text-muted dark:text-slate-400">{t('profile.planCard.subtitle')}</p>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 text-xs font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20 rounded-full">{t('profile.planCard.status')}</span>
-                </div>
-              </div>
-            </div>
-            <div className="bg-surface-light dark:bg-slate-800 rounded-2xl p-6 border border-border-light dark:border-slate-700 shadow-sm">
-              <h3 className="font-bold text-text-main dark:text-white mb-6 flex items-center gap-2 text-lg">
-                <span className="material-symbols-outlined text-primary">insights</span>
-                {t('profile.usage.title')}
-              </h3>
-              <div className="space-y-5">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-text-muted dark:text-slate-400 font-medium">{t('profile.usage.minutes')}</span>
-                    <span className="font-bold text-text-main dark:text-white">{t('profile.usage.quota', { used: 240, total: 500 })}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
-                    <div className="bg-primary h-full rounded-full transition-all duration-500" style={{ width: '48%' }}></div>
-                  </div>
-                </div>
-
-              </div>
             </div>
           </div>
           <div className="lg:col-span-8 space-y-6">
@@ -218,7 +179,8 @@ const ProfileSettingsContent = () => {
                     <select
                       className="appearance-none w-full bg-input-bg dark:bg-slate-700 border border-border-light dark:border-slate-600 text-text-main dark:text-white rounded-xl h-12 px-4 pl-10 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none font-medium cursor-pointer"
                       id="sign-lang"
-                      {...register('signLanguage')}
+                      value={profile.signLanguage}
+                      onChange={(e) => handleChange('signLanguage', e.target.value)}
                     >
                       <option value="asl">{t('profile.fields.signLanguageOptions.asl')}</option>
                       <option value="arsl">{t('profile.fields.signLanguageOptions.arsl')}</option>
@@ -234,7 +196,8 @@ const ProfileSettingsContent = () => {
                     <select
                       className="appearance-none w-full bg-input-bg dark:bg-slate-700 border border-border-light dark:border-slate-600 text-text-main dark:text-white rounded-xl h-12 px-4 pl-10 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none font-medium cursor-pointer"
                       id="spoken-lang"
-                      {...register('spokenLanguage')}
+                      value={profile.spokenLanguage}
+                      onChange={(e) => handleChange('spokenLanguage', e.target.value)}
                     >
                       <option value="en-us">{t('profile.fields.spokenLanguageOptions.enUS')}</option>
                       <option value="ar">{t('profile.fields.spokenLanguageOptions.ar')}</option>
@@ -314,14 +277,14 @@ const ProfileSettingsContent = () => {
             <div className="flex justify-end gap-4 pt-6 pb-12">
               <button
                 className="px-6 py-3 rounded-xl text-text-muted dark:text-slate-400 font-bold hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-text-main dark:hover:text-white transition-colors"
-                onClick={() => window.location.reload()}
+                onClick={handleCancelEdits}
               >
                 {t('profile.buttons.cancel')}
               </button>
               <button
-                onClick={handleSubmit(onSubmit)}
-                disabled={isSubmitting}
-                className={`px-8 py-3 rounded-xl bg-primary hover:bg-[#d6452b] text-white font-bold shadow-lg shadow-orange-500/20 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2 ${isSubmitting ? 'opacity-75 cursor-not-allowed' : ''} ${iconDir}`}
+                onClick={handleSave}
+                disabled={isSaving}
+                className={`px-8 py-3 rounded-xl bg-primary hover:bg-[#d6452b] text-white font-bold shadow-lg shadow-orange-500/20 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2 ${isSaving ? 'opacity-75 cursor-not-allowed' : ''} ${iconDir}`}
               >
                 {isSubmitting ? (
                   <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-white border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></span>

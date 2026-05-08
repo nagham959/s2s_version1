@@ -17,6 +17,7 @@ import AboutPage from "./pages/AboutPage";
 import PricingPage from "./pages/PricingPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
+import FAQPage from "./pages/FAQPage";
 import ContactPage from "./pages/ContactPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -40,6 +41,7 @@ function App() {
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/faq" element={<FAQPage />} />
               <Route path="/contact" element={<ContactPage />} />
 
               <Route path="/login" element={<LoginPage />} />

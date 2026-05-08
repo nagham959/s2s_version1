@@ -77,7 +77,77 @@ const SignUpPage = () => {
     </button>
   );
 
-  // Manual validation logic removed in favor of Zod schema
+  const canSubmit = useMemo(() => {
+    return (
+      form.displayName.trim() &&
+      form.email.trim() &&
+      form.dateOfBirth &&
+      form.phoneNumber.trim() &&
+      form.password &&
+      form.confirmPassword
+    );
+  }, [form]);
+
+  const setValue = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+
+    if (formError) setFormError("");
+
+    setFieldErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
+  };
+
+  const validate = () => {
+    const errs = {};
+
+    if (!form.displayName.trim()) errs.displayName = t("signUp.errors.displayNameRequired");
+
+    if (!form.email.trim()) errs.email = t("signUp.errors.emailRequired");
+    else if (!/^\S+@\S+\.\S+$/.test(form.email)) errs.email = t("signUp.errors.emailInvalid");
+
+    if (!form.dateOfBirth) errs.dateOfBirth = t("signUp.errors.dobRequired");
+    else {
+      const dob = new Date(form.dateOfBirth);
+      const today = new Date();
+      if (dob > today) errs.dateOfBirth = t("signUp.errors.dobInvalid");
+    }
+
+    // phone validation
+    const phone = (form.phoneNumber || "").trim().replace(/\s|-/g, "");
+    if (!phone) {
+      errs.phoneNumber = t("signUp.errors.phoneRequired");
+    } else {
+      const okEgyptLocal = /^\d{11}$/.test(phone);
+      const okEgyptIntl = /^\+20\d{10}$/.test(phone);
+      const okGeneric = /^\+?\d{10,15}$/.test(phone);
+      if (!(okEgyptLocal || okEgyptIntl || okGeneric)) {
+        errs.phoneNumber = t("signUp.errors.phoneInvalid");
+      }
+    }
+
+    if (!form.password) {
+      errs.password = t("signUp.errors.passwordRequired");
+    } else if (form.password.length < 8) {
+      errs.password = t("signUp.errors.passwordShort");
+    } else if (!/[A-Z]/.test(form.password)) {
+      errs.password = t("signUp.errors.passwordUpper");
+    } else if (!/[a-z]/.test(form.password)) {
+      errs.password = t("signUp.errors.passwordLower");
+    } else if (!/[0-9]/.test(form.password)) {
+      errs.password = t("signUp.errors.passwordDigit");
+    } else if (!/[@$!%*?& #]/.test(form.password)) {
+      errs.password = t("signUp.errors.passwordSpecial");
+    }
+
+    if (form.confirmPassword !== form.password) {
+      errs.confirmPassword = t("signUp.errors.confirmMismatch");
+    }
+
+    return errs;
+  };
 
   const RegisterErrorHandler = async (res) => {
     const rawText = await res.text();
@@ -173,7 +243,7 @@ const SignUpPage = () => {
           videoSrc={helpModal.videoSrc}
           anchorRect={helpModal.anchorRect}
         />
-        <Navbar variant="auth" logo="SignaryAI" />
+        <Navbar variant="auth" logo="S2S" />
 
         <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none opacity-40 dark:opacity-20 z-0">
@@ -392,12 +462,13 @@ const SignUpPage = () => {
                 <input
                   type="checkbox"
                   id="usesSignLanguage"
+                  checked={form.usesSignLanguage}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setValue("usesSignLanguage", checked);
+                    if (!checked) setValue("signLanguage", 1);
+                  }}
                   className="w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-600 text-primary focus:ring-primary cursor-pointer"
-                  {...register("usesSignLanguage", {
-                    onChange: (e) => {
-                      if (!e.target.checked) setHookFormValue("signLanguage", 1);
-                    }
-                  })}
                 />
                 <label
                   htmlFor="usesSignLanguage"
@@ -407,21 +478,19 @@ const SignUpPage = () => {
                 </label>
               </div>
 
-              {usesSignLanguage && (
+              {form.usesSignLanguage && (
                 <div className="flex flex-col gap-1.5">
                   <label className={`text-sm font-medium text-slate-700 dark:text-slate-200 ${textStart}`} htmlFor="signLanguage">
                     {t("signUp.fields.signLanguage")}
                   </label>
                   <select
                     id="signLanguage"
-                    className={`h-11 px-4 rounded-xl border ${errors.signLanguage ? 'border-red-500' : 'border-border-light dark:border-border-dark'} bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart} appearance-none`}
-                    {...register("signLanguage", { valueAsNumber: true })}
+                    className={`h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart} appearance-none`}
+                    value={form.signLanguage}
+                    onChange={(e) => setValue("signLanguage", Number(e.target.value))}
                   >
                     <option value={1}>{t("signUp.options.defaultSignLanguage")}</option>
                   </select>
-                  {errors.signLanguage && (
-                    <span className="text-xs text-red-600">{t(errors.signLanguage.message)}</span>
-                  )}
                 </div>
               )}
 

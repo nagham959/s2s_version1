@@ -103,7 +103,7 @@ const LoginPage = () => {
           videoSrc={helpModal.videoSrc}
           anchorRect={helpModal.anchorRect}
         />
-        <Navbar variant="auth" logo="SignaryAI" />
+        <Navbar variant="auth" logo="S2S" />
 
         <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none opacity-40 dark:opacity-20 z-0">
@@ -308,7 +308,7 @@ const LoginPage = () => {
                   <span>{t("login.google")}</span>
                 </button>
 
-                {/* <button
+                <button
                   className="flex items-center justify-center gap-3 w-full h-12 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-transparent hover:bg-slate-50 dark:hover:bg-[#2a2a2a] transition-all font-semibold text-slate-700 dark:text-slate-200"
                   type="button"
                 >
@@ -316,7 +316,7 @@ const LoginPage = () => {
                     <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z" fill="#1877F2" />
                   </svg>
                   <span>{t('login.facebook')}</span>
-                </button> */}
+                </button>
               </div>
             </form>
             <div className="bg-slate-50 dark:bg-black/40 px-8 py-5 border-t border-border-light dark:border-border-dark text-center">
