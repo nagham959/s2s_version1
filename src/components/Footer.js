@@ -62,9 +62,9 @@ const Footer = ({ variant = 'default' }) => {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <div className="size-10">
-                <img src={logoSrc} alt="SignaryAI Logo" className="h-full w-auto" />
+                <img src={logoSrc} alt="S2S Logo" className="h-full w-auto" />
               </div>
-              <span className="text-lg font-bold">SignaryAI</span>
+              <span className="text-lg font-bold">S2S</span>
             </div>
             <p className="text-gray-400 dark:text-slate-400 text-sm leading-relaxed">
               {t('footer.tagline')}

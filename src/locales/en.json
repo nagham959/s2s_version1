@@ -9,10 +9,18 @@
   "common": {
     "error": "An error occurred. Please try again."
   },
+  "auth": {
+    "errors": {
+      "invalidCredentials": "Invalid email or password.",
+      "unverified": "Please verify your email first.",
+      "accountLocked": "Account is locked. Please try again later.",
+      "invalidOrExpired": "The code entered is invalid or has expired."
+    }
+  },
   "navbar": {
-    "features": "Features",
-    "about": "About",
-    "pricing": "Pricing",
+    "terms": "Terms & Conditions",
+    "privacy": "Privacy Policy",
+    "faq": "FAQ",
     "dashboard": "Dashboard",
     "history": "History",
     "settings": "Settings",
@@ -113,7 +121,7 @@
     "hero": {
       "eyebrow": "About",
       "title": "We believe communication is for everyone",
-      "subtitle": "SignaryAI is an innovative platform that breaks language barriers between the Deaf community and the hearing world using state-of-the-art AI."
+      "subtitle": "S2S is an innovative platform that breaks language barriers between the Deaf community and the hearing world using state-of-the-art AI."
     },
     "missionVision": {
       "missionTitle": "Our mission",
@@ -152,7 +160,7 @@
     "hero": {
       "eyebrow": "Features",
       "title": "Everything you need to communicate without barriers",
-      "subtitle": "SignaryAI combines advanced AI with motion tracking to provide instant, seamless translation."
+      "subtitle": "S2S combines advanced AI with motion tracking to provide instant, seamless translation."
     },
     "featureCards": [
       {
@@ -281,7 +289,7 @@
         },
         {
           "q": "Does it work on mobile?",
-          "a": "The platform runs in the browser on desktop and mobile. Mobile apps are coming soon."
+          "a": "The platform runs in the browser and is accessible on mobile devices."
         }
       ]
     }
@@ -301,9 +309,9 @@
       "privacy": "Privacy policy",
       "terms": "Terms of service",
       "help": "Help center",
-      "copyright": "© 2025 SignaryAI Inc. All rights reserved."
+      "copyright": "© 2025 S2S Inc. All rights reserved."
     },
-    "copyright": "© 2025 SignaryAI Inc. All rights reserved."
+    "copyright": "© 2025 S2S Inc. All rights reserved."
   },
   "help": {
     "exampleTitle": "Example demo",
@@ -357,15 +365,15 @@
     "sections": [
       {
         "title": "1. Acceptance of terms",
-        "body": "By using the SignaryAI platform, you agree to these terms. If you disagree with any part, please stop using the service."
+        "body": "By using the S2S platform, you agree to these terms. If you disagree with any part, please stop using the service."
       },
       {
         "title": "2. Service description",
-        "body": "SignaryAI provides sign-to-voice and voice-to-sign translation using AI. The service is for lawful personal and professional use only."
+        "body": "S2S provides sign-to-voice and voice-to-sign translation using AI. The service is for lawful personal and professional use only."
       },
       {
         "title": "3. User account",
-        "body": "You are responsible for keeping your login details confidential. Notify us immediately if you suspect unauthorized use. SignaryAI is not liable for losses resulting from failing to protect your account."
+        "body": "You are responsible for keeping your login details confidential. Notify us immediately if you suspect unauthorized use. S2S is not liable for losses resulting from failing to protect your account."
       },
       {
         "title": "4. Acceptable use",
@@ -379,15 +387,15 @@
       },
       {
         "title": "5. Intellectual property",
-        "body": "All IP in the platform and its content is owned by SignaryAI. You may not copy, distribute, or modify any part without prior written permission."
+        "body": "All IP in the platform and its content is owned by S2S. You may not copy, distribute, or modify any part without prior written permission."
       },
       {
         "title": "6. Disclaimer",
-        "body": "The service is provided \"as is\" without warranties. SignaryAI does not guarantee translation accuracy at all times and is not liable for damages from using or relying on the service in scenarios requiring absolute accuracy."
+        "body": "The service is provided \"as is\" without warranties. S2S does not guarantee translation accuracy at all times and is not liable for damages from using or relying on the service in scenarios requiring absolute accuracy."
       },
       {
         "title": "7. Changes to terms",
-        "body": "SignaryAI may update these terms at any time. We will notify you of material changes via email or in-app notice. Continuing to use the service after changes means you accept them."
+        "body": "S2S may update these terms at any time. We will notify you of material changes via email or in-website notice. Continuing to use the service after changes means you accept them."
       },
       {
         "title": "8. Contact us",
@@ -405,7 +413,7 @@
     "sections": [
       {
         "title": "1. Introduction",
-        "body": "SignaryAI is committed to protecting your privacy. This policy explains how we collect, use, and safeguard your data."
+        "body": "S2S is committed to protecting your privacy. This policy explains how we collect, use, and safeguard your data."
       },
       {
         "title": "2. Data we collect",
@@ -632,7 +640,7 @@
       "hintFilter": "Try changing the filter to see more records."
     },
     "pagination": {
-      "showing": "Showing {count} of {total} records",
+      "showing": "Total records: {total}",
       "prev": "Previous",
       "next": "Next"
     },
@@ -640,7 +648,7 @@
   },
   "profile": {
     "title": "Profile & settings",
-    "subtitle": "Manage your identity, preferences, and accessibility options to tailor your SignaryAI experience.",
+    "subtitle": "Manage your identity, preferences, and accessibility options to tailor your S2S experience.",
     "planCard": {
       "title": "Pro plan",
       "subtitle": "Annual renewal",
@@ -649,6 +657,8 @@
     "usage": {
       "title": "Usage this month",
       "minutes": "Translation minutes",
+      "used": "Used minutes",
+      "total": "Total minutes",
       "quota": "{used} / {total}"
     },
     "sections": {
@@ -657,6 +667,8 @@
       "security": "Account security"
     },
     "fields": {
+      "name": "Name",
+      "email": "Email",
       "signLanguage": "Primary sign language",
       "signLanguageOptions": {
         "asl": "American Sign Language (ASL)",
@@ -685,7 +697,9 @@
     "buttons": {
       "cancel": "Cancel",
       "save": "Save changes",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "edit": "Edit",
+      "done": "Done"
     },
     "avatar": {
       "edit": "Edit avatar"
@@ -767,7 +781,122 @@
       "empty": "No recent activity"
     },
     "errors": {
-      "speechUnsupported": "This browser does not support speech recognition."
+      "speechUnsupported": "This browser does not support speech recognition.",
+      "arabicOnly": "Only Arabic text is allowed."
+    },
+    "upload": {
+      "cancelled": "Upload cancelled by user."
+    },
+    "videoReview": {
+      "title": "Review your video",
+      "fileName": "File Name",
+      "fileSize": "File Size",
+      "duration": "Duration",
+      "fileType": "File Type",
+      "uploading": "Uploading video...",
+      "cancel": "Cancel",
+      "stop": "Stop upload",
+      "upload": "Upload video"
+    }
+  },
+  "validation": {
+    "shared": {
+      "emailRequired": "Email is required.",
+      "emailInvalid": "A valid email is required.",
+      "emailMaxLength": "Email cannot exceed 256 characters.",
+      "emailForbiddenChars": "Email contains forbidden characters.",
+      "passwordRequired": "Password is required.",
+      "passwordMinLength": "Password must be at least 8 characters.",
+      "passwordMaxLength": "Password cannot exceed 100 characters.",
+      "passwordUppercase": "Password must contain at least one uppercase letter.",
+      "passwordLowercase": "Password must contain at least one lowercase letter.",
+      "passwordDigit": "Password must contain at least one number.",
+      "passwordSpecialChar": "Password must contain at least one special character.",
+      "passwordNoHtmlTags": "Password cannot contain HTML tags.",
+      "confirmPasswordRequired": "Confirm password is required.",
+      "confirmPasswordMismatch": "Passwords do not match."
+    },
+    "register": {
+      "displayNameRequired": "Display Name is required.",
+      "displayNameMaxLength": "Display Name cannot exceed 50 characters.",
+      "usernameRequired": "Username is required.",
+      "usernameMinLength": "Username must be at least 3 characters long.",
+      "usernameMaxLength": "Username cannot exceed 30 characters.",
+      "usernamePattern": "Username can only contain letters, numbers, dots, hyphens, and underscores.",
+      "phoneRequired": "Phone number is required.",
+      "phoneInvalid": "Phone number must be a valid Egyptian number (e.g. 01XXXXXXXXX).",
+      "dobRequired": "Date of birth is required.",
+      "dobAge": "Age must be between 15 and 80 years.",
+      "userTypeRequired": "User Type is required.",
+      "signLanguageRequired": "Sign Language must be specified if 'Uses Sign Language' is true."
+    },
+    "login": {
+      "passwordMaxLength": "Password cannot exceed 100 characters."
+    },
+    "verifyOtp": {
+      "emailRequired": "Email is required.",
+      "emailInvalid": "Invalid email format.",
+      "emailMaxLength": "Email cannot exceed 256 characters.",
+      "emailForbiddenChars": "Email contains forbidden characters.",
+      "otpRequired": "OTP is required.",
+      "otpLength": "OTP must be exactly 6 characters.",
+      "otpDigitsOnly": "OTP must contain only 6 digits."
+    },
+    "forgotPassword": {
+      "emailRequired": "Email is required.",
+      "emailMaxLength": "Email cannot exceed 256 characters.",
+      "emailInvalid": "Please enter a valid email address.",
+      "emailFormat": "Please enter a valid email format.",
+      "emailForbiddenChars": "Email contains forbidden characters."
+    },
+    "resetPassword": {
+      "tokenRequired": "Security token is required."
+    },
+    "changePassword": {
+      "currentPasswordRequired": "Current password is required.",
+      "newPasswordRequired": "New password is required.",
+      "newPasswordSameAsCurrent": "New password must be different from the current password."
+    },
+    "updateProfile": {
+      "displayNameEmpty": "Display Name cannot be empty.",
+      "displayNameMaxLength": "Display Name cannot exceed 50 characters.",
+      "phoneInvalid": "Phone number must be a valid Egyptian number (e.g. 01XXXXXXXXX)."
+    },
+    "firebaseLogin": {
+      "idTokenRequired": "Firebase ID token is required."
+    },
+    "fcmToken": {
+      "fcmTokenRequired": "FCM token is required."
+    },
+    "translation": {
+      "videoRequired": "Video file is required.",
+      "videoTooLarge": "Video file exceeds 50 MB.",
+      "videoInvalidFormat": "Unsupported video format.",
+      "videoInvalidContentType": "Unsupported video content type.",
+      "audioRequired": "Audio file is required.",
+      "audioTooLarge": "Audio file exceeds 20 MB.",
+      "audioInvalidFormat": "Unsupported audio format.",
+      "audioInvalidContentType": "Unsupported audio content type.",
+      "textRequired": "Text is required for translation.",
+      "textTooLong": "Text cannot exceed 200 characters."
+    },
+    "tts": {
+      "textRequired": "Text is required for speech synthesis.",
+      "textTooLong": "Text exceeds the maximum length for speech synthesis."
+    },
+    "changeEmail": {
+      "newEmailRequired": "New email is required.",
+      "newEmailInvalid": "A valid email is required.",
+      "currentPasswordRequired": "Current password is required.",
+      "currentPasswordMaxLength": "Password cannot exceed 100 characters.",
+      "otpRequired": "OTP is required.",
+      "otpLength": "OTP must be exactly 6 characters."
+    },
+    "profileImage": {
+      "imageRequired": "Profile image is required.",
+      "imageTooLarge": "Profile image exceeds 5 MB.",
+      "imageInvalidFormat": "Unsupported image format.",
+      "imageInvalidContentType": "Unsupported image content type."
     }
   }
 }

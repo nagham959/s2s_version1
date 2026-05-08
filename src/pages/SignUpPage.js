@@ -1,9 +1,16 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { format } from "date-fns";
+import { registerSchema } from "../validations/auth/registerSchema";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import VideoHelpModal from "../components/VideoHelpModal";
+import PasswordStrengthIndicator from "../components/PasswordStrengthIndicator";
 import { useLanguage } from "../contexts/LanguageContext";
 
 const API_BASE_URL =
@@ -18,23 +25,35 @@ const SignUpPage = () => {
   const passwordPadding = isRtl ? 'pr-4 pl-12' : 'pl-4 pr-12';
   const passwordTogglePosition = isRtl ? 'left-3' : 'right-3';
 
-  const [form, setForm] = useState({
-    displayName: "",
-    userName: "",
-    email: "",
-    phoneNumber: "",
-    dateOfBirth: "",
-    userType: 1, 
-    usesSignLanguage: false,
-    signLanguage: 1, 
-    password: "",
-    confirmPassword: "",
-    gender: "", 
+  const {
+    register,
+    handleSubmit,
+    watch,
+    control,
+    setValue: setHookFormValue,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(registerSchema),
+    mode: "onTouched",
+    reValidateMode: "onChange",
+    defaultValues: {
+      displayName: "",
+      userName: "",
+      email: "",
+      phoneNumber: "",
+      dateOfBirth: "",
+      userType: 1,
+      usesSignLanguage: false,
+      signLanguage: 1,
+      password: "",
+      confirmPassword: "",
+      gender: "",
+    },
   });
 
-  const [fieldErrors, setFieldErrors] = useState({});
+  const usesSignLanguage = watch("usesSignLanguage");
+
   const [formError, setFormError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -175,29 +194,20 @@ const SignUpPage = () => {
     return { message, fieldErrors };
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     setFormError("");
-
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setFieldErrors(validationErrors);
-      return;
-    }
-
-    setSubmitting(true);
 
     try {
       const payload = {
-        email: form.email.trim(),
-        displayName: form.displayName.trim(),
-        dateOfBirth: form.dateOfBirth,
-        userName: (form.userName || "").trim() || form.email.split("@")[0],
-        password: form.password,
-        phoneNumber: (form.phoneNumber || "").trim(),
-        userType: Number(form.userType),
-        usesSignLanguage: Boolean(form.usesSignLanguage),
-        signLanguage: Number(form.signLanguage),
+        email: data.email.trim(),
+        displayName: data.displayName.trim(),
+        dateOfBirth: data.dateOfBirth,
+        userName: (data.userName || "").trim() || data.email.split("@")[0],
+        password: data.password,
+        phoneNumber: (data.phoneNumber || "").trim(),
+        userType: Number(data.userType),
+        usesSignLanguage: Boolean(data.usesSignLanguage),
+        signLanguage: Number(data.signLanguage),
       };
 
       const res = await fetch(`${API_BASE_URL}/api/v1/Auth/Register`, {
@@ -207,23 +217,16 @@ const SignUpPage = () => {
       });
 
       if (!res.ok) {
-        const { message, fieldErrors: apiFieldErrors } = await RegisterErrorHandler(res);
-
-        if (apiFieldErrors && Object.keys(apiFieldErrors).length > 0) {
-          setFieldErrors((prev) => ({ ...prev, ...apiFieldErrors }));
-        }
-
+        const { message } = await RegisterErrorHandler(res);
         setFormError(message);
         return;
       }
 
       // if rigestred successfully navigate to verify page
-      navigate("/verifyEmail", { state: { email: form.email.trim() } });
+      navigate("/verifyEmail", { state: { email: payload.email } });
     } catch (err) {
       console.error(err);
       setFormError(t("signUp.errors.serverUnavailable"));
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -240,7 +243,7 @@ const SignUpPage = () => {
           videoSrc={helpModal.videoSrc}
           anchorRect={helpModal.anchorRect}
         />
-        <Navbar variant="auth" logo="SignaryAI" />
+        <Navbar variant="auth" logo="S2S" />
 
         <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none opacity-40 dark:opacity-20 z-0">
@@ -287,7 +290,7 @@ const SignUpPage = () => {
               </div>
             </div>
 
-            <form className="p-8 flex flex-col gap-5" onSubmit={handleSubmit}>
+            <form className="p-8 flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)}>
               {!!formError?.trim() && (
                 <div
                   role="alert"
@@ -306,15 +309,14 @@ const SignUpPage = () => {
                 <div className="flex items-center gap-2">
                   <input
                     id="displayName"
-                    className={`flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart}`}
+                    className={`flex-1 h-11 px-4 rounded-xl border ${errors.displayName ? 'border-red-500' : 'border-border-light dark:border-border-dark'} bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart}`}
                     placeholder={t("signUp.placeholders.displayName")}
-                    value={form.displayName}
-                    onChange={(e) => setValue("displayName", e.target.value)}
+                    {...register("displayName")}
                   />
                   <HelpBtn label={t("signUp.fields.displayName")} videoSrc="/videos/hello.mp4" />
                 </div>
-                {fieldErrors.displayName && (
-                  <span className="text-xs text-red-600">{fieldErrors.displayName}</span>
+                {errors.displayName && (
+                  <span className="text-xs text-red-600">{t(errors.displayName.message)}</span>
                 )}
               </div>
 
@@ -326,13 +328,15 @@ const SignUpPage = () => {
                 <div className="flex items-center gap-2">
                   <input
                     id="userName"
-                    className={`flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart}`}
+                    className={`flex-1 h-11 px-4 rounded-xl border ${errors.userName ? 'border-red-500' : 'border-border-light dark:border-border-dark'} bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart}`}
                     placeholder={t("signUp.placeholders.userName")}
-                    value={form.userName}
-                    onChange={(e) => setValue("userName", e.target.value)}
+                    {...register("userName")}
                   />
                   <HelpBtn label={t("signUp.fields.userName")} videoSrc="/videos/hello.mp4" />
                 </div>
+                {errors.userName && (
+                  <span className="text-xs text-red-600">{t(errors.userName.message)}</span>
+                )}
               </div>
 
               {/* البريد الإلكتروني */}
@@ -343,15 +347,14 @@ const SignUpPage = () => {
                 <div className="flex items-center gap-2">
                   <input
                     id="email"
-                    className={`flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart}`}
+                    className={`flex-1 h-11 px-4 rounded-xl border ${errors.email ? 'border-red-500' : 'border-border-light dark:border-border-dark'} bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart}`}
                     placeholder={t("signUp.placeholders.email")}
                     type="email"
-                    value={form.email}
-                    onChange={(e) => setValue("email", e.target.value)}
+                    {...register("email")}
                   />
                   <HelpBtn label={t("signUp.fields.email")} videoSrc="/videos/hello.mp4" />
                 </div>
-                {fieldErrors.email && <span className="text-xs text-red-600">{fieldErrors.email}</span>}
+                {errors.email && <span className="text-xs text-red-600">{t(errors.email.message)}</span>}
               </div>
 
               {/* رقم الهاتف */}
@@ -362,16 +365,16 @@ const SignUpPage = () => {
                 <div className="flex items-center gap-2">
                   <input
                     id="phoneNumber"
-                    className={`flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart}`}
+                    className={`flex-1 h-11 px-4 rounded-xl border ${errors.phoneNumber ? 'border-red-500' : 'border-border-light dark:border-border-dark'} bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart}`}
                     placeholder={t("signUp.placeholders.phoneNumber")}
-                    value={form.phoneNumber}
-                    onChange={(e) => setValue("phoneNumber", e.target.value)}
+                    {...register("phoneNumber")}
                     dir="ltr"
+                    style={{ direction: 'ltr', textAlign: isRtl ? 'right' : 'left', unicodeBidi: 'plaintext' }}
                   />
                   <HelpBtn label={t("signUp.fields.phoneNumber")} videoSrc="/videos/hello.mp4" />
                 </div>
-                {fieldErrors.phoneNumber && (
-                  <span className="text-xs text-red-600">{fieldErrors.phoneNumber}</span>
+                {errors.phoneNumber && (
+                  <span className="text-xs text-red-600">{t(errors.phoneNumber.message)}</span>
                 )}
               </div>
 
@@ -384,9 +387,8 @@ const SignUpPage = () => {
                   <div className="flex items-center gap-2">
                     <select
                       id="gender"
-                      className={`flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart} appearance-none`}
-                      value={form.gender}
-                      onChange={(e) => setValue("gender", e.target.value)}
+                      className={`flex-1 h-11 px-4 rounded-xl border ${errors.gender ? 'border-red-500' : 'border-border-light dark:border-border-dark'} bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart} appearance-none`}
+                      {...register("gender")}
                     >
                       <option value="">{t("signUp.options.choose")}</option>
                       <option value="male">{t("signUp.options.male")}</option>
@@ -394,6 +396,9 @@ const SignUpPage = () => {
                     </select>
                     <HelpBtn label={t("signUp.fields.gender")} videoSrc="/videos/hello.mp4" />
                   </div>
+                  {errors.gender && (
+                    <span className="text-xs text-red-600">{t(errors.gender.message)}</span>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -401,17 +406,32 @@ const SignUpPage = () => {
                     {t("signUp.fields.dateOfBirth")} <span className="text-red-500 text-xs">{t("signUp.required")}</span>
                   </label>
                   <div className="flex items-center gap-2">
-                    <input
-                      id="dateOfBirth"
-                      className={`flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart}`}
-                      type="date"
-                      value={form.dateOfBirth}
-                      onChange={(e) => setValue("dateOfBirth", e.target.value)}
+                    <Controller
+                      name="dateOfBirth"
+                      control={control}
+                      render={({ field }) => (
+                        <DatePicker
+                          selected={field.value ? new Date(field.value) : null}
+                          onChange={(date) => {
+                            if (date) {
+                              field.onChange(format(date, 'yyyy-MM-dd'));
+                            } else {
+                              field.onChange('');
+                            }
+                          }}
+                          dateFormat="yyyy-MM-dd"
+                          className={`flex-1 w-full h-11 px-4 rounded-xl border ${errors.dateOfBirth ? 'border-red-500' : 'border-border-light dark:border-border-dark'} bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart}`}
+                          placeholderText="YYYY-MM-DD"
+                          showYearDropdown
+                          showMonthDropdown
+                          dropdownMode="select"
+                        />
+                      )}
                     />
                     <HelpBtn label={t("signUp.fields.dateOfBirth")} videoSrc="/videos/hello.mp4" />
                   </div>
-                  {fieldErrors.dateOfBirth && (
-                    <span className="text-xs text-red-600">{fieldErrors.dateOfBirth}</span>
+                  {errors.dateOfBirth && (
+                    <span className="text-xs text-red-600">{t(errors.dateOfBirth.message)}</span>
                   )}
                 </div>
               </div>
@@ -424,15 +444,17 @@ const SignUpPage = () => {
                 <div className="flex items-center gap-2">
                   <select
                     id="userType"
-                    className={`flex-1 h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart} appearance-none`}
-                    value={form.userType}
-                    onChange={(e) => setValue("userType", Number(e.target.value))}
+                    className={`flex-1 h-11 px-4 rounded-xl border ${errors.userType ? 'border-red-500' : 'border-border-light dark:border-border-dark'} bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart} appearance-none`}
+                    {...register("userType", { valueAsNumber: true })}
                   >
                     <option value={1}>{t("signUp.options.userDeaf")}</option>
                     <option value={2}>{t("signUp.options.userHearing")}</option>
                   </select>
                   <HelpBtn label={t("signUp.fields.userType")} videoSrc="/videos/hello.mp4" />
                 </div>
+                {errors.userType && (
+                  <span className="text-xs text-red-600">{t(errors.userType.message)}</span>
+                )}
               </div>
 
               {/* لغة الإشارة */}
@@ -482,11 +504,10 @@ const SignUpPage = () => {
                   <div className="relative flex-1">
                     <input
                       id="password"
-                      className={`h-11 w-full rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart} ${passwordPadding}`}
+                      className={`h-11 w-full rounded-xl border ${errors.password ? 'border-red-500' : 'border-border-light dark:border-border-dark'} bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart} ${passwordPadding}`}
                       placeholder={t("signUp.placeholders.password")}
                       type={showPassword ? "text" : "password"}
-                      value={form.password}
-                      onChange={(e) => setValue("password", e.target.value)}
+                      {...register("password")}
                     />
                     <button
                       type="button"
@@ -501,8 +522,8 @@ const SignUpPage = () => {
                   </div>
                   <HelpBtn label={t("signUp.fields.password")} videoSrc="/videos/hello.mp4" />
                 </div>
-
-                {fieldErrors.password && <span className="text-xs text-red-600">{fieldErrors.password}</span>}
+                <PasswordStrengthIndicator password={watch("password")} />
+                {errors.password && <span className="text-xs text-red-600">{t(errors.password.message)}</span>}
               </div>
 
               {/* تأكيد كلمة المرور */}
@@ -515,11 +536,10 @@ const SignUpPage = () => {
                   <div className="relative flex-1">
                     <input
                       id="confirmPassword"
-                      className={`h-11 w-full rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart} ${passwordPadding}`}
+                      className={`h-11 w-full rounded-xl border ${errors.confirmPassword ? 'border-red-500' : 'border-border-light dark:border-border-dark'} bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart} ${passwordPadding}`}
                       placeholder={t("signUp.placeholders.confirmPassword")}
                       type={showConfirmPassword ? "text" : "password"}
-                      value={form.confirmPassword}
-                      onChange={(e) => setValue("confirmPassword", e.target.value)}
+                      {...register("confirmPassword")}
                     />
                     <button
                       type="button"
@@ -535,17 +555,17 @@ const SignUpPage = () => {
                   <HelpBtn label={t("signUp.fields.confirmPassword")} videoSrc="/videos/hello.mp4" />
                 </div>
 
-                {fieldErrors.confirmPassword && (
-                  <span className="text-xs text-red-600">{fieldErrors.confirmPassword}</span>
+                {errors.confirmPassword && (
+                  <span className="text-xs text-red-600">{t(errors.confirmPassword.message)}</span>
                 )}
               </div>
 
               <button
                 type="submit"
-                disabled={submitting || !canSubmit}
+                disabled={isSubmitting}
                 className="mt-4 h-12 w-full bg-primary hover:bg-primary-dark text-white font-medium rounded-xl shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {submitting ? (
+                {isSubmitting ? (
                   <>
                     <span className="animate-spin material-symbols-outlined">refresh</span>
                     {t("signUp.actions.submitting")}

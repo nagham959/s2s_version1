@@ -1,70 +1,56 @@
-import React, { useState } from 'react';
-import { ThemeProvider } from '../contexts/ThemeContext';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
-import { useAuth } from '../contexts/authContext';
-import { useLanguage } from '../contexts/LanguageContext';
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { changePasswordSchema } from "../validations/auth/changePasswordSchema.js";
+import { ThemeProvider } from "../contexts/ThemeContext";
+import Navbar from "../components/Navbar";
+import Sidebar from "../components/Sidebar";
+import PasswordStrengthIndicator from "../components/PasswordStrengthIndicator";
+import { useAuth } from "../contexts/authContext.js";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const ChangePasswordPage = () => {
-    const { changePassword } = useAuth();
-    const { t, language, dir } = useLanguage();
-    const isRtl = language === 'ar';
-    const textStart = isRtl ? 'text-right' : 'text-left';
-    const [formData, setFormData] = useState({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-    });
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const [isLoading, setIsLoading] = useState(false); // 3. حالة التحميل
+  const { changePassword } = useAuth();
+  const { t, language, dir } = useLanguage();
+  const isRtl = language === "ar";
+  const textStart = isRtl ? "text-right" : "text-left";
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(changePasswordSchema),
+    mode: "onTouched",
+    reValidateMode: "onChange",
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
-        if (error) setError('');
-        if (success) setSuccess('');
-    };
+  const [apiError, setApiError] = useState("");
+  const [success, setSuccess] = useState("");
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        const { currentPassword, newPassword, confirmPassword } = formData;
+  const onSubmit = async (data) => {
+    setApiError("");
+    setSuccess("");
 
-        if (!currentPassword || !newPassword || !confirmPassword) {
-            setError(t('changePassword.errors.required'));
-            return;
-        }
+    try {
+      await changePassword(
+        data.currentPassword,
+        data.newPassword,
+        data.confirmPassword,
+      );
 
-        if (newPassword.length < 8) {
-            setError(t('changePassword.errors.short'));
-            return;
-        }
-
-        if (newPassword !== confirmPassword) {
-            setError(t('changePassword.errors.mismatch'));
-            return;
-        }
-
-        setIsLoading(true); 
-        setError('');
-        
-        try {
-            await changePassword(currentPassword, newPassword, confirmPassword);
-            
-            setSuccess(t('changePassword.success'));
-            setFormData({
-                currentPassword: '',
-                newPassword: '',
-                confirmPassword: ''
-            });
-        } catch (err) {
-            setError(err.message || t('common.error'));
-        } finally {
-            setIsLoading(false); 
-        }
-    };
+      setSuccess(t("changePassword.success"));
+      reset();
+    } catch (err) {
+      setApiError(err.message || t("common.error"));
+    }
+  };
 
     return (
         <ThemeProvider>
@@ -84,82 +70,104 @@ const ChangePasswordPage = () => {
                             {t('changePassword.title')}
                         </h1>
 
-                        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
-                            {error && (
-                                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-sm font-medium flex items-center gap-2 border border-red-100 dark:border-red-800">
-                                    <span className="material-symbols-outlined">error</span>
-                                    {error}
-                                </div>
-                            )}
-                            {success && (
-                                <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl text-sm font-medium flex items-center gap-2 border border-green-100 dark:border-green-800">
-                                    <span className="material-symbols-outlined">check_circle</span>
-                                    {success}
-                                </div>
-                            )}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
+              {apiError && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-sm font-medium flex items-center gap-2 border border-red-100 dark:border-red-800">
+                  <span className="material-symbols-outlined">error</span>
+                  {apiError}
+                </div>
+              )}
+              {success && (
+                <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl text-sm font-medium flex items-center gap-2 border border-green-100 dark:border-green-800">
+                  <span className="material-symbols-outlined">
+                    check_circle
+                  </span>
+                  {success}
+                </div>
+              )}
 
-                            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-                                <div>
-                                    <label className={`block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 ${textStart}`}>
-                                        {t('changePassword.fields.current')}
-                                    </label>
-                                    <input
-                                        type="password"
-                                        name="currentPassword"
-                                        value={formData.currentPassword}
-                                        onChange={handleChange}
-                                        disabled={isLoading}
-                                        className={`w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50 ${textStart}`}
-                                        placeholder={t('changePassword.placeholders.current')}
-                                    />
-                                </div>
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="flex flex-col gap-6"
+              >
+                <div>
+                  <label
+                    className={`block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 ${textStart}`}
+                  >
+                    {t("changePassword.fields.current")}
+                  </label>
+                  <input
+                    type="password"
+                    {...register("currentPassword")}
+                    disabled={isSubmitting}
+                    className={`w-full px-4 py-3 rounded-xl border ${errors.currentPassword ? "border-red-500" : "border-slate-200 dark:border-slate-600"} bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50 ${textStart}`}
+                    placeholder={t("changePassword.placeholders.current")}
+                  />
+                  {errors.currentPassword && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {t(errors.currentPassword.message)}
+                    </p>
+                  )}
+                </div>
 
-                                <div>
-                                    <label className={`block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 ${textStart}`}>
-                                        {t('changePassword.fields.new')}
-                                    </label>
-                                    <input
-                                        type="password"
-                                        name="newPassword"
-                                        value={formData.newPassword}
-                                        onChange={handleChange}
-                                        disabled={isLoading}
-                                        className={`w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50 ${textStart}`}
-                                        placeholder={t('changePassword.placeholders.new')}
-                                    />
-                                </div>
+                <div>
+                  <label
+                    className={`block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 ${textStart}`}
+                  >
+                    {t("changePassword.fields.new")}
+                  </label>
+                  <input
+                    type="password"
+                    {...register("newPassword")}
+                    disabled={isSubmitting}
+                    className={`w-full px-4 py-3 rounded-xl border ${errors.newPassword ? "border-red-500" : "border-slate-200 dark:border-slate-600"} bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50 ${textStart}`}
+                    placeholder={t("changePassword.placeholders.new")}
+                  />
+                  <PasswordStrengthIndicator password={watch("newPassword")} />
+                  {errors.newPassword && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {t(errors.newPassword.message)}
+                    </p>
+                  )}
+                </div>
 
-                                <div>
-                                    <label className={`block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 ${textStart}`}>
-                                        {t('changePassword.fields.confirm')}
-                                    </label>
-                                    <input
-                                        type="password"
-                                        name="confirmPassword"
-                                        value={formData.confirmPassword}
-                                        onChange={handleChange}
-                                        disabled={isLoading}
-                                        className={`w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50 ${textStart}`}
-                                        placeholder={t('changePassword.placeholders.confirm')}
-                                    />
-                                </div>
+                <div>
+                  <label
+                    className={`block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 ${textStart}`}
+                  >
+                    {t("changePassword.fields.confirm")}
+                  </label>
+                  <input
+                    type="password"
+                    {...register("confirmPassword")}
+                    disabled={isSubmitting}
+                    className={`w-full px-4 py-3 rounded-xl border ${errors.confirmPassword ? "border-red-500" : "border-slate-200 dark:border-slate-600"} bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none disabled:opacity-50 ${textStart}`}
+                    placeholder={t("changePassword.placeholders.confirm")}
+                  />
+                  {errors.confirmPassword && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {t(errors.confirmPassword.message)}
+                    </p>
+                  )}
+                </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={isLoading}
-                                    className="w-full py-3.5 px-4 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                                >
-                                    {isLoading ? t('changePassword.submitting') : t('changePassword.submit')}
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-
-                </main>
-                <Sidebar variant="mobile" activeItem="settings" />
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 px-4 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting
+                    ? t("changePassword.submitting")
+                    : t("changePassword.submit")}
+                </button>
+              </form>
             </div>
-        </ThemeProvider>
-    );
+          </div>
+        </main>
+        <Sidebar variant="mobile" activeItem="settings" />
+      </div>
+    </ThemeProvider>
+  );
 };
 
 export default ChangePasswordPage;

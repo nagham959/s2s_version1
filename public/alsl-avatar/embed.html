@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CWASA Embed Avatar</title>
-  <link rel="stylesheet" href="cwa/cwasa.css" />
-  <script src="cwa/allcsa.js"></script>
+  <link rel="stylesheet" href="cwa/cwasa.css?v=marc-force" />
+  <script src="cwa/allcsa.js?v=marc-force"></script>
   <style>
     html, body {
       margin: 0;
@@ -13,7 +13,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #f1f5f9;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%);
       font-family: Arial, sans-serif;
     }
 
@@ -28,19 +28,10 @@
       height: 100%;
     }
 
-    .menu-wrap {
-      position: absolute;
-      left: 50%;
-      bottom: 8px;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.85);
-      border: 1px solid rgba(15, 23, 42, 0.12);
-      border-radius: 8px;
-      padding: 2px 8px;
-      font-size: 12px;
-      color: #0f172a;
-      z-index: 5;
-      backdrop-filter: blur(2px);
+    .menu-wrap,
+    .CWASAAvMenu,
+    .CWASAAvMenu * {
+      display: none !important;
     }
 
   </style>
@@ -49,13 +40,50 @@
       var isReady = false;
       var queuedSigml = null;
 
+      function forceMarcAvatar() {
+        try {
+          if (window.CWASA) {
+            var cfg = window.CWASA.theConfig || window.CWASA.config || {};
+            cfg.avs = ['marc'];
+            cfg.avsfull = ['marc'];
+            cfg.initAv = 'marc';
+          }
+
+          if (window.CWASA && window.CWASA.avatar && typeof window.CWASA.avatar.switchAvatar === 'function') {
+            window.CWASA.avatar.switchAvatar('marc');
+            return true;
+          }
+
+          var menu = document.querySelector('.menuAv');
+          if (menu) {
+            menu.value = 'marc';
+            menu.dispatchEvent(new Event('change'));
+            return true;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+
+        return false;
+      }
+
       function initCWASA() {
         if (!window.CWASA || typeof window.CWASA.init !== 'function') {
           console.error('CWASA is not available.');
           return;
         }
-        CWASA.init();
+        CWASA.init({ initAv: 'marc', avs: ['marc'] });
         isReady = true;
+
+        if (!forceMarcAvatar()) {
+          var tries = 0;
+          var timer = setInterval(function () {
+            tries++;
+            if (forceMarcAvatar() || tries > 25) {
+              clearInterval(timer);
+            }
+          }, 200);
+        }
 
         if (queuedSigml) {
           playSiGML(queuedSigml);
@@ -95,9 +123,6 @@
 <body>
   <div class="avatar-shell">
     <div class="CWASAAvatar av0"></div>
-    <div class="menu-wrap">
-      <span class="CWASAAvMenu av0"></span>
-    </div>
   </div>
 </body>
 </html>

@@ -1,15 +1,13 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { forgotPasswordSchema } from "../validations/auth/forgotPasswordSchema";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useAuth } from "../contexts/authContext";
 import { useLanguage } from "../contexts/LanguageContext";
-
-// validation
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
-}
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
@@ -19,30 +17,31 @@ const ForgotPasswordPage = () => {
   const textStart = isRtl ? "text-right" : "text-left";
   const arrowIcon = isRtl ? 'arrow_back' : 'arrow_forward';
 
-  const [email, setEmail] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(forgotPasswordSchema),
+    mode: "onTouched",
+    reValidateMode: "onChange",
+    defaultValues: { email: "" },
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMessage("");
+  const [apiError, setApiError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const onSubmit = async (data) => {
+    setApiError("");
     setSuccessMessage("");
 
-    const cleanEmail = email.trim();
-    if (!cleanEmail) return setErrorMessage(t("forgotPassword.errorEmpty"));
-    if (!isValidEmail(cleanEmail)) return setErrorMessage(t("forgotPassword.errorInvalid"));
-
-    setIsLoading(true);
     try {
-      await forgotPassword(cleanEmail);
+      await forgotPassword(data.email.trim());
 
       setSuccessMessage(t("forgotPassword.success"));
       setTimeout(() => navigate("/login"), 2500);
     } catch (err) {
-      setErrorMessage(err?.message || t("common.error"));
-    } finally {
-      setIsLoading(false);
+      setApiError(err?.message || t("common.error"));
     }
   };
 
@@ -52,7 +51,7 @@ const ForgotPasswordPage = () => {
         dir={dir}
         className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display antialiased transition-colors duration-300"
       >
-        <Navbar variant="auth" logo="SignaryAI" />
+        <Navbar variant="auth" logo="S2S" />
 
         <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none opacity-40 dark:opacity-20 z-0">
@@ -70,7 +69,7 @@ const ForgotPasswordPage = () => {
               </p>
             </div>
 
-            <form className="p-8 flex flex-col gap-5" onSubmit={handleSubmit}>
+            <form className="p-8 flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)}>
               <label className="flex flex-col gap-2 group">
                 <span className={`text-sm font-medium text-slate-700 dark:text-white ${textStart}`}>
                   {t("forgotPassword.emailLabel")}
@@ -78,15 +77,10 @@ const ForgotPasswordPage = () => {
 
                 <div className="relative">
                   <input
-                    className={`w-full h-12 pr-10 pl-4 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base ${textStart}`}
+                    className={`w-full h-12 pr-10 pl-4 rounded-xl border ${errors.email ? 'border-red-500' : 'border-border-light dark:border-border-dark'} bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base ${textStart}`}
                     placeholder={t("forgotPassword.emailPlaceholder")}
                     type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (errorMessage) setErrorMessage("");
-                      if (successMessage) setSuccessMessage("");
-                    }}
+                    {...register("email")}
                   />
                   <div className={`absolute ${isRtl ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none`}>
                     <span className="material-symbols-outlined text-[20px]">mail</span>
@@ -94,13 +88,19 @@ const ForgotPasswordPage = () => {
                 </div>
               </label>
 
-              {!!errorMessage?.trim() && (
+              {errors.email && (
+                <div className="text-sm text-red-600 mt-1">
+                  {t(errors.email.message)}
+                </div>
+              )}
+
+              {!!apiError?.trim() && (
                 <div
                   role="alert"
                   aria-live="polite"
                   className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm text-red-600"
                 >
-                  {errorMessage}
+                  {apiError}
                 </div>
               )}
 
@@ -113,9 +113,9 @@ const ForgotPasswordPage = () => {
               <button
                 className="w-full h-12 mt-2 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-[#F2593D]/20 hover:shadow-[#F2593D]/40 transition-all active:scale-[0.98] focus-visible-ring flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
-                <span>{isLoading ? t("forgotPassword.submitting") : t("forgotPassword.submit")}</span>
+                <span>{isSubmitting ? t("forgotPassword.submitting") : t("forgotPassword.submit")}</span>
                 <span className="material-symbols-outlined text-[18px]">{arrowIcon}</span>
               </button>
             </form>

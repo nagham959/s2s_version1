@@ -41,6 +41,19 @@ const DashboardPage = () => {
   const [avatarSigml, setAvatarSigml] = useState("");
   const [avatarPlayNonce, setAvatarPlayNonce] = useState(0);
 
+  // Video Upload Review Modal States
+  const [pendingVideo, setPendingVideo] = useState(null);
+  const [showVideoReviewModal, setShowVideoReviewModal] = useState(false);
+  const [videoMetadata, setVideoMetadata] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const uploadAbortControllerRef = useRef(null);
+
+  const keepArabicCharactersOnly = (value) => {
+    // Keep Arabic script, Arabic/Latin digits, spaces, and common punctuation.
+    return (value || '').replace(/[^\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\s0-9٠-٩.,!?؟،؛:\-()\n]/g, '');
+  };
+
   const isLikelySigml = (value) => {
     const xml = (value || "").trim().toLowerCase();
     return xml.startsWith("<sigml") || xml.includes("<sigml");
@@ -50,6 +63,14 @@ const DashboardPage = () => {
     const minutes = Math.floor(seconds / 60);
     const secs = (seconds % 60).toString().padStart(2, "0");
     return `${minutes}:${secs} ${t("dashboard.history.durationUnit")}`;
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   };
 
   const parseApiBody = (rawBody) => {
@@ -237,13 +258,51 @@ const DashboardPage = () => {
   const handleVideoUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Create preview URL and extract metadata
     const url = URL.createObjectURL(file);
+    
+    // Extract file metadata
+    const metadata = {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: file.lastModified,
+    };
+
+    // Try to get video duration
+    const video = document.createElement('video');
+    video.onloadedmetadata = () => {
+      metadata.duration = video.duration;
+      setVideoMetadata(metadata);
+    };
+    video.onerror = () => {
+      metadata.duration = null;
+      setVideoMetadata(metadata);
+    };
+    video.src = url;
+
+    // Store pending file and show review modal
+    setPendingVideo({ file, url });
+    setShowVideoReviewModal(true);
+    e.target.value = '';
+  };
+
+  const handleConfirmVideoUpload = async () => {
+    if (!pendingVideo) return;
+
+    const { file, url } = pendingVideo;
+    
+    // Stop camera and reset states
     stopCamera({ processRecordedVideo: false, addSessionToHistory: false });
     setOutputText("");
     setTranslationError("");
     resetAudioPlayer();
     setAudioUrl("");
     setUploadedVideo(url);
+    setShowVideoReviewModal(false);
+    setPendingVideo(null);
+    
     if (videoRef.current) {
       videoRef.current.srcObject = null;
       videoRef.current.src = url;
@@ -375,6 +434,7 @@ const DashboardPage = () => {
 
         // Show all finalized text + current interim in textarea in real-time
         setTextInput((allFinal + interimTranscript).trim());
+        setTextInputError('');
       };
 
       recognitionRef.current.onerror = (event) => {
@@ -595,7 +655,7 @@ const toggleRecording = async () => {
       >
         <Navbar
           variant="dashboard"
-          logo="SignaryAI"
+          logo="S2S"
           userProfile="https://lh3.googleusercontent.com/aida-public/AB6AXuDGZQ2Lpmsf2wWPOWbV1NwlSV8apne6XJ1_XsdsDMPhMvbqdiB66HO7PwhmU_DZTGa6XlUQi5NVf0ujJTsRg4xtUU-6Wpwu1Szn_yfiAymfFaKdYMd8GtdBtqSVa2dEtUo31mAq1yjcN548LRNthF2qQ3SvvYs8XgIPbGqY_6lqeleuYwzMPOEvLLIY7inFcwQ0YfJMkt5hTPtZRHcnrLG52YPO27f3HamgyAdtmNaRMhqerd6BtQXWBQd7qpEIe_cy5RZwIEhYib8"
         />
         <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -1050,6 +1110,9 @@ const toggleRecording = async () => {
                         className={`w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-slate-800 dark:text-white text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 dark:placeholder:text-slate-500 ${textStart} transition-shadow`}
                         onClick={(e) => e.stopPropagation()}
                       />
+                      {textInputError && (
+                        <p className="mt-2 text-xs font-medium text-red-500 dark:text-red-400">{textInputError}</p>
+                      )}
                     </div>
 
                     {/* Convert Button */}
@@ -1198,6 +1261,120 @@ const toggleRecording = async () => {
           </section>
         </main>
         <Sidebar variant="mobile" activeItem="dashboard" />
+
+        {/* Video Review Modal */}
+        {showVideoReviewModal && pendingVideo && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div dir={dir} className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-700">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-2xl">preview</span>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t('dashboard.videoReview.title')}</h2>
+                </div>
+                <button
+                  onClick={handleCancelVideoUpload}
+                  className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  disabled={isUploadingFile}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {/* Video Preview */}
+                <div className="bg-slate-900 rounded-xl overflow-hidden aspect-video flex items-center justify-center">
+                  <video
+                    src={pendingVideo.url}
+                    controls
+                    className="w-full h-full"
+                  />
+                </div>
+
+                {/* File Info */}
+                {videoMetadata && (
+                  <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg">
+                    <div>
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">{t('dashboard.videoReview.fileName')}</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white break-all">{videoMetadata.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">{t('dashboard.videoReview.fileSize')}</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{formatFileSize(videoMetadata.size)}</p>
+                    </div>
+                    {videoMetadata.duration !== null && (
+                      <div>
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">{t('dashboard.videoReview.duration')}</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{formatDurationWithUnit(videoMetadata.duration)}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">{t('dashboard.videoReview.fileType')}</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{videoMetadata.type || 'Unknown'}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload Progress */}
+                {isUploadingFile && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('dashboard.videoReview.uploading')}</p>
+                      <span className="text-sm font-semibold text-primary">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-primary h-full rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer - Actions */}
+              <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700 flex gap-3">
+                <button
+                  onClick={handleCancelVideoUpload}
+                  disabled={isUploadingFile}
+                  className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all border ${
+                    isUploadingFile
+                      ? 'opacity-50 cursor-not-allowed bg-slate-200 dark:bg-slate-600 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-500'
+                      : 'bg-slate-100 dark:bg-slate-600 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-500 hover:bg-slate-200 dark:hover:bg-slate-500'
+                  }`}
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="material-symbols-outlined text-lg">close</span>
+                    {t('dashboard.videoReview.cancel')}
+                  </span>
+                </button>
+
+                {isUploadingFile ? (
+                  <button
+                    onClick={handleStopVideoUpload}
+                    className="flex-1 px-4 py-2.5 rounded-lg font-medium transition-all bg-red-500 hover:bg-red-600 text-white border border-red-600"
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="material-symbols-outlined text-lg">stop</span>
+                      {t('dashboard.videoReview.stop')}
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleConfirmVideoUpload}
+                    className="flex-1 px-4 py-2.5 rounded-lg font-medium transition-all bg-primary hover:bg-primary-dark text-white border border-primary active:scale-[0.98] shadow-lg shadow-primary/20"
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="material-symbols-outlined text-lg">upload</span>
+                      {t('dashboard.videoReview.upload')}
+                    </span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ThemeProvider>
   );

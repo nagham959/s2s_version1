@@ -32,7 +32,7 @@ const HistoryPage = () => {
             >
                 <Navbar
                     variant="dashboard"
-                    logo="SignaryAI"
+                    logo="S2S"
                     userProfile="https://lh3.googleusercontent.com/aida-public/AB6AXuDGZQ2Lpmsf2wWPOWbV1NwlSV8apne6XJ1_XsdsDMPhMvbqdiB66HO7PwhmU_DZTGa6XlUQi5NVf0ujJTsRg4xtUU-6Wpwu1Szn_yfiAymfFaKdYMd8GtdBtqSVa2dEtUo31mAq1yjcN548LRNthF2qQ3SvvYs8XgIPbGqY_6lqeleuYwzMPOEvLLIY7inFcwQ0YfJMkt5hTPtZRHcnrLG52YPO27f3HamgyAdtmNaRMhqerd6BtQXWBQd7qpEIe_cy5RZwIEhYib8"
                 />
                 <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -153,7 +153,7 @@ const HistoryPage = () => {
                         {/* Pagination Mockup */}
                         <div className="border-t border-slate-100 dark:border-slate-700 p-4 flex items-center justify-between">
                             <span className={`text-sm text-slate-500 dark:text-slate-400 ${textStart}`}>
-                                {t('history.pagination.showing', { count: filteredItems.length, total: historyItems.length })}
+                                {t('history.pagination.showing', { total: historyItems.length })}
                             </span>
                             <div className="flex gap-2">
                                 <button disabled className="px-3 py-1.5 text-sm font-medium text-slate-400 border border-slate-200 dark:border-slate-700 rounded-lg cursor-not-allowed opacity-50">{t('history.pagination.prev')}</button>
