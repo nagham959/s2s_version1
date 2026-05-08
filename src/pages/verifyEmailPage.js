@@ -1,6 +1,8 @@
-// VerifyEmailPage.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { verifyOtpSchema } from '../validations/auth/verifyOtpSchema';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -15,11 +17,17 @@ const VerifyEmailPage = () => {
   const isRtl = language === 'ar';
   const textStart = isRtl ? 'text-right' : 'text-left';
 
-  // جيب الإيميل من الـ state (من صفحة Register) أو من query param
-  const email = location.state?.email || new URLSearchParams(location.search).get('email') || '';
+  const emailFromState = location.state?.email || new URLSearchParams(location.search).get('email') || '';
 
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [errorMessage, setErrorMessage] = useState('');
+  const { handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(verifyOtpSchema),
+    mode: "onTouched",
+    reValidateMode: "onChange",
+    defaultValues: { email: emailFromState, otp: '' }
+  });
+
+  const [otpArray, setOtpArray] = useState(['', '', '', '', '', '']);
+  const [apiError, setApiError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [resendDisabled, setResendDisabled] = useState(false);
   const [countdown, setCountdown] = useState(60);
@@ -27,10 +35,10 @@ const VerifyEmailPage = () => {
   const inputRefs = useRef([]);
 
   useEffect(() => {
-    if (!email) {
+    if (!emailFromState) {
       navigate('/signup'); // لو مفيش إيميل → رجّعه للتسجيل
     }
-  }, [email, navigate]);
+  }, [emailFromState, navigate]);
 
   // Countdown لإعادة الإرسال
   useEffect(() => {
@@ -47,9 +55,10 @@ const VerifyEmailPage = () => {
   const handleChange = (index, value) => {
     if (!/^\d$/.test(value) && value !== '') return; // أرقام بس
 
-    const newOtp = [...otp];
+    const newOtp = [...otpArray];
     newOtp[index] = value;
-    setOtp(newOtp);
+    setOtpArray(newOtp);
+    setValue('otp', newOtp.join(''), { shouldValidate: true });
 
     // move to next input
     if (value !== '' && index < 5) {
@@ -58,7 +67,7 @@ const VerifyEmailPage = () => {
   };
 
   const handleKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && otp[index] === '' && index > 0) {
+    if (e.key === 'Backspace' && otpArray[index] === '' && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
@@ -67,35 +76,32 @@ const VerifyEmailPage = () => {
     e.preventDefault();
     const pasted = e.clipboardData.getData('text').trim();
     if (/^\d{6}$/.test(pasted)) {
-      setOtp(pasted.split(''));
+      setOtpArray(pasted.split(''));
+      setValue('otp', pasted, { shouldValidate: true });
       inputRefs.current[5]?.focus();
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMessage('');
+  const onSubmit = async (data) => {
+    setApiError('');
     setSuccessMessage('');
-
-    const code = otp.join('');
-    if (code.length !== 6) return setErrorMessage(t('verifyEmail.errorLength'));
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/Auth/VerifyEmail`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp: code }),
+        body: JSON.stringify({ email: data.email, otp: data.otp }),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || t('verifyEmail.errorInvalid'));
+        const resData = await res.json();
+        throw new Error(resData.message || t('verifyEmail.errorInvalid'));
       }
 
       setSuccessMessage(t('verifyEmail.success'));
       setTimeout(() => navigate('/login'), 2500);
     } catch (err) {
-      setErrorMessage(err.message || t('common.error'));
+      setApiError(err.message || t('common.error'));
     }
   };
 
@@ -103,11 +109,11 @@ const VerifyEmailPage = () => {
     if (resendDisabled) return;
 
     setResendDisabled(true);
-    setErrorMessage('');
+    setApiError('');
     setSuccessMessage(t('verifyEmail.resendSending'));
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/Auth/ResendOtp?email=${encodeURIComponent(email)}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/Auth/ResendOtp?email=${encodeURIComponent(emailFromState)}`, {
         method: 'POST',
       });
 
@@ -115,7 +121,7 @@ const VerifyEmailPage = () => {
 
       setSuccessMessage(t('verifyEmail.resendSuccess'));
     } catch (err) {
-      setErrorMessage(err.message || t('common.error'));
+      setApiError(err.message || t('common.error'));
       setResendDisabled(false);
     }
   };
@@ -143,14 +149,14 @@ const VerifyEmailPage = () => {
               <p className={`text-slate-500 dark:text-text-secondary text-sm ${textStart}`}>
                 {t('verifyEmail.subtitle')}
                 <br />
-                <strong>{email || t('verifyEmail.emailPlaceholder')}</strong>
+                <strong>{emailFromState || t('verifyEmail.emailPlaceholder')}</strong>
               </p>
             </div>
 
-            <form className="p-8 flex flex-col gap-6" onSubmit={handleSubmit}>
+            <form className="p-8 flex flex-col gap-6" onSubmit={handleSubmit(onSubmit)}>
               {/* OTP Inputs */}
               <div className="flex justify-center gap-3 md:gap-4" dir="ltr" onPaste={handlePaste}>
-                {otp.map((digit, index) => (
+                {otpArray.map((digit, index) => (
                   <input
                     key={index}
                     type="text"
@@ -166,9 +172,14 @@ const VerifyEmailPage = () => {
               </div>
 
               {/* Errors & Success */}
-              {errorMessage && (
+              {errors.otp && (
                 <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm text-red-600">
-                  {errorMessage}
+                  {t(errors.otp.message)}
+                </div>
+              )}
+              {apiError && (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm text-red-600">
+                  {apiError}
                 </div>
               )}
               {successMessage && (
@@ -180,7 +191,7 @@ const VerifyEmailPage = () => {
               <button
                 type="submit"
                 className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-[#F2593D]/20 hover:shadow-[#F2593D]/40 transition-all active:scale-[0.98] focus-visible-ring flex items-center justify-center gap-2 disabled:opacity-60"
-                disabled={otp.join('').length !== 6}
+                disabled={isSubmitting || otpArray.join('').length !== 6}
               >
                 {t('verifyEmail.submit')}
               </button>

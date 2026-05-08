@@ -9,6 +9,14 @@
   "common": {
     "error": "An error occurred. Please try again."
   },
+  "auth": {
+    "errors": {
+      "invalidCredentials": "Invalid email or password.",
+      "unverified": "Please verify your email first.",
+      "accountLocked": "Account is locked. Please try again later.",
+      "invalidOrExpired": "The code entered is invalid or has expired."
+    }
+  },
   "navbar": {
     "features": "Features",
     "about": "About",
@@ -317,9 +325,21 @@
       "subtitle": "Our team is ready to answer your questions. We reply within 24 hours."
     },
     "infoCards": [
-      { "icon": "email", "title": "Email", "value": "support@signaryai.com" },
-      { "icon": "schedule", "title": "Hours", "value": "Sunday - Thursday, 9am - 5pm" },
-      { "icon": "location_on", "title": "Location", "value": "Cairo, Egypt" }
+      {
+        "icon": "email",
+        "title": "Email",
+        "value": "support@signaryai.com"
+      },
+      {
+        "icon": "schedule",
+        "title": "Hours",
+        "value": "Sunday - Thursday, 9am - 5pm"
+      },
+      {
+        "icon": "location_on",
+        "title": "Location",
+        "value": "Cairo, Egypt"
+      }
     ],
     "form": {
       "title": "Send us a message",
@@ -768,6 +788,106 @@
     },
     "errors": {
       "speechUnsupported": "This browser does not support speech recognition."
+    }
+  },
+  "validation": {
+    "shared": {
+      "emailRequired": "Email is required.",
+      "emailInvalid": "A valid email is required.",
+      "emailMaxLength": "Email cannot exceed 256 characters.",
+      "emailForbiddenChars": "Email contains forbidden characters.",
+      "passwordRequired": "Password is required.",
+      "passwordMinLength": "Password must be at least 8 characters.",
+      "passwordMaxLength": "Password cannot exceed 100 characters.",
+      "passwordUppercase": "Password must contain at least one uppercase letter.",
+      "passwordLowercase": "Password must contain at least one lowercase letter.",
+      "passwordDigit": "Password must contain at least one number.",
+      "passwordSpecialChar": "Password must contain at least one special character.",
+      "passwordNoHtmlTags": "Password cannot contain HTML tags.",
+      "confirmPasswordRequired": "Confirm password is required.",
+      "confirmPasswordMismatch": "Passwords do not match."
+    },
+    "register": {
+      "displayNameRequired": "Display Name is required.",
+      "displayNameMaxLength": "Display Name cannot exceed 50 characters.",
+      "usernameRequired": "Username is required.",
+      "usernameMinLength": "Username must be at least 3 characters long.",
+      "usernameMaxLength": "Username cannot exceed 30 characters.",
+      "usernamePattern": "Username can only contain letters, numbers, dots, hyphens, and underscores.",
+      "phoneRequired": "Phone number is required.",
+      "phoneInvalid": "Phone number must be a valid Egyptian number (e.g. 01XXXXXXXXX).",
+      "dobRequired": "Date of birth is required.",
+      "dobAge": "Age must be between 15 and 80 years.",
+      "userTypeRequired": "User Type is required.",
+      "signLanguageRequired": "Sign Language must be specified if 'Uses Sign Language' is true."
+    },
+    "login": {
+      "passwordMaxLength": "Password cannot exceed 100 characters."
+    },
+    "verifyOtp": {
+      "emailRequired": "Email is required.",
+      "emailInvalid": "Invalid email format.",
+      "emailMaxLength": "Email cannot exceed 256 characters.",
+      "emailForbiddenChars": "Email contains forbidden characters.",
+      "otpRequired": "OTP is required.",
+      "otpLength": "OTP must be exactly 6 characters.",
+      "otpDigitsOnly": "OTP must contain only 6 digits."
+    },
+    "forgotPassword": {
+      "emailRequired": "Email is required.",
+      "emailMaxLength": "Email cannot exceed 256 characters.",
+      "emailInvalid": "Please enter a valid email address.",
+      "emailFormat": "Please enter a valid email format.",
+      "emailForbiddenChars": "Email contains forbidden characters."
+    },
+    "resetPassword": {
+      "tokenRequired": "Security token is required."
+    },
+    "changePassword": {
+      "currentPasswordRequired": "Current password is required.",
+      "newPasswordRequired": "New password is required.",
+      "newPasswordSameAsCurrent": "New password must be different from the current password."
+    },
+    "updateProfile": {
+      "displayNameEmpty": "Display Name cannot be empty.",
+      "displayNameMaxLength": "Display Name cannot exceed 50 characters.",
+      "phoneInvalid": "Phone number must be a valid Egyptian number (e.g. 01XXXXXXXXX)."
+    },
+    "firebaseLogin": {
+      "idTokenRequired": "Firebase ID token is required."
+    },
+    "fcmToken": {
+      "fcmTokenRequired": "FCM token is required."
+    },
+    "translation": {
+      "videoRequired": "Video file is required.",
+      "videoTooLarge": "Video file exceeds 50 MB.",
+      "videoInvalidFormat": "Unsupported video format.",
+      "videoInvalidContentType": "Unsupported video content type.",
+      "audioRequired": "Audio file is required.",
+      "audioTooLarge": "Audio file exceeds 20 MB.",
+      "audioInvalidFormat": "Unsupported audio format.",
+      "audioInvalidContentType": "Unsupported audio content type.",
+      "textRequired": "Text is required for translation.",
+      "textTooLong": "Text cannot exceed 200 characters."
+    },
+    "tts": {
+      "textRequired": "Text is required for speech synthesis.",
+      "textTooLong": "Text exceeds the maximum length for speech synthesis."
+    },
+    "changeEmail": {
+      "newEmailRequired": "New email is required.",
+      "newEmailInvalid": "A valid email is required.",
+      "currentPasswordRequired": "Current password is required.",
+      "currentPasswordMaxLength": "Password cannot exceed 100 characters.",
+      "otpRequired": "OTP is required.",
+      "otpLength": "OTP must be exactly 6 characters."
+    },
+    "profileImage": {
+      "imageRequired": "Profile image is required.",
+      "imageTooLarge": "Profile image exceeds 5 MB.",
+      "imageInvalidFormat": "Unsupported image format.",
+      "imageInvalidContentType": "Unsupported image content type."
     }
   }
 }

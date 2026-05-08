@@ -1,8 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { resetPasswordSchema } from "../validations/auth/resetPasswordSchema";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import PasswordStrengthIndicator from "../components/PasswordStrengthIndicator";
 import { useAuth } from "../contexts/authContext";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -20,41 +24,38 @@ const ResetPasswordPage = () => {
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const token = params.get("token") || params.get("Token") || "";
 
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(resetPasswordSchema),
+    mode: "onTouched",
+    reValidateMode: "onChange",
+    defaultValues: { token, newPassword: "", confirmPassword: "" },
+  });
 
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const [errorMessage, setErrorMessage] = useState("");
+  const [apiError, setApiError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
-  const validate = () => {
-    if (!token) return t("resetPassword.errors.noToken");
-    if (!newPassword) return t("resetPassword.errors.empty");
-    if (newPassword.length < 8) return t("resetPassword.errors.short");
-    if (confirmPassword !== newPassword) return t("resetPassword.errors.mismatch");
-    return "";
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMessage("");
+  const onSubmit = async (data) => {
+    setApiError("");
     setSuccessMessage("");
 
-    const v = validate();
-    if (v) return setErrorMessage(v);
-
-    setIsLoading(true);
     try {
-      await resetPassword({ token, newPassword, confirmPassword });
+      await resetPassword({
+        token: data.token,
+        newPassword: data.newPassword,
+        confirmPassword: data.confirmPassword
+      });
       setSuccessMessage(t("resetPassword.success"));
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      setErrorMessage(err?.message || t("common.error"));
-    } finally {
-      setIsLoading(false);
+      setApiError(err?.message || t("common.error"));
     }
   };
 
@@ -82,7 +83,7 @@ const ResetPasswordPage = () => {
               </p>
             </div>
 
-            <form className="p-8 flex flex-col gap-5" onSubmit={handleSubmit}>
+            <form className="p-8 flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)}>
               {!token && (
                 <div
                   role="alert"
@@ -100,15 +101,10 @@ const ResetPasswordPage = () => {
 
                 <div className="relative flex items-center">
                   <input
-                    className={`w-full h-12 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base ${textStart} ${passwordPadding}`}
+                    className={`w-full h-12 rounded-xl border ${errors.newPassword ? 'border-red-500' : 'border-border-light dark:border-border-dark'} bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base ${textStart} ${passwordPadding}`}
                     placeholder={t("resetPassword.newPassword")}
                     type={showNew ? "text" : "password"}
-                    value={newPassword}
-                    onChange={(e) => {
-                      setNewPassword(e.target.value);
-                      if (errorMessage) setErrorMessage("");
-                      if (successMessage) setSuccessMessage("");
-                    }}
+                    {...register("newPassword")}
                   />
 
                   <button
@@ -122,11 +118,14 @@ const ResetPasswordPage = () => {
                     </span>
                   </button>
                 </div>
-
+                <PasswordStrengthIndicator password={watch("newPassword")} />
                 <div className="flex items-center gap-1 mt-1 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300">
                   <span className="material-symbols-outlined text-[14px] text-text-secondary">info</span>
                   <span className="text-xs text-text-secondary">{t("resetPassword.helper")}</span>
                 </div>
+                {errors.newPassword && (
+                  <span className="text-xs text-red-600 mt-1">{t(errors.newPassword.message)}</span>
+                )}
               </label>
 
               <label className="flex flex-col gap-2 group">
@@ -136,15 +135,10 @@ const ResetPasswordPage = () => {
 
                 <div className="relative flex items-center">
                   <input
-                    className={`w-full h-12 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base ${textStart} ${passwordPadding}`}
+                    className={`w-full h-12 rounded-xl border ${errors.confirmPassword ? 'border-red-500' : 'border-border-light dark:border-border-dark'} bg-background-light dark:bg-input-bg-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base ${textStart} ${passwordPadding}`}
                     placeholder={t("resetPassword.confirmPassword")}
                     type={showConfirm ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      if (errorMessage) setErrorMessage("");
-                      if (successMessage) setSuccessMessage("");
-                    }}
+                    {...register("confirmPassword")}
                   />
 
                   <button
@@ -158,15 +152,18 @@ const ResetPasswordPage = () => {
                     </span>
                   </button>
                 </div>
+                {errors.confirmPassword && (
+                  <span className="text-xs text-red-600 mt-1">{t(errors.confirmPassword.message)}</span>
+                )}
               </label>
 
-              {!!errorMessage?.trim() && (
+              {!!apiError?.trim() && (
                 <div
                   role="alert"
                   aria-live="polite"
                   className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm text-red-600"
                 >
-                  {errorMessage}
+                  {apiError}
                 </div>
               )}
 
@@ -179,9 +176,9 @@ const ResetPasswordPage = () => {
               <button
                 className="w-full h-12 mt-2 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-[#F2593D]/20 hover:shadow-[#F2593D]/40 transition-all active:scale-[0.98] focus-visible-ring flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 type="submit"
-                disabled={isLoading || !token}
+                disabled={isSubmitting || !token}
               >
-                <span>{isLoading ? t("resetPassword.submitting") : t("resetPassword.submit")}</span>
+                <span>{isSubmitting ? t("resetPassword.submitting") : t("resetPassword.submit")}</span>
                 <span className="material-symbols-outlined text-[18px]">{arrowIcon}</span>
               </button>
             </form>
