@@ -18,8 +18,8 @@ module.exports = defineConfig({
       openMode: 0,
     },
     env: {
-      testEmail: 'yousefmasoud81@gmail.com',
-      testPassword: 'Joe@joe221652004',
+      testEmail: process.env.CYPRESS_TEST_EMAIL || '',
+      testPassword: process.env.CYPRESS_TEST_PASSWORD || '',
     },
   },
 });

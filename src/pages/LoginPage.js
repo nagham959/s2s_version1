@@ -9,6 +9,9 @@ import Footer from "../components/Footer";
 import { useAuth } from "../contexts/authContext";
 import VideoHelpModal from "../components/VideoHelpModal";
 import { useLanguage } from "../contexts/LanguageContext";
+import ErrorMessage from "../components/ErrorMessage";
+import LoadingButton from "../components/LoadingButton";
+import { getErrorMessageKey } from "../utils/normalizeApiError";
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -55,7 +58,7 @@ const LoginPage = () => {
       await loginWithGoogle();
       navigate("/dashboard");
     } catch (error) {
-      setErrorMessage(error.message || t("login.errorGoogle"));
+      setErrorMessage(getErrorMessageKey(error));
     } finally {
       setIsLoading(false);
     }
@@ -68,25 +71,9 @@ const LoginPage = () => {
       await login(data.email, data.password);
       navigate("/dashboard");
     } catch (error) {
-      const status = error?.response?.status;
-      const errorStr = error?.message?.toLowerCase() || "";
-      let message = t("login.errorServer");
-
-      if (status === 401 || errorStr.includes("invalid credential") || errorStr.includes("unauthorized")) {
-        message = t("auth.errors.invalidCredentials");
-      } else if (errorStr.includes("locked")) {
-        message = t("auth.errors.accountLocked");
-      } else if (errorStr.includes("verify") || errorStr.includes("verification")) {
-        message = t("auth.errors.unverified");
-      } else if (status === 503) {
-        message = t("login.errorUnavailable");
-      } else if (status === 500) {
-        message = t("login.errorInternal");
-      } else {
-        message = t("common.error");
-      }
+      setErrorMessage(getErrorMessageKey(error, { invalidCredentials: true }));
+    } finally {
       setIsLoading(false);
-      setErrorMessage(message);
     }
   };
 
@@ -250,24 +237,19 @@ const LoginPage = () => {
                   {t(errors.password.message)}
                 </div>
               )}
-              {!!errorMessage?.trim() && (
-                <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm text-red-600">
-                  {errorMessage}
-                </div>
-              )}
+              <ErrorMessage messageKey={errorMessage} className="text-center" />
 
-              <button
+              <LoadingButton
                 className="w-full h-12 mt-2 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 type="submit"
-                disabled={isLoading}
+                loading={isLoading}
+                loadingText={t("loading.signingIn")}
               >
-                <span>
-                  {isLoading ? t("login.submitting") : t("login.submit")}
-                </span>
+                {t("login.submit")}
                 <span className="material-symbols-outlined text-[18px]">
                   {arrowIcon}
                 </span>
-              </button>
+              </LoadingButton>
 
               <div className="relative flex items-center justify-center py-2">
                 <div className="absolute inset-0 flex items-center">
@@ -309,8 +291,10 @@ const LoginPage = () => {
                 </button>
 
                 <button
-                  className="flex items-center justify-center gap-3 w-full h-12 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-transparent hover:bg-slate-50 dark:hover:bg-[#2a2a2a] transition-all font-semibold text-slate-700 dark:text-slate-200"
+                  className="flex items-center justify-center gap-3 w-full h-12 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-transparent transition-all font-semibold text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-70"
                   type="button"
+                  disabled
+                  title={t("common.notAvailable")}
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z" fill="#1877F2" />

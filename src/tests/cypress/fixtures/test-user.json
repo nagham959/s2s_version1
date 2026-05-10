@@ -1,7 +1,7 @@
 {
   "validUser": {
-    "email": "yousefmasoud81@gmail.com",
-    "password": "Joe@joe221652004",
+    "email": "test@example.com",
+    "password": "ChangeMe123!",
     "displayName": "يوسف مسعود",
     "userName": "yousef_test",
     "phoneNumber": "01012345678",
@@ -11,5 +11,5 @@
   "invalidEmail": "invalid-email",
   "invalidPhone": "010123456",
   "weakPassword": "12345678",
-  "strongPassword": "Joe@joe221652004"
+  "strongPassword": "ChangeMe123!"
 }

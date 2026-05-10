@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,6 +12,9 @@ import Footer from "../components/Footer";
 import VideoHelpModal from "../components/VideoHelpModal";
 import PasswordStrengthIndicator from "../components/PasswordStrengthIndicator";
 import { useLanguage } from "../contexts/LanguageContext";
+import ErrorMessage from "../components/ErrorMessage";
+import LoadingButton from "../components/LoadingButton";
+import { getErrorMessageKey } from "../utils/normalizeApiError";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "https://api.s2sai.online";
@@ -30,7 +33,8 @@ const SignUpPage = () => {
     handleSubmit,
     watch,
     control,
-    setValue: setHookFormValue,
+    setValue,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registerSchema),
@@ -52,23 +56,9 @@ const SignUpPage = () => {
   });
 
   const usesSignLanguage = watch("usesSignLanguage");
+  const signLanguage = watch("signLanguage");
 
   const [formError, setFormError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState({});
-
-  const [form, setForm] = useState({
-    displayName: "",
-    userName: "",
-    email: "",
-    phoneNumber: "",
-    dateOfBirth: "",
-    userType: 1,
-    usesSignLanguage: false,
-    signLanguage: 1,
-    password: "",
-    confirmPassword: "",
-    gender: "",
-  });
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -91,78 +81,6 @@ const SignUpPage = () => {
       <i className="fa-solid fa-hands-asl-interpreting text-xl text-primary"></i>
     </button>
   );
-
-  const canSubmit = useMemo(() => {
-    return (
-      form.displayName.trim() &&
-      form.email.trim() &&
-      form.dateOfBirth &&
-      form.phoneNumber.trim() &&
-      form.password &&
-      form.confirmPassword
-    );
-  }, [form]);
-
-  const setValue = (key, value) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-
-    if (formError) setFormError("");
-
-    setFieldErrors((prev) => {
-      const copy = { ...prev };
-      delete copy[key];
-      return copy;
-    });
-  };
-
-  const validate = () => {
-    const errs = {};
-
-    if (!form.displayName.trim()) errs.displayName = t("signUp.errors.displayNameRequired");
-
-    if (!form.email.trim()) errs.email = t("signUp.errors.emailRequired");
-    else if (!/^\S+@\S+\.\S+$/.test(form.email)) errs.email = t("signUp.errors.emailInvalid");
-
-    if (!form.dateOfBirth) errs.dateOfBirth = t("signUp.errors.dobRequired");
-    else {
-      const dob = new Date(form.dateOfBirth);
-      const today = new Date();
-      if (dob > today) errs.dateOfBirth = t("signUp.errors.dobInvalid");
-    }
-
-    // phone validation
-    const phone = (form.phoneNumber || "").trim().replace(/\s|-/g, "");
-    if (!phone) {
-      errs.phoneNumber = t("signUp.errors.phoneRequired");
-    } else {
-      const okEgyptLocal = /^\d{11}$/.test(phone);
-      const okEgyptIntl = /^\+20\d{10}$/.test(phone);
-      const okGeneric = /^\+?\d{10,15}$/.test(phone);
-      if (!(okEgyptLocal || okEgyptIntl || okGeneric)) {
-        errs.phoneNumber = t("signUp.errors.phoneInvalid");
-      }
-    }
-
-    if (!form.password) {
-      errs.password = t("signUp.errors.passwordRequired");
-    } else if (form.password.length < 8) {
-      errs.password = t("signUp.errors.passwordShort");
-    } else if (!/[A-Z]/.test(form.password)) {
-      errs.password = t("signUp.errors.passwordUpper");
-    } else if (!/[a-z]/.test(form.password)) {
-      errs.password = t("signUp.errors.passwordLower");
-    } else if (!/[0-9]/.test(form.password)) {
-      errs.password = t("signUp.errors.passwordDigit");
-    } else if (!/[@$!%*?& #]/.test(form.password)) {
-      errs.password = t("signUp.errors.passwordSpecial");
-    }
-
-    if (form.confirmPassword !== form.password) {
-      errs.confirmPassword = t("signUp.errors.confirmMismatch");
-    }
-
-    return errs;
-  };
 
   const RegisterErrorHandler = async (res) => {
     const rawText = await res.text();
@@ -195,18 +113,14 @@ const SignUpPage = () => {
       (m.includes("phone") || m.includes("phonenumber") || m.includes("mobile")) &&
       (m.includes("exist") || m.includes("already") || m.includes("duplicate") || m.includes("taken") || m.includes("used"));
 
-    let message = t("signUp.errors.unexpected");
+    let messageKey = getErrorMessageKey({ status: res.status, data }, { defaultMessageKey: "errors.unknown" });
 
-    if (res.status === 503) message = t("signUp.errors.serverUnavailable");
-    else if (emailDup) message = t("signUp.errors.emailDup");
-    else if (phoneDup) message = t("signUp.errors.phoneDup");
-    else if (res.status === 400) message = t("signUp.errors.badRequest");
-    else if (m.includes("invalid")) message = t("signUp.errors.invalidData");
+    if (emailDup || phoneDup || m.includes("invalid")) messageKey = "errors.validation";
 
-    if (emailDup && !fieldErrors.email) fieldErrors.email = t("signUp.errors.emailDup");
-    if (phoneDup && !fieldErrors.phoneNumber) fieldErrors.phoneNumber = t("signUp.errors.phoneDup");
+    if (emailDup && !fieldErrors.email) fieldErrors.email = "errors.validation";
+    if (phoneDup && !fieldErrors.phoneNumber) fieldErrors.phoneNumber = "errors.validation";
 
-    return { message, fieldErrors };
+    return { messageKey, fieldErrors };
   };
 
   const onSubmit = async (data) => {
@@ -232,16 +146,18 @@ const SignUpPage = () => {
       });
 
       if (!res.ok) {
-        const { message } = await RegisterErrorHandler(res);
-        setFormError(message);
+        const { messageKey, fieldErrors } = await RegisterErrorHandler(res);
+        Object.entries(fieldErrors).forEach(([field, message]) => {
+          setError(field, { type: "server", message });
+        });
+        setFormError(messageKey);
         return;
       }
 
       // if rigestred successfully navigate to verify page
       navigate("/verifyEmail", { state: { email: payload.email } });
     } catch (err) {
-      console.error(err);
-      setFormError(t("signUp.errors.serverUnavailable"));
+      setFormError(getErrorMessageKey(err));
     }
   };
 
@@ -306,15 +222,7 @@ const SignUpPage = () => {
             </div>
 
             <form className="p-8 flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)}>
-              {!!formError?.trim() && (
-                <div
-                  role="alert"
-                  aria-live="polite"
-                  className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm text-red-600"
-                >
-                  {formError}
-                </div>
-              )}
+              <ErrorMessage messageKey={formError} className="text-center" />
 
               {/* الاسم الكامل */}
               <div className="flex flex-col gap-1.5">
@@ -338,7 +246,7 @@ const SignUpPage = () => {
               {/* اسم المستخدم */}
               <div className="flex flex-col gap-1.5">
                 <label className={`text-sm font-medium text-slate-700 dark:text-slate-200 ${textStart}`} htmlFor="userName">
-                  {t("signUp.fields.userName")} <span className="text-slate-400 text-xs">{t("signUp.optional")}</span>
+                  {t("signUp.fields.userName")} <span className="text-red-500 text-xs">{t("signUp.required")}</span>
                 </label>
                 <div className="flex items-center gap-2">
                   <input
@@ -477,11 +385,12 @@ const SignUpPage = () => {
                 <input
                   type="checkbox"
                   id="usesSignLanguage"
-                  checked={form.usesSignLanguage}
+                  checked={usesSignLanguage}
                   onChange={(e) => {
                     const checked = e.target.checked;
-                    setValue("usesSignLanguage", checked);
-                    if (!checked) setValue("signLanguage", 1);
+                    setValue("usesSignLanguage", checked, { shouldDirty: true, shouldValidate: true });
+                    if (!checked) setValue("signLanguage", 1, { shouldDirty: true, shouldValidate: true });
+                    if (formError) setFormError("");
                   }}
                   className="w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-600 text-primary focus:ring-primary cursor-pointer"
                 />
@@ -493,7 +402,7 @@ const SignUpPage = () => {
                 </label>
               </div>
 
-              {form.usesSignLanguage && (
+              {usesSignLanguage && (
                 <div className="flex flex-col gap-1.5">
                   <label className={`text-sm font-medium text-slate-700 dark:text-slate-200 ${textStart}`} htmlFor="signLanguage">
                     {t("signUp.fields.signLanguage")}
@@ -501,8 +410,8 @@ const SignUpPage = () => {
                   <select
                     id="signLanguage"
                     className={`h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart} appearance-none`}
-                    value={form.signLanguage}
-                    onChange={(e) => setValue("signLanguage", Number(e.target.value))}
+                    value={signLanguage || 1}
+                    onChange={(e) => setValue("signLanguage", Number(e.target.value), { shouldDirty: true, shouldValidate: true })}
                   >
                     <option value={1}>{t("signUp.options.defaultSignLanguage")}</option>
                   </select>
@@ -575,20 +484,14 @@ const SignUpPage = () => {
                 )}
               </div>
 
-              <button
+              <LoadingButton
                 type="submit"
-                disabled={isSubmitting}
+                loading={isSubmitting}
+                loadingText={t("loading.signingUp")}
                 className="mt-4 h-12 w-full bg-primary hover:bg-primary-dark text-white font-medium rounded-xl shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {isSubmitting ? (
-                  <>
-                    <span className="animate-spin material-symbols-outlined">refresh</span>
-                    {t("signUp.actions.submitting")}
-                  </>
-                ) : (
-                  t("signUp.actions.submit")
-                )}
-              </button>
+                {t("signUp.actions.submit")}
+              </LoadingButton>
             </form>
 
             <div className="bg-slate-50 dark:bg-slate-900/40 px-8 py-5 border-t border-border-light dark:border-border-dark text-center text-sm text-slate-600 dark:text-slate-400">

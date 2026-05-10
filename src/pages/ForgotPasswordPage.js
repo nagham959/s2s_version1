@@ -8,6 +8,9 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useAuth } from "../contexts/authContext";
 import { useLanguage } from "../contexts/LanguageContext";
+import ErrorMessage from "../components/ErrorMessage";
+import LoadingButton from "../components/LoadingButton";
+import { getErrorMessageKey } from "../utils/normalizeApiError";
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
@@ -41,7 +44,7 @@ const ForgotPasswordPage = () => {
       setSuccessMessage(t("forgotPassword.success"));
       setTimeout(() => navigate("/login"), 2500);
     } catch (err) {
-      setApiError(err?.message || t("common.error"));
+      setApiError(getErrorMessageKey(err, { defaultMessageKey: "errors.unknown" }));
     }
   };
 
@@ -94,15 +97,7 @@ const ForgotPasswordPage = () => {
                 </div>
               )}
 
-              {!!apiError?.trim() && (
-                <div
-                  role="alert"
-                  aria-live="polite"
-                  className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm text-red-600"
-                >
-                  {apiError}
-                </div>
-              )}
+              <ErrorMessage messageKey={apiError} className="text-center" />
 
               {!!successMessage?.trim() && (
                 <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-center text-sm text-green-600">
@@ -110,14 +105,15 @@ const ForgotPasswordPage = () => {
                 </div>
               )}
 
-              <button
+              <LoadingButton
                 className="w-full h-12 mt-2 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-[#F2593D]/20 hover:shadow-[#F2593D]/40 transition-all active:scale-[0.98] focus-visible-ring flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 type="submit"
-                disabled={isSubmitting}
+                loading={isSubmitting}
+                loadingText={t("loading.sending")}
               >
-                <span>{isSubmitting ? t("forgotPassword.submitting") : t("forgotPassword.submit")}</span>
+                {t("forgotPassword.submit")}
                 <span className="material-symbols-outlined text-[18px]">{arrowIcon}</span>
-              </button>
+              </LoadingButton>
             </form>
 
             <div className="bg-slate-50 dark:bg-black/40 px-8 py-5 border-t border-border-light dark:border-border-dark text-center">

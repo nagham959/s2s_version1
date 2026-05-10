@@ -1,4 +1,7 @@
 describe('Login Form - Error Messages (Arabic)', () => {
+  const testEmail = Cypress.env('testEmail') || 'test@example.com';
+  const testPassword = Cypress.env('testPassword') || 'ChangeMe123!';
+
   beforeEach(() => {
     cy.visit('/login');
   });
@@ -24,7 +27,7 @@ describe('Login Form - Error Messages (Arabic)', () => {
     });
 
     it('EM-007: Wrong credentials shows Arabic error', () => {
-      cy.get('input[type="email"]').clear().type('yousefmasoud81@gmail.com');
+      cy.get('input[type="email"]').clear().type(testEmail);
       cy.get('input[type="password"]').clear().type('WrongPassword123');
       cy.get('button[type="submit"]').click();
       cy.contains('البريد الإلكتروني أو كلمة المرور غير صحيحة').should('be.visible');
@@ -33,8 +36,12 @@ describe('Login Form - Error Messages (Arabic)', () => {
 
   describe('POS-001: Valid Login', () => {
     it('Should login successfully with valid credentials', () => {
-      cy.get('input[type="email"]').clear().type('yousefmasoud81@gmail.com');
-      cy.get('input[type="password"]').clear().type('Joe@joe221652004');
+      if (!Cypress.env('testEmail') || !Cypress.env('testPassword')) {
+        cy.log('Skipping valid login: CYPRESS_TEST_EMAIL/CYPRESS_TEST_PASSWORD are not set.');
+        return;
+      }
+      cy.get('input[type="email"]').clear().type(testEmail);
+      cy.get('input[type="password"]').clear().type(testPassword);
       cy.get('button[type="submit"]').click();
       cy.url().should('include', '/dashboard', { timeout: 15000 });
     });

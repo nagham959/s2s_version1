@@ -7,7 +7,45 @@
     "toggle": "Switch language"
   },
   "common": {
-    "error": "An error occurred. Please try again."
+    "error": "An error occurred. Please try again.",
+    "notAvailable": "This option is not available yet."
+  },
+  "passwordStrength": {
+    "title": "Password strength",
+    "length": "At least 8 characters",
+    "uppercase": "Uppercase letter",
+    "lowercase": "Lowercase letter",
+    "number": "Number",
+    "special": "Special character"
+  },
+  "errors": {
+    "network": "Could not reach the server. Check your internet connection.",
+    "tooManyRequests": "Too many attempts. Please wait and try again.",
+    "unauthorized": "Your session expired. Please sign in again.",
+    "invalidCredentials": "The email or password is incorrect.",
+    "forbidden": "You do not have permission to perform this action.",
+    "server": "The server is unavailable. Please try again later.",
+    "validation": "Some details are invalid. Check the required fields.",
+    "unknown": "An unexpected error occurred. Please try again.",
+    "audioToSignFailed": "Could not convert audio to sign. Please try again.",
+    "textToSignFailed": "Could not convert text to sign. Please try again.",
+    "noSpeechDetected": "No clear speech was detected. Try recording again.",
+    "noValidSigml": "Speech was recognized, but no valid sign animation was generated.",
+    "avatarFailed": "Could not play the Anna avatar. Please try again.",
+    "microphoneDenied": "Microphone access was denied or unavailable.",
+    "invalidFileType": "This file type is not supported.",
+    "fileTooLarge": "The file is too large."
+  },
+  "loading": {
+    "signingIn": "Signing in...",
+    "signingUp": "Creating account...",
+    "converting": "Converting...",
+    "processingAudio": "Processing audio...",
+    "saving": "Saving...",
+    "sending": "Sending...",
+    "verifying": "Verifying...",
+    "resettingPassword": "Resetting password...",
+    "changingPassword": "Changing password..."
   },
   "auth": {
     "errors": {
@@ -782,7 +820,11 @@
     },
     "errors": {
       "speechUnsupported": "This browser does not support speech recognition.",
-      "arabicOnly": "Only Arabic text is allowed."
+      "arabicOnly": "Only Arabic text is allowed.",
+      "micPermission": "Microphone access was denied or unavailable.",
+      "fullscreenFailed": "Unable to enter fullscreen mode.",
+      "videoInvalidFormat": "Unsupported video format. Use MP4, WebM, OGG, MOV, or AVI.",
+      "videoTooLarge": "Video file is too large. Maximum size is 100 MB."
     },
     "upload": {
       "cancelled": "Upload cancelled by user."

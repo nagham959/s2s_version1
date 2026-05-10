@@ -8,6 +8,9 @@ import Sidebar from "../components/Sidebar";
 import PasswordStrengthIndicator from "../components/PasswordStrengthIndicator";
 import { useAuth } from "../contexts/authContext.js";
 import { useLanguage } from "../contexts/LanguageContext";
+import ErrorMessage from "../components/ErrorMessage";
+import LoadingButton from "../components/LoadingButton";
+import { getErrorMessageKey } from "../utils/normalizeApiError";
 
 const ChangePasswordPage = () => {
   const { changePassword } = useAuth();
@@ -48,7 +51,7 @@ const ChangePasswordPage = () => {
       setSuccess(t("changePassword.success"));
       reset();
     } catch (err) {
-      setApiError(err.message || t("common.error"));
+      setApiError(getErrorMessageKey(err, { defaultMessageKey: "errors.unknown" }));
     }
   };
 
@@ -71,12 +74,7 @@ const ChangePasswordPage = () => {
                         </h1>
 
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8">
-              {apiError && (
-                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-sm font-medium flex items-center gap-2 border border-red-100 dark:border-red-800">
-                  <span className="material-symbols-outlined">error</span>
-                  {apiError}
-                </div>
-              )}
+              <ErrorMessage messageKey={apiError} className="mb-6" />
               {success && (
                 <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl text-sm font-medium flex items-center gap-2 border border-green-100 dark:border-green-800">
                   <span className="material-symbols-outlined">
@@ -151,15 +149,14 @@ const ChangePasswordPage = () => {
                   )}
                 </div>
 
-                <button
+                <LoadingButton
                   type="submit"
-                  disabled={isSubmitting}
+                  loading={isSubmitting}
+                  loadingText={t("loading.changingPassword")}
                   className="w-full py-3.5 px-4 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting
-                    ? t("changePassword.submitting")
-                    : t("changePassword.submit")}
-                </button>
+                  {t("changePassword.submit")}
+                </LoadingButton>
               </form>
             </div>
           </div>

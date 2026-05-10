@@ -10,7 +10,6 @@ const AboutPage = () => {
   const { t, language, dir } = useLanguage();
   const isRtl = language === 'ar';
   const textStart = isRtl ? 'text-right' : 'text-left';
-  const alignStart = isRtl ? 'items-end text-right' : 'items-start text-left';
 
   return (
     <ThemeProvider>

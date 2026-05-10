@@ -9,7 +9,6 @@ const PricingPage = () => {
   const navigate = useNavigate();
   const [isAnnual, setIsAnnual] = useState(false);
   const { t, language, dir } = useLanguage();
-  const isRtl = language === "ar";
   const perMonthLabel = language === "ar" ? "/شهر" : "/month";
 
   const pricingCopy = t("pricing", {});

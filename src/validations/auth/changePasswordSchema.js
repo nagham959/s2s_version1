@@ -37,4 +37,4 @@ export const changePasswordSchema = z
       });
     }
   })
-  .superRefine(confirmPasswordMatch("newPassword", "confirmNewPassword"));
+  .superRefine(confirmPasswordMatch("newPassword", "confirmPassword"));
