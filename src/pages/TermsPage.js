@@ -1,13 +1,11 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const TermsPage = () => {
-  const navigate = useNavigate();
-  const { t, language, dir } = useLanguage();
+  const { language, dir } = useLanguage();
   const isRtl = language === 'ar';
   const textStart = isRtl ? 'text-right' : 'text-left';
 

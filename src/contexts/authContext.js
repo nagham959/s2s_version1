@@ -15,32 +15,20 @@ const AuthContext = React.createContext(null);
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "https://api.s2sai.online";
 
-const safeErrorMessage = (err, fallback = "حدث خطأ، حاول مرة أخرى.") => {
-  const status = err?.response?.status;
-  const msg =
-    err?.response?.data?.message ||
-    err?.response?.data?.title ||
-    err?.message ||
-    fallback;
+let refreshPromise = null;
 
-  const s = String(msg || "");
-
-  if (/<!doctype|<html|<body|<pre/i.test(s)) {
-    return "حدث خطأ في الاتصال بالخادم. حاول مرة أخرى.";
+const logRefresh = (message) => {
+  if (process.env.NODE_ENV === "development") {
+    console.log(`[auth] ${message}`);
   }
-
-  if (status === 400)
-    return "البيانات غير صحيحة. راجع المدخلات وحاول مرة أخرى.";
-  if (status === 401) return "غير مصرح. يرجى تسجيل الدخول مرة أخرى.";
-  if (status === 503) return "السيرفر غير متاح حاليًا. حاول بعد قليل.";
-
-  return s || fallback;
 };
 
 export function AuthProvider({ children }) {
   const [accessToken, setAccessToken] = useState(null);
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(() =>
+    Boolean(localStorage.getItem("refreshToken")),
+  );
 
   const tokenRef = useRef(null);
   useEffect(() => {
@@ -57,14 +45,40 @@ export function AuthProvider({ children }) {
 
   const doRefresh = useCallback(
     async (storedRefresh) => {
-      const res = await api.post("/api/v1/Auth/RefreshToken", {
-        refreshToken: storedRefresh,
-      });
-      const data = res.data;
+      if (!refreshPromise) {
+        logRefresh("refresh started");
+        refreshPromise = api
+          .post(
+            "/api/v1/Auth/RefreshToken",
+            {
+              refreshToken: storedRefresh,
+            },
+            {
+              skipAuth: true,
+            },
+          )
+          .then((res) => {
+            logRefresh("refresh success");
+            return res.data;
+          })
+          .catch((err) => {
+            logRefresh("refresh failed");
+            throw err;
+          })
+          .finally(() => {
+            refreshPromise = null;
+          });
+      } else {
+        logRefresh("refresh joined existing promise");
+      }
+
+      const data = await refreshPromise;
 
       setAccessToken(data.token);
+      tokenRef.current = data.token;
       setUser({ email: data.email, displayName: data.displayName });
 
+      localStorage.setItem("token", data.token);
       if (data.refreshToken) {
         localStorage.setItem("refreshToken", data.refreshToken);
       }
@@ -91,6 +105,14 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const reqId = api.interceptors.request.use((req) => {
+      const isRefreshRequest = req.url?.includes("/api/v1/Auth/RefreshToken");
+      if (req.skipAuth || isRefreshRequest) {
+        if (req.headers) {
+          delete req.headers.Authorization;
+        }
+        return req;
+      }
+
       const t = tokenRef.current;
       if (t) req.headers.Authorization = `Bearer ${t}`;
       return req;
@@ -100,8 +122,16 @@ export function AuthProvider({ children }) {
       (res) => res,
       async (err) => {
         const originalRequest = err.config;
+        const isRefreshRequest = originalRequest?.url?.includes(
+          "/api/v1/Auth/RefreshToken",
+        );
 
-        if (err.response?.status === 401 && !originalRequest?._retry) {
+        if (
+          err.response?.status === 401 &&
+          originalRequest &&
+          !originalRequest._retry &&
+          !isRefreshRequest
+        ) {
           originalRequest._retry = true;
 
           const storedRefresh = localStorage.getItem("refreshToken");
@@ -112,6 +142,7 @@ export function AuthProvider({ children }) {
 
           try {
             const data = await doRefresh(storedRefresh);
+            originalRequest.headers = originalRequest.headers || {};
             originalRequest.headers.Authorization = `Bearer ${data.token}`;
             return api(originalRequest);
           } catch (e) {
@@ -159,11 +190,11 @@ export function AuthProvider({ children }) {
 
       localStorage.setItem("token", token);
       localStorage.setItem("refreshToken", refreshToken);
+      setAccessToken(token);
       setUser({ email, displayName });
 
       return response.data;
     } catch (error) {
-      console.error("Auth Error:", error);
       const serverMessage =
         error.response?.data?.detail || "فشل التحقق من الحساب عبر السيرفر";
       throw new Error(serverMessage);
@@ -174,11 +205,18 @@ export function AuthProvider({ children }) {
   // Auto-refresh لو عندك refreshToken محفوظ وداخل الصفحة لأول مرة
   useEffect(() => {
     const storedRefresh = localStorage.getItem("refreshToken");
-    if (!storedRefresh || accessToken) return;
+    if (!storedRefresh || accessToken) {
+      setIsLoading(false);
+      return;
+    }
 
-    doRefresh(storedRefresh).catch(() => {
-      localStorage.removeItem("refreshToken");
-    });
+    setIsLoading(true);
+    doRefresh(storedRefresh)
+      .catch(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+      })
+      .finally(() => setIsLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -187,9 +225,7 @@ export function AuthProvider({ children }) {
       await api.post("/api/v1/Auth/ForgotPassword", { email });
       return true;
     } catch (err) {
-      throw new Error(
-        safeErrorMessage(err, "فشل إرسال طلب إعادة تعيين كلمة المرور."),
-      );
+      throw err;
     }
   };
 
@@ -205,10 +241,7 @@ export function AuthProvider({ children }) {
 
       return true;
     } catch (err) {
-      console.error("Server Response Error:", err.response?.data);
-      throw new Error(
-        safeErrorMessage(err, "فشل تغيير كلمة المرور. حاول مرة أخرى."),
-      );
+      throw err;
     }
   };
 
@@ -226,8 +259,7 @@ export function AuthProvider({ children }) {
 
       return response.data;
     } catch (error) {
-      const message = error.response?.data?.detail || "فشل تغيير كلمة المرور.";
-      throw new Error(message);
+      throw error;
     }
   };
 
@@ -255,11 +287,7 @@ const translateTextToSigml = async (text, avatar = "anna", speed = "1.0", format
     
     return null;
   } catch (error) {
-    console.error("Translation Error (401 Fix):", error);
-    if (error.response?.status === 401) {
-      throw new Error("جلسة العمل انتهت، يرجى تسجيل الدخول مرة أخرى.");
-    }
-    throw new Error(error.response?.data?.detail || "فشل التحقق من الهوية.");
+    throw error;
   }
 };
 

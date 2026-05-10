@@ -15,7 +15,7 @@ Test cases for valid inputs that should succeed.
 
 | Test ID | Email | Password | Expected Result |
 |---------|-------|----------|-----------------|
-| POS-001 | yousefmasoud81@gmail.com | Joe@joe221652004 | Login success |
+| POS-001 | Set via CYPRESS_TEST_EMAIL | Set via CYPRESS_TEST_PASSWORD | Login success |
 
 ### Register
 

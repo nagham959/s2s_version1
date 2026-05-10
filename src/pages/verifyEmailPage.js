@@ -7,8 +7,18 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useLanguage } from '../contexts/LanguageContext';
+import ErrorMessage from '../components/ErrorMessage';
+import LoadingButton from '../components/LoadingButton';
+import { getErrorMessageKey } from '../utils/normalizeApiError';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.s2sai.online';
+
+const createHttpError = (status, data = {}) => {
+  const error = new Error('Request failed');
+  error.status = status;
+  error.data = data;
+  return error;
+};
 
 const VerifyEmailPage = () => {
   const location = useLocation();
@@ -30,6 +40,7 @@ const VerifyEmailPage = () => {
   const [apiError, setApiError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [resendDisabled, setResendDisabled] = useState(false);
+  const [isResendLoading, setIsResendLoading] = useState(false);
   const [countdown, setCountdown] = useState(60);
 
   const inputRefs = useRef([]);
@@ -94,21 +105,27 @@ const VerifyEmailPage = () => {
       });
 
       if (!res.ok) {
-        const resData = await res.json();
-        throw new Error(resData.message || t('verifyEmail.errorInvalid'));
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (_error) {
+          data = {};
+        }
+        throw createHttpError(res.status, data);
       }
 
       setSuccessMessage(t('verifyEmail.success'));
       setTimeout(() => navigate('/login'), 2500);
     } catch (err) {
-      setApiError(err.message || t('common.error'));
+      setApiError(getErrorMessageKey(err, { defaultMessageKey: 'errors.validation' }));
     }
   };
 
   const handleResend = async () => {
-    if (resendDisabled) return;
+    if (resendDisabled || isResendLoading) return;
 
     setResendDisabled(true);
+    setIsResendLoading(true);
     setApiError('');
     setSuccessMessage(t('verifyEmail.resendSending'));
 
@@ -117,12 +134,14 @@ const VerifyEmailPage = () => {
         method: 'POST',
       });
 
-      if (!res.ok) throw new Error(t('verifyEmail.resendFailed'));
+      if (!res.ok) throw createHttpError(res.status);
 
       setSuccessMessage(t('verifyEmail.resendSuccess'));
     } catch (err) {
-      setApiError(err.message || t('common.error'));
+      setApiError(getErrorMessageKey(err));
       setResendDisabled(false);
+    } finally {
+      setIsResendLoading(false);
     }
   };
 
@@ -177,34 +196,36 @@ const VerifyEmailPage = () => {
                   {t(errors.otp.message)}
                 </div>
               )}
-              {apiError && (
-                <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm text-red-600">
-                  {apiError}
-                </div>
-              )}
+              <ErrorMessage messageKey={apiError} className="text-center" />
               {successMessage && (
                 <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-center text-sm text-green-600">
                   {successMessage}
                 </div>
               )}
 
-              <button
+              <LoadingButton
                 type="submit"
                 className="w-full h-12 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-[#F2593D]/20 hover:shadow-[#F2593D]/40 transition-all active:scale-[0.98] focus-visible-ring flex items-center justify-center gap-2 disabled:opacity-60"
-                disabled={isSubmitting || otpArray.join('').length !== 6}
+                disabled={otpArray.join('').length !== 6}
+                loading={isSubmitting}
+                loadingText={t('loading.verifying')}
               >
                 {t('verifyEmail.submit')}
-              </button>
+              </LoadingButton>
 
               <div className={`text-center text-sm text-slate-500 dark:text-text-secondary ${textStart}`}>
                 {t('verifyEmail.noCode')}{' '}
                 <button
                   type="button"
                   onClick={handleResend}
-                  disabled={resendDisabled}
+                  disabled={resendDisabled || isResendLoading}
                   className={`font-bold text-primary hover:text-primary-hover focus-visible-ring ${resendDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  {resendDisabled ? t('verifyEmail.resendCountdown', { countdown }) : t('verifyEmail.resend')}
+                  {isResendLoading
+                    ? t('loading.sending')
+                    : resendDisabled
+                      ? t('verifyEmail.resendCountdown', { countdown })
+                      : t('verifyEmail.resend')}
                 </button>
               </div>
             </form>

@@ -82,8 +82,9 @@ const ContactPage = () => {
                     <h3 className={`text-text-main dark:text-white text-xl font-bold mb-2 ${textStart}`}>{formCopy.title}</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div className="flex flex-col gap-2">
-                        <label className="text-sm font-semibold text-text-main dark:text-white">{formCopy.name}</label>
+                        <label className="text-sm font-semibold text-text-main dark:text-white" htmlFor="contact-name">{formCopy.name}</label>
                         <input
+                          id="contact-name"
                           type="text"
                           name="name"
                           value={form.name}
@@ -94,8 +95,9 @@ const ContactPage = () => {
                         />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className="text-sm font-semibold text-text-main dark:text-white">{formCopy.email}</label>
+                        <label className="text-sm font-semibold text-text-main dark:text-white" htmlFor="contact-email">{formCopy.email}</label>
                         <input
+                          id="contact-email"
                           type="email"
                           name="email"
                           value={form.email}
@@ -108,8 +110,9 @@ const ContactPage = () => {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <label className="text-sm font-semibold text-text-main dark:text-white">{formCopy.subject}</label>
+                      <label className="text-sm font-semibold text-text-main dark:text-white" htmlFor="contact-subject">{formCopy.subject}</label>
                       <select
+                        id="contact-subject"
                         name="subject"
                         value={form.subject}
                         onChange={handleChange}
@@ -123,8 +126,9 @@ const ContactPage = () => {
                       </select>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <label className="text-sm font-semibold text-text-main dark:text-white">{formCopy.message}</label>
+                      <label className="text-sm font-semibold text-text-main dark:text-white" htmlFor="contact-message">{formCopy.message}</label>
                       <textarea
+                        id="contact-message"
                         name="message"
                         value={form.message}
                         onChange={handleChange}

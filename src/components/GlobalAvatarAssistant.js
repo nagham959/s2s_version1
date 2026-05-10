@@ -221,7 +221,7 @@ const GlobalAvatarAssistant = () => {
   return (
     <div
       ref={assistantRootRef}
-      className="pointer-events-none fixed z-[9999]"
+      className="pointer-events-none fixed z-[9999] hidden sm:block"
       style={{ left: position.x, top: position.y }}
     >
       <div className="pointer-events-auto relative">

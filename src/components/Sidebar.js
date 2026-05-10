@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const Sidebar = ({ 
@@ -9,10 +8,8 @@ const Sidebar = ({
   activeItem = null,
   onItemClick = null
 }) => {
-  const { isDark } = useTheme();
   const location = useLocation();
-  const { t, dir, language } = useLanguage();
-  const isRtl = language === 'ar';
+  const { t, dir } = useLanguage();
 
   // Default mobile navigation items
   const defaultMobileItems = [

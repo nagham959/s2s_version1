@@ -7,6 +7,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 const HistoryPage = () => {
     const [filter, setFilter] = useState('all');
+    const [selectedItem, setSelectedItem] = useState(null);
     const { historyItems, deleteHistoryItem } = useHistory();
     const { t, language, dir } = useLanguage();
     const isRtl = language === 'ar';
@@ -115,7 +116,11 @@ const HistoryPage = () => {
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button className="p-2 text-slate-400 hover:text-primary hover:bg-white dark:hover:bg-slate-600 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-500 shadow-sm" title={t('history.table.view')}>
+                                                        <button
+                                                            onClick={() => setSelectedItem(item)}
+                                                            className="p-2 text-slate-400 hover:text-primary hover:bg-white dark:hover:bg-slate-600 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-500 shadow-sm"
+                                                            title={t('history.table.view')}
+                                                        >
                                                             <span className="material-symbols-outlined text-[18px]">visibility</span>
                                                         </button>
                                                         <button
@@ -157,12 +162,47 @@ const HistoryPage = () => {
                             </span>
                             <div className="flex gap-2">
                                 <button disabled className="px-3 py-1.5 text-sm font-medium text-slate-400 border border-slate-200 dark:border-slate-700 rounded-lg cursor-not-allowed opacity-50">{t('history.pagination.prev')}</button>
-                                <button className="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">{t('history.pagination.next')}</button>
+                                <button disabled className="px-3 py-1.5 text-sm font-medium text-slate-400 border border-slate-200 dark:border-slate-700 rounded-lg cursor-not-allowed opacity-50">{t('history.pagination.next')}</button>
                             </div>
                         </div>
                     </div>
                 </main>
                 <Sidebar variant="mobile" activeItem="history" />
+                {selectedItem && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
+                        <div className={`w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-800 ${textStart}`}>
+                            <div className="mb-4 flex items-center justify-between gap-4">
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('history.table.view')}</h2>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedItem(null)}
+                                    className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-white"
+                                    aria-label="Close"
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">close</span>
+                                </button>
+                            </div>
+                            <dl className="space-y-3 text-sm">
+                                <div>
+                                    <dt className="font-semibold text-slate-500 dark:text-slate-400">{t('history.table.activity')}</dt>
+                                    <dd className="text-slate-900 dark:text-white">{selectedItem.label}</dd>
+                                </div>
+                                <div>
+                                    <dt className="font-semibold text-slate-500 dark:text-slate-400">{t('history.table.date')}</dt>
+                                    <dd className="text-slate-900 dark:text-white">{selectedItem.date}</dd>
+                                </div>
+                                <div>
+                                    <dt className="font-semibold text-slate-500 dark:text-slate-400">{t('history.table.status')}</dt>
+                                    <dd className="text-slate-900 dark:text-white">{selectedItem.status}</dd>
+                                </div>
+                                <div>
+                                    <dt className="font-semibold text-slate-500 dark:text-slate-400">{t('history.table.preview')}</dt>
+                                    <dd className="whitespace-pre-wrap break-words text-slate-900 dark:text-white">{selectedItem.preview}</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+                )}
             </div>
         </ThemeProvider>
     );

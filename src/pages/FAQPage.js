@@ -7,7 +7,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 const FAQPage = () => {
   const navigate = useNavigate();
-  const { t, language, dir } = useLanguage();
+  const { language, dir } = useLanguage();
   const isRtl = language === 'ar';
   const textStart = isRtl ? 'text-right' : 'text-left';
   const [expandedIndex, setExpandedIndex] = useState(null);

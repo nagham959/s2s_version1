@@ -4,12 +4,26 @@ import { ThemeProvider } from "../contexts/ThemeContext";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import CWASAAvatarPlayer from "../components/CWASAAvatarPlayer";
+import ErrorMessage from "../components/ErrorMessage";
+import LoadingButton from "../components/LoadingButton";
 import { useHistory } from "../contexts/HistoryContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/authContext";
+import { getErrorMessageKey } from "../utils/normalizeApiError";
+
+const MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024;
+const ALLOWED_VIDEO_MIME_TYPES = new Set([
+  "video/mp4",
+  "video/webm",
+  "video/ogg",
+  "video/quicktime",
+  "video/x-msvideo",
+]);
+const ALLOWED_VIDEO_EXTENSIONS = new Set(["mp4", "webm", "ogg", "mov", "avi"]);
+const ANNA_AVATAR_NAME = "anna";
 
 const DashboardPage = () => {
-  const { api, translateTextToSigml, translateAudioToSigml } = useAuth();
+  const { api, translateTextToSigml } = useAuth();
   const { t, language, dir } = useLanguage();
   const isRtl = language === "ar";
   const textStart = isRtl ? "text-right" : "text-left";
@@ -24,13 +38,17 @@ const DashboardPage = () => {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [outputText, setOutputText] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isTextToSignLoading, setIsTextToSignLoading] = useState(false);
+  const [isAudioToSignLoading, setIsAudioToSignLoading] = useState(false);
   const { historyItems, addHistoryItem } = useHistory();
   const startTimeRef = useRef(null);
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const audioStreamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
+  const avatarContainerRef = useRef(null);
   const audioPlayerRef = useRef(null);
   const recognitionRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -41,6 +59,8 @@ const DashboardPage = () => {
   const [translationError, setTranslationError] = useState("");
   const [avatarSigml, setAvatarSigml] = useState("");
   const [avatarPlayNonce, setAvatarPlayNonce] = useState(0);
+  const [isAvatarFullscreenFallbackOpen, setIsAvatarFullscreenFallbackOpen] = useState(false);
+  const [isAvatarFullscreenActive, setIsAvatarFullscreenActive] = useState(false);
 
   // Video Upload Review Modal States
   const [pendingVideo, setPendingVideo] = useState(null);
@@ -50,6 +70,7 @@ const DashboardPage = () => {
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const uploadAbortControllerRef = useRef(null);
 
+  // eslint-disable-next-line no-unused-vars
   const keepArabicCharactersOnly = (value) => {
     // Keep Arabic script, Arabic/Latin digits, spaces, and common punctuation.
     return (value || '').replace(/[^\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\s0-9٠-٩.,!?؟،؛:\-()\n]/g, '');
@@ -59,6 +80,9 @@ const DashboardPage = () => {
     const xml = (value || "").trim().toLowerCase();
     return xml.startsWith("<sigml") || xml.includes("<sigml");
   };
+
+  const isNonEmptyString = (value) =>
+    typeof value === "string" && value.trim().length > 0;
 
   const formatDurationWithUnit = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -72,6 +96,14 @@ const DashboardPage = () => {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const isAllowedVideoFile = (file) => {
+    const extension = file.name.split(".").pop()?.toLowerCase() || "";
+    const hasAllowedType = file.type
+      ? ALLOWED_VIDEO_MIME_TYPES.has(file.type)
+      : true;
+    return hasAllowedType && ALLOWED_VIDEO_EXTENSIONS.has(extension);
   };
 
   const parseApiBody = (rawBody) => {
@@ -97,6 +129,98 @@ const DashboardPage = () => {
     return "";
   };
 
+  const normalizeDisplayText = (value) => {
+    if (typeof value !== "string") return "";
+    const text = value.trim();
+    if (!text || isLikelySigml(text)) return "";
+    return text;
+  };
+
+  const extractAudioToSignText = (responseData) => {
+    const body = parseApiBody(responseData);
+    const candidates = [
+      body?.translation?.original_text,
+      body?.original_text,
+      body?.data?.translation?.original_text,
+      body?.data?.original_text,
+
+      body?.text,
+      body?.transcript,
+      body?.transcription,
+      body?.recognizedText,
+      body?.translatedText,
+      body?.inputText,
+      body?.sentence,
+      body?.result?.text,
+      body?.data?.text,
+      body?.data?.transcript,
+      body?.data?.translatedText,
+      body?.translation?.text,
+      body?.translation?.transcript,
+      body?.translation?.transcription,
+      body?.translation?.recognizedText,
+      body?.translation?.translatedText,
+      body?.translation?.inputText,
+      body?.translation?.sentence,
+      body?.data?.translation?.text,
+      body?.data?.translation?.transcript,
+      body?.data?.translation?.translatedText,
+    ];
+
+    return candidates.map(normalizeDisplayText).find(isNonEmptyString) || "";
+  };
+
+  const extractAudioToSignSigml = (responseData) => {
+    if (typeof responseData === "string" && isLikelySigml(responseData)) {
+      return responseData.trim();
+    }
+
+    const body = parseApiBody(responseData);
+    const candidates = [
+      body?.translation?.sigml_content,
+      body?.translation?.sigmlContent,
+      body?.translation?.sigml,
+
+      body?.sigml_content,
+      body?.sigmlContent,
+      body?.sigml,
+
+      body?.data?.translation?.sigml_content,
+      body?.data?.translation?.sigmlContent,
+      body?.data?.translation?.sigml,
+
+      body?.data?.sigml_content,
+      body?.data?.sigmlContent,
+      body?.data?.sigml,
+
+      body?.result?.sigml_content,
+      body?.result?.sigmlContent,
+      body?.result?.sigml,
+    ];
+
+    const sigml = candidates.find(isNonEmptyString)?.trim() || "";
+    return isLikelySigml(sigml) ? sigml : "";
+  };
+
+  const requestAvatarPlay = (sigmlData) => {
+    const sigml = typeof sigmlData === "string" ? sigmlData.trim() : "";
+    if (!sigml || !isLikelySigml(sigml)) return false;
+
+    setAvatarSigml(sigml);
+    setAvatarPlayNonce((prev) => {
+      const nextNonce = prev + 1;
+      if (process.env.NODE_ENV === "development") {
+        console.debug("avatar play requested", {
+          hasSigml: true,
+          sigmlLength: sigml.length,
+          playNonce: nextNonce,
+        });
+      }
+      return nextNonce;
+    });
+    return true;
+  };
+
   const extractTranscript = (translation) => {
     const direct = firstFilledValue(translation, [
       "text",
@@ -119,25 +243,8 @@ const DashboardPage = () => {
     return firstFilledValue(translation, ["audio_url", "audioUrl"]);
   };
 
-  const extractApiErrorMessage = (
-    error,
-    fallback = "Translation failed. Please try again.",
-  ) => {
-    const data = error?.response?.data;
-    const body = parseApiBody(data);
-    const message =
-      body?.detail ||
-      body?.message ||
-      body?.title ||
-      error?.message ||
-      fallback;
-    const text = String(message || "").trim();
-
-    if (!text || /<!doctype|<html|<body|<pre/i.test(text)) {
-      return fallback;
-    }
-    return text;
-  };
+  const extractApiErrorMessage = (error, fallback = "errors.unknown") =>
+    getErrorMessageKey(error, { defaultMessageKey: fallback });
 
   const resetAudioPlayer = () => {
     if (!audioPlayerRef.current) return;
@@ -149,6 +256,41 @@ const DashboardPage = () => {
     audioPlayerRef.current = null;
     setIsAudioPlaying(false);
     setIsAudioLoading(false);
+  };
+
+  const stopAudioStream = () => {
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      audioStreamRef.current = null;
+    }
+  };
+
+  const requestElementFullscreen = async (element, { onFallback } = {}) => {
+    if (!element) return;
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (typeof element.requestFullscreen === "function") {
+        await element.requestFullscreen();
+      } else if (typeof onFallback === "function") {
+        onFallback();
+      } else {
+        setTranslationError("dashboard.errors.fullscreenFailed");
+      }
+    } catch (_error) {
+      if (typeof onFallback === "function") {
+        onFallback();
+      } else {
+        setTranslationError("dashboard.errors.fullscreenFailed");
+      }
+    }
+  };
+
+  const openAvatarFullscreen = () => {
+    setTranslationError("");
+    void requestElementFullscreen(avatarContainerRef.current, {
+      onFallback: () => setIsAvatarFullscreenFallbackOpen(true),
+    });
   };
 
   const translateSignVideo = async (videoFile) => {
@@ -260,6 +402,20 @@ const DashboardPage = () => {
     const file = e.target.files[0];
     if (!file) return;
 
+    setTranslationError("");
+
+    if (!isAllowedVideoFile(file)) {
+      setTranslationError("errors.invalidFileType");
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
+      setTranslationError("errors.fileTooLarge");
+      e.target.value = '';
+      return;
+    }
+
     // Create preview URL and extract metadata
     const url = URL.createObjectURL(file);
     
@@ -329,20 +485,24 @@ const DashboardPage = () => {
     setUploadProgress(0);
   };
 
-  const stopAudioRecorder = () => {
+  const stopAudioRecorder = (processRecordedAudio = true) => {
     const recorder = mediaRecorderRef.current;
     if (!recorder || recorder.state === "inactive") {
       recordedChunksRef.current = [];
       mediaRecorderRef.current = null;
+      stopAudioStream();
       return;
     }
 
+    const recorderStream = recorder.stream;
     recorder.onstop = () => {
       const chunks = [...recordedChunksRef.current];
       recordedChunksRef.current = [];
       mediaRecorderRef.current = null;
+      recorderStream?.getTracks().forEach((track) => track.stop());
+      stopAudioStream();
 
-      if (chunks.length === 0) return;
+      if (!processRecordedAudio || chunks.length === 0) return;
 
       const blob = new Blob(chunks, { type: "audio/webm" });
       if (!blob.size) return;
@@ -357,7 +517,9 @@ const DashboardPage = () => {
   const handleStopAudioRecording = async (audioBlob) => {
     if (!audioBlob || audioBlob.size === 0) return;
 
-    setIsTranslating(true);
+    if (isAudioToSignLoading) return;
+
+    setIsAudioToSignLoading(true);
     setTranslationError("");
 
     try {
@@ -365,53 +527,103 @@ const DashboardPage = () => {
         type: "audio/webm",
       });
 
-      const sigmlData = await translateAudioToSigml(audioFile);
+      const formData = new FormData();
+      formData.append("audio_file", audioFile);
+      formData.append("avatar", ANNA_AVATAR_NAME);
+      formData.append("speed", "1.0");
+      formData.append("output_format", "sigml");
+
+      const response = await api.post("/api/v1/Translate/audio-to-sign", formData, {
+        headers: {
+          Accept: "application/json",
+        },
+      });
+      const responseData = response.data;
+      const responseBody = parseApiBody(responseData);
+      const translation = responseBody?.translation;
+      const returnedText = extractAudioToSignText(responseData);
+      const sigmlData = extractAudioToSignSigml(responseData);
+      let didRequestAvatarPlay = false;
+
+      if (returnedText) {
+        setTextInput(returnedText);
+        setTextInputError("");
+        setInputMode("text");
+      }
 
       if (sigmlData) {
-        setAvatarSigml(sigmlData);
-        setAvatarPlayNonce((prev) => prev + 1);
+        didRequestAvatarPlay = requestAvatarPlay(sigmlData);
+      }
+
+      if (!returnedText && didRequestAvatarPlay) {
+        setTextInputError("errors.noSpeechDetected");
+      }
+
+      if (!didRequestAvatarPlay) {
+        setTranslationError(returnedText ? "errors.noValidSigml" : "errors.noSpeechDetected");
+      }
+
+      if (process.env.NODE_ENV === "development") {
+        console.debug("audio-to-sign response mapping", {
+          responseKeys: Object.keys(responseBody || {}),
+          hasTranslation: Boolean(translation && typeof translation === "object"),
+          hasOriginalText: isNonEmptyString(translation?.original_text),
+          hasSigmlContent: isNonEmptyString(translation?.sigml_content),
+          sigmlContentType: typeof translation?.sigml_content,
+          sigmlLength: sigmlData.length,
+          didRequestAvatarPlay,
+          avatarName: ANNA_AVATAR_NAME,
+        });
       }
     } catch (error) {
-      console.error("Audio Translation Error:", error);
-      setTranslationError(error.message);
+      if (process.env.NODE_ENV === "development") {
+        console.debug("Audio translation failed:", {
+          status: error?.response?.status,
+          message: error?.message,
+        });
+      }
+      setTranslationError(extractApiErrorMessage(error, "errors.audioToSignFailed"));
     } finally {
-      setIsTranslating(false);
+      setIsAudioToSignLoading(false);
     }
   };
 
   const handlePlayAvatarFromInput = async () => {
     const textToTranslate = textInput.trim();
 
-    if (!textToTranslate) return;
+    if (!textToTranslate || isTextToSignLoading) return;
 
-    setIsTranslating(true);
+    setIsTextToSignLoading(true);
     setTranslationError("");
 
     try {
       if (isLikelySigml(textToTranslate)) {
-        setAvatarSigml(textToTranslate);
-        setAvatarPlayNonce((prev) => prev + 1);
-        setIsTranslating(false);
+        requestAvatarPlay(textToTranslate);
         return;
       }
 
-      console.log("Sending to API:", textToTranslate);
       const sigmlData = await translateTextToSigml(
         textToTranslate,
-        "anna",
+        ANNA_AVATAR_NAME,
         "1.0",
         "sigml",
       );
 
       if (sigmlData) {
-        setAvatarSigml(sigmlData);
-        setAvatarPlayNonce((prev) => prev + 1);
+        requestAvatarPlay(sigmlData);
+      } else {
+        setTranslationError("errors.noValidSigml");
       }
     } catch (error) {
-      setTranslationError(error.message);
-      console.error("API Error:", error);
+      setTranslationError(extractApiErrorMessage(error, "errors.textToSignFailed"));
+      if (process.env.NODE_ENV === "development") {
+        console.debug("Text translation failed:", {
+          status: error?.response?.status,
+          message: error?.message,
+        });
+      }
     } finally {
-      setIsTranslating(false);
+      setIsTextToSignLoading(false);
     }
   };
 
@@ -423,7 +635,7 @@ const DashboardPage = () => {
       return;
     }
     setTranslationError("");
-    setAvatarPlayNonce((prev) => prev + 1);
+    requestAvatarPlay(avatarSigml);
   };
 
   // Initialize Speech Recognition
@@ -468,7 +680,7 @@ const DashboardPage = () => {
         }
       };
     } else {
-      console.log("Speech Recognition Not Supported");
+      setTranslationError("dashboard.errors.speechUnsupported");
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -618,6 +830,7 @@ const toggleRecording = async () => {
     }
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioStreamRef.current = stream;
     const mediaRecorder = new MediaRecorder(stream);
     mediaRecorderRef.current = mediaRecorder;
     recordedChunksRef.current = [];
@@ -631,10 +844,10 @@ const toggleRecording = async () => {
     // نوقف الـ Translating دلوقتي لحد ما الريكورد يخلص ونبعت
     setIsTranslating(false); 
 
-    console.log("Recording started successfully...");
   } catch (err) {
     console.error("Mic Error:", err);
-    alert("Check mic permissions");
+    setIsRecording(false);
+    setTranslationError("errors.microphoneDenied");
   }
 };
 
@@ -643,11 +856,29 @@ const toggleRecording = async () => {
   useEffect(() => {
     return () => {
       stopCamera({ addSessionToHistory: false });
+      stopAudioRecorder(false);
       resetAudioPlayer();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsAvatarFullscreenActive(
+        document.fullscreenElement === avatarContainerRef.current,
+      );
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
   const toggleMode = () => {
+    if (mediaRecorderRef.current) {
+      stopAudioRecorder(false);
+    }
+    recognitionRef.current?.stop?.();
     setMode((prev) =>
       prev === "sign-to-voice" ? "voice-to-avatar" : "sign-to-voice",
     );
@@ -661,7 +892,7 @@ const toggleRecording = async () => {
     setAvatarPlayNonce(0);
     resetAudioPlayer();
     setAudioUrl("");
-    stopCamera({ addSessionToHistory: false });
+    stopCamera({ processRecordedVideo: false, addSessionToHistory: false });
   };
 
   return (
@@ -829,13 +1060,7 @@ const toggleRecording = async () => {
                     </div>
                     <div className="absolute top-6 left-6 flex gap-2">
                       <button
-                        onClick={() => {
-                          if (document.fullscreenElement) {
-                            document.exitFullscreen();
-                          } else {
-                            videoRef.current?.requestFullscreen();
-                          }
-                        }}
+                        onClick={() => requestElementFullscreen(videoRef.current)}
                         className="bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 backdrop-blur-md text-slate-700 dark:text-white size-10 rounded-full flex items-center justify-center transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
                       >
                         <span className="material-symbols-outlined text-sm">
@@ -951,9 +1176,7 @@ const toggleRecording = async () => {
                         )}
                       </div>
                     ) : translationError ? (
-                      <div className="h-full rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-600 dark:border-red-800/70 dark:bg-red-900/20 dark:text-red-300">
-                        {translationError}
-                      </div>
+                      <ErrorMessage messageKey={translationError} className="h-full" />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50">
                         <span className="material-symbols-outlined text-4xl mb-2">
@@ -1009,6 +1232,7 @@ const toggleRecording = async () => {
                         className="relative flex-shrink-0"
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (isAudioToSignLoading && !isRecording) return;
                           setInputMode("voice");
                           if (isRecording) {
                             stopAudioRecorder();
@@ -1018,10 +1242,12 @@ const toggleRecording = async () => {
                         }}
                       >
                         <button
+                          type="button"
+                          disabled={isAudioToSignLoading && !isRecording}
                           className={`relative z-10 flex h-16 w-16 items-center justify-center rounded-full text-white shadow-lg transition-all duration-300 border-4 ${isRecording ? "bg-red-500 border-red-200 scale-110" : "bg-primary border-white dark:border-slate-700 hover:bg-primary-light hover:scale-105"}`}
                         >
                           <span className="material-symbols-outlined text-3xl">
-                            {isRecording ? "stop" : "mic"}
+                            {isAudioToSignLoading ? "hourglass_top" : isRecording ? "stop" : "mic"}
                           </span>
                         </button>
                         {isRecording && (
@@ -1038,9 +1264,11 @@ const toggleRecording = async () => {
                           <span
                             className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${isRecording ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600"}`}
                           >
-                            {isRecording
-                              ? t("dashboard.recording.listening")
-                              : t("dashboard.recording.tapMic")}
+                            {isAudioToSignLoading
+                              ? t("loading.processingAudio")
+                              : isRecording
+                                ? t("dashboard.recording.listening")
+                                : t("dashboard.recording.tapMic")}
                           </span>
                         </div>
                         <div
@@ -1101,6 +1329,7 @@ const toggleRecording = async () => {
                             onClick={(e) => {
                               e.stopPropagation();
                               setTextInput("");
+                              setTextInputError("");
                             }}
                             className="text-xs text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1"
                           >
@@ -1115,6 +1344,8 @@ const toggleRecording = async () => {
                         value={textInput}
                         onChange={(e) => {
                           setTextInput(e.target.value);
+                          setTextInputError("");
+                          setTranslationError("");
                           setInputMode("text");
                           if (isRecording) {
                             recognitionRef.current?.stop();
@@ -1127,46 +1358,54 @@ const toggleRecording = async () => {
                         className={`w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-slate-800 dark:text-white text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 dark:placeholder:text-slate-500 ${textStart} transition-shadow`}
                         onClick={(e) => e.stopPropagation()}
                       />
-                      {textInputError && (
-                        <p className="mt-2 text-xs font-medium text-red-500 dark:text-red-400">{textInputError}</p>
-                      )}
+                      <ErrorMessage messageKey={textInputError} className="mt-2 px-3 py-2 text-xs" />
                     </div>
 
                     {/* Convert Button */}
                     <div className="px-5 pb-5">
-                      <button
+                      <LoadingButton
                         onClick={handlePlayAvatarFromInput}
+                        loading={isTextToSignLoading}
+                        loadingText={t("loading.converting")}
                         disabled={!textInput.trim()}
                         className={`w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] ${iconDir}`}
                       >
-                        <span className="material-symbols-outlined">
+                        <span className="material-symbols-outlined" aria-hidden="true">
                           smart_toy
                         </span>
                         {t("dashboard.text.convert")}
-                      </button>
+                      </LoadingButton>
+                      <ErrorMessage messageKey={translationError} className="mt-3" />
                     </div>
                   </div>
                 </div>
 
                 <div className="lg:col-span-7 flex flex-col gap-6">
                   {/* Avatar preview powered by CWASA SiGML runtime */}
-                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden flex flex-col">
+                  <div
+                    ref={avatarContainerRef}
+                    className={`bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden flex flex-col ${isAvatarFullscreenActive ? "h-screen w-screen rounded-none border-0" : ""}`}
+                  >
                     <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-700">
                       <div className="flex gap-2">
                         <button
+                          type="button"
+                          onClick={openAvatarFullscreen}
                           className="p-2 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600"
-                          title={t("dashboard.avatar.fullscreen")}
+                          title="تكبير عرض الإشارة"
+                          aria-label="تكبير عرض الإشارة"
                         >
                           <span className="material-symbols-outlined">
-                            fullscreen
+                            {isAvatarFullscreenActive ? "fullscreen_exit" : "fullscreen"}
                           </span>
                         </button>
                       </div>
                     </div>
-                    <div className="relative aspect-video w-full bg-white dark:bg-slate-900 overflow-hidden">
+                    <div className={`relative w-full bg-white dark:bg-slate-900 overflow-hidden ${isAvatarFullscreenActive ? "flex-1 min-h-0" : "aspect-video"}`}>
                       <CWASAAvatarPlayer
                         sigml={avatarSigml}
                         playNonce={avatarPlayNonce}
+                        avatarName={ANNA_AVATAR_NAME}
                         className="absolute inset-0 h-full w-full"
                         title="Dashboard Avatar"
                       />
@@ -1278,6 +1517,39 @@ const toggleRecording = async () => {
           </section>
         </main>
         <Sidebar variant="mobile" activeItem="dashboard" />
+
+        {isAvatarFullscreenFallbackOpen && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
+            <div
+              dir={dir}
+              className="w-full max-w-6xl h-[85vh] bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col"
+            >
+              <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-800">
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                  {t("dashboard.avatar.fullscreen")}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsAvatarFullscreenFallbackOpen(false)}
+                  className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  title="إغلاق عرض الإشارة المكبر"
+                  aria-label="إغلاق عرض الإشارة المكبر"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <div className="relative flex-1 min-h-0 bg-white dark:bg-slate-900">
+                <CWASAAvatarPlayer
+                  sigml={avatarSigml}
+                  playNonce={avatarPlayNonce}
+                  avatarName={ANNA_AVATAR_NAME}
+                  className="absolute inset-0 h-full w-full"
+                  title="Dashboard Avatar Fullscreen"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Video Review Modal */}
         {showVideoReviewModal && pendingVideo && (

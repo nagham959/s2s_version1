@@ -7,7 +7,7 @@
 export const HAS_UPPERCASE = /[A-Z]/;
 export const HAS_LOWERCASE = /[a-z]/;
 export const HAS_DIGIT = /[0-9]/;
-export const HAS_SPECIAL_CHAR = /[!?\\*.#@$%^&()_+\-=\[\]{};:'"<>,./\\]/;
+export const HAS_SPECIAL_CHAR = /[!?\\*.#@$%^&()_+\-=[\]{};:'"<>,./\\]/;
 export const NO_HTML_TAGS = /^[^<>]*$/;
 
 // ── Phone ────────────────────────────────────────────────────────────
@@ -22,7 +22,7 @@ export const EMAIL_STRICT_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2
 
 // ── Forbidden Characters ─────────────────────────────────────────────
 /** Chars forbidden in email fields: < > & ' " \ / ; ` */
-export const NO_FORBIDDEN_CHARS = /^[^<>&'"\\\/;`]*$/;
+export const NO_FORBIDDEN_CHARS = /^[^<>&'"\\;`/]*$/;
 
 // ── Username ─────────────────────────────────────────────────────────
 /** Only letters, numbers, dots, hyphens, and underscores */

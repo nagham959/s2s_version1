@@ -1,4 +1,6 @@
 describe('Security - Input Validation & Auth', () => {
+  const testEmail = Cypress.env('testEmail') || 'test@example.com';
+
   describe('SEC-001 to SEC-002: XSS Prevention', () => {
     it('SEC-001: Should sanitize script tags in displayName', () => {
       cy.visit('/signup');
@@ -32,7 +34,7 @@ describe('Security - Input Validation & Auth', () => {
     it('SEC-018: Should lock account after 3 failed attempts', () => {
       cy.visit('/login');
       for (let i = 0; i < 3; i++) {
-        cy.get('input[type="email"]').clear().type('yousefmasoud81@gmail.com');
+        cy.get('input[type="email"]').clear().type(testEmail);
         cy.get('input[type="password"]').clear().type('WrongPass');
         cy.get('button[type="submit"]').click();
         cy.wait(500);

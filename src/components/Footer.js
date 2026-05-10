@@ -30,24 +30,24 @@ const Footer = ({ variant = 'default' }) => {
     return (
       <footer dir={dir} className="w-full py-6 text-center text-xs text-slate-400 dark:text-slate-600">
         <div className="flex justify-center gap-6 mb-2">
-          <a
-            href="#"
+          <Link
+            to="/privacy"
             className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
           >
             {t('footer.auth.privacy')}
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            to="/terms"
             className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
           >
             {t('footer.auth.terms')}
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            to="/faq"
             className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
           >
             {t('footer.auth.help')}
-          </a>
+          </Link>
         </div>
         <p>{t('footer.auth.copyright')}</p>
       </footer>
@@ -127,20 +127,22 @@ const Footer = ({ variant = 'default' }) => {
             {t('footer.copyright')}
           </p>
           <div className="flex gap-4">
-            <a
+            <button
+              type="button"
               aria-label="Twitter"
-              href="#"
-              className="text-gray-400 dark:text-slate-500 hover:text-white transition-colors"
+              disabled
+              className="text-gray-400 dark:text-slate-500 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             >
               <span className="material-symbols-outlined text-sm">public</span>
-            </a>
-            <a
+            </button>
+            <button
+              type="button"
               aria-label="LinkedIn"
-              href="#"
-              className="text-gray-400 dark:text-slate-500 hover:text-white transition-colors"
+              disabled
+              className="text-gray-400 dark:text-slate-500 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             >
               <span className="material-symbols-outlined text-sm">group</span>
-            </a>
+            </button>
           </div>
         </div>
       </div>
