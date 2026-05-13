@@ -8,7 +8,8 @@
   },
   "common": {
     "error": "An error occurred. Please try again.",
-    "notAvailable": "This option is not available yet."
+    "notAvailable": "This option is not available yet.",
+    "comingSoon": "Coming Soon"
   },
   "passwordStrength": {
     "title": "Password strength",
@@ -56,8 +57,8 @@
     }
   },
   "navbar": {
-    "terms": "Terms & Conditions",
-    "privacy": "Privacy Policy",
+    "about": "About Us",
+    "features": "Features",
     "faq": "FAQ",
     "dashboard": "Dashboard",
     "history": "History",
@@ -188,10 +189,21 @@
         }
       ]
     },
+    "ourStory": {
+      "title": "Our Story",
+      "description": "S2S platform represents the culmination of our years of study and our graduation project as a team of Information Technology (IT) department students, specializing in Software at Delta Technological University. We did not design it merely as an academic requirement, but rather as an effective technical and humanitarian tool that enables deaf and hard of hearing people to interact and communicate smoothly with the community around them.",
+      "visionTitle": "Our Vision",
+      "visionDescription": "To leave a meaningful impact before our graduation, contributing to building a world without language barriers, where everyone has equal opportunities in communication and expression.",
+      "missionTitle": "Our Mission",
+      "missionDescription": "To leverage modern technology to develop an intelligent software solution that combines the precision of artificial intelligence with ease of use, to translate sign language in real-time, and make daily communication natural and effortless."
+    },
+    "team": {
+      "title": "Our Team"
+    },
     "cta": {
-      "title": "Be part of the change",
+      "title": "Contact Us",
       "description": "Join us today and help build a more inclusive, connected world.",
-      "primary": "Start free"
+      "primary": "Contact Us"
     }
   },
   "featuresPage": {
@@ -254,91 +266,12 @@
       ]
     }
   },
-  "pricing": {
-    "hero": {
-      "eyebrow": "Pricing",
-      "title": "Plans that fit your needs",
-      "subtitle": "Start free and scale as you grow. No credit card required."
-    },
-    "toggle": {
-      "monthly": "Monthly",
-      "annual": "Annual",
-      "save": "Save 20%"
-    },
-    "plans": [
-      {
-        "name": "Free",
-        "desc": "Perfect for trying things out and limited personal use.",
-        "cta": "Start free",
-        "highlight": false,
-        "features": [
-          "Up to 30 minutes of translation per month",
-          "Sign to voice",
-          "Basic avatar quality",
-          "Email support"
-        ]
-      },
-      {
-        "name": "Pro",
-        "desc": "For individuals and pros who need unlimited translation.",
-        "cta": "Start free trial",
-        "highlight": true,
-        "features": [
-          "Unlimited translation",
-          "Both directions (Sign ↔ Voice)",
-          "High-fidelity 3D avatar",
-          "Zoom and Teams integration",
-          "Conversation history",
-          "Priority support"
-        ]
-      },
-      {
-        "name": "Enterprise",
-        "desc": "For organizations that need tailored solutions.",
-        "cta": "Contact us",
-        "highlight": false,
-        "features": [
-          "Everything in Pro",
-          "Custom API integration",
-          "Admin dashboard",
-          "Team onboarding",
-          "SLA guarantee",
-          "Dedicated account manager"
-        ]
-      }
-    ],
-    "badges": {
-      "popular": "Most popular"
-    },
-    "faq": {
-      "title": "FAQs",
-      "items": [
-        {
-          "q": "Can I cancel anytime?",
-          "a": "Yes, you can cancel your subscription at any time with no extra fees."
-        },
-        {
-          "q": "Is my data protected?",
-          "a": "Yes. All data is encrypted and protected with top security standards. We never share your data with third parties."
-        },
-        {
-          "q": "Which sign languages are supported?",
-          "a": "We currently support Arabic Sign Language and are adding more languages."
-        },
-        {
-          "q": "Does it work on mobile?",
-          "a": "The platform runs in the browser and is accessible on mobile devices."
-        }
-      ]
-    }
-  },
   "footer": {
     "tagline": "Making the world more accessible, one gesture at a time.",
     "product": "Product",
     "company": "Company",
     "legal": "Legal",
     "features": "Features",
-    "pricing": "Pricing",
     "about": "About us",
     "contact": "Contact us",
     "privacy": "Privacy policy",
@@ -364,7 +297,6 @@
     },
     "infoCards": [
       { "icon": "email", "title": "Email", "value": "support@signaryai.com" },
-      { "icon": "schedule", "title": "Hours", "value": "Sunday - Thursday, 9am - 5pm" },
       { "icon": "location_on", "title": "Location", "value": "Cairo, Egypt" }
     ],
     "form": {

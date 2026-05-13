@@ -35,15 +35,30 @@ const FeaturesPage = () => {
           <section className="pb-20 px-6 lg:px-40 bg-white dark:bg-surface-dark">
             <div className="mx-auto max-w-[1280px]">
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {t('featuresPage.featureCards', []).map((feature, i) => (
-                  <div key={i} className="p-6 rounded-2xl bg-background-alt dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col gap-3">
-                    <div className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-900/20 text-primary flex items-center justify-center text-2xl">
-                      <span className="material-symbols-outlined">{feature.icon}</span>
+                {t('featuresPage.featureCards', []).map((feature, i) => {
+                  const isComingSoon = feature.title === 'Video integration' || feature.title === 'تكامل الفيديو';
+                  return (
+                    <div 
+                      key={i} 
+                      className={`p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col gap-3 relative overflow-hidden ${
+                        isComingSoon 
+                          ? 'bg-gray-50 dark:bg-slate-700/50 opacity-60' 
+                          : 'bg-background-alt dark:bg-slate-800'
+                      }`}
+                    >
+                      {isComingSoon && (
+                        <div className="absolute top-0 right-0 bg-orange-600 px-4 py-2 text-white text-sm font-bold rounded-bl-lg">
+                          {language === 'ar' ? 'قريباً' : 'Coming Soon'}
+                        </div>
+                      )}
+                      <div className={`w-12 h-12 rounded-full ${isComingSoon ? 'opacity-50' : ''} bg-orange-50 dark:bg-orange-900/20 text-primary flex items-center justify-center text-2xl`}>
+                        <span className="material-symbols-outlined">{feature.icon}</span>
+                      </div>
+                      <h3 className={`text-text-main dark:text-white text-xl font-bold ${textStart}`}>{feature.title}</h3>
+                      <p className={`text-text-sub dark:text-slate-400 text-base leading-relaxed ${textStart}`}>{feature.description}</p>
                     </div>
-                    <h3 className={`text-text-main dark:text-white text-xl font-bold ${textStart}`}>{feature.title}</h3>
-                    <p className={`text-text-sub dark:text-slate-400 text-base leading-relaxed ${textStart}`}>{feature.description}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </section>

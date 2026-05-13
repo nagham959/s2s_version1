@@ -99,17 +99,32 @@ const HomePage = () => {
           <section className="pb-20 px-6 lg:px-40 flex justify-center bg-white dark:bg-surface-dark">
             <div className="max-w-[1280px] w-full">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {t('home.featureCards', []).map((card, index) => (
-                  <div key={index} className="group flex flex-col gap-4 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 hover:shadow-xl hover:border-primary/50 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                      <span className="material-symbols-outlined">{card.icon}</span>
+                {t('home.featureCards', []).map((card, index) => {
+                  const isComingSoon = card.title === 'Video integration' || card.title === 'تكامل الفيديو';
+                  return (
+                    <div 
+                      key={index} 
+                      className={`group flex flex-col gap-4 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 transition-all duration-300 relative overflow-hidden ${
+                        isComingSoon 
+                          ? 'opacity-60 hover:shadow-none hover:border-gray-200 dark:hover:border-slate-700' 
+                          : 'hover:shadow-xl hover:border-primary/50'
+                      }`}
+                    >
+                      {isComingSoon && (
+                        <div className="absolute top-0 right-0 bg-orange-600 px-4 py-2 text-white text-sm font-bold rounded-bl-lg">
+                          {t('common.comingSoon', 'Coming Soon')}
+                        </div>
+                      )}
+                      <div className={`w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary transition-colors ${isComingSoon ? 'opacity-50' : 'group-hover:bg-primary group-hover:text-white'}`}>
+                        <span className="material-symbols-outlined">{card.icon}</span>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <h4 className="text-text-main dark:text-white text-xl font-bold leading-tight">{card.title}</h4>
+                        <p className="text-text-sub dark:text-slate-400 text-base leading-relaxed">{card.description}</p>
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <h4 className="text-text-main dark:text-white text-xl font-bold leading-tight">{card.title}</h4>
-                      <p className="text-text-sub dark:text-slate-400 text-base leading-relaxed">{card.description}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </section>

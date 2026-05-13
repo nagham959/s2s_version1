@@ -50,8 +50,8 @@ const Navbar = ({
   // Default navigation items based on variant
   const defaultNavItems = {
     default: [
-      { label: t('navbar.terms'), href: '/terms' },
-      { label: t('navbar.privacy'), href: '/privacy' },
+      { label: t('navbar.about'), href: '/about' },
+      { label: t('navbar.features'), href: '/#features' },
       { label: t('navbar.faq'), href: '/faq' }
     ],
     dashboard: [

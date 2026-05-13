@@ -10,6 +10,7 @@ import { useHistory } from "../contexts/HistoryContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/authContext";
 import { getErrorMessageKey } from "../utils/normalizeApiError";
+import { set } from "zod";
 
 const MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024;
 const ALLOWED_VIDEO_MIME_TYPES = new Set([
@@ -74,6 +75,26 @@ const DashboardPage = () => {
   const keepArabicCharactersOnly = (value) => {
     // Keep Arabic script, Arabic/Latin digits, spaces, and common punctuation.
     return (value || '').replace(/[^\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\s0-9٠-٩.,!?؟،؛:\-()\n]/g, '');
+  };
+
+  const handleTextInputChange = (e) => {
+    const inputValue = e.target.value;
+    const arabicOnlyValue = keepArabicCharactersOnly(inputValue);
+
+    // Always set the cleaned value
+    setTextInput(arabicOnlyValue);
+
+    // Set error only if non-Arabic characters were detected
+    setTextInputError(inputValue !== arabicOnlyValue ? "dashboard.errors.arabicOnly" : "");
+
+    setTranslationError("");
+    setInputMode("text");
+
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      setIsTranslating(false);
+    }
   };
 
   const isLikelySigml = (value) => {
@@ -1340,21 +1361,20 @@ const toggleRecording = async () => {
                           </button>
                         )}
                       </div>
+                      <div className="flex justify-between items-ceter mb-2">
+                        <label className={`text-sm font-meduim text-slate-700 dark:text-slate-200 ${textStart}`}>
+                          {t("dashboard.text.title")}
+                        </label>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {textInput.length}/50
+                        </span>
+                      </div>
                       <textarea
                         value={textInput}
-                        onChange={(e) => {
-                          setTextInput(e.target.value);
-                          setTextInputError("");
-                          setTranslationError("");
-                          setInputMode("text");
-                          if (isRecording) {
-                            recognitionRef.current?.stop();
-                            setIsRecording(false);
-                            setIsTranslating(false);
-                          }
-                        }}
+                        onChange={handleTextInputChange}
                         placeholder={t("dashboard.text.placeholder")}
                         rows={4}
+                        maxLength={50}
                         className={`w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-slate-800 dark:text-white text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-400 dark:placeholder:text-slate-500 ${textStart} transition-shadow`}
                         onClick={(e) => e.stopPropagation()}
                       />
@@ -1370,9 +1390,6 @@ const toggleRecording = async () => {
                         disabled={!textInput.trim()}
                         className={`w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] ${iconDir}`}
                       >
-                        <span className="material-symbols-outlined" aria-hidden="true">
-                          smart_toy
-                        </span>
                         {t("dashboard.text.convert")}
                       </LoadingButton>
                       <ErrorMessage messageKey={translationError} className="mt-3" />
@@ -1411,17 +1428,6 @@ const toggleRecording = async () => {
                       />
                     </div>
                     <div className="p-4 bg-white dark:bg-slate-800 flex flex-col md:flex-row items-center justify-center gap-4 border-t border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center gap-3 w-full md:w-auto">
-                        <button
-                          onClick={replayAvatar}
-                          className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all active:translate-y-0.5 border border-primary"
-                        >
-                          <span className="material-symbols-outlined">
-                            play_arrow
-                          </span>
-                          <span>{t("dashboard.avatar.play")}</span>
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </div>

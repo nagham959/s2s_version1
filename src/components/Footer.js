@@ -79,13 +79,6 @@ const Footer = ({ variant = 'default' }) => {
             >
               {t('footer.features')}
             </Link>
-            <Link
-              to="/pricing"
-              onClick={scrollToTop}
-              className="text-gray-400 dark:text-slate-500 hover:text-primary transition-colors text-sm"
-            >
-              {t('footer.pricing')}
-            </Link>
           </div>
           <div className="flex flex-col gap-3">
             <h4 className="font-bold text-base mb-1">{t('footer.company')}</h4>

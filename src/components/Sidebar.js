@@ -30,12 +30,6 @@ const Sidebar = ({
       label: t('navbar.settings', 'Settings'),
       href: '/profile-settings',
       active: activeItem === 'settings' || location.pathname === '/profile-settings'
-    },
-    {
-      icon: 'account_circle',
-      label: t('navbar.profile', t('navbar.settings', 'Profile')), // fallback for profile label
-      href: '/profile-settings',
-      active: activeItem === 'profile' || location.pathname === '/profile-settings'
     }
   ];
 

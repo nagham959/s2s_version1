@@ -1,9 +1,9 @@
+/* eslint-disable no-undef */
 const publicRoutes = [
   '/',
   '/home',
   '/features',
   '/about',
-  '/pricing',
   '/terms',
   '/privacy',
   '/faq',

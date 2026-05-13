@@ -168,48 +168,6 @@ const ProfileSettingsContent = () => {
           <div className="lg:col-span-8 space-y-6">
             <section className="bg-surface-light dark:bg-slate-800 rounded-2xl shadow-sm border border-border-light dark:border-slate-700 overflow-hidden">
               <div className="px-8 py-5 border-b border-border-light dark:border-slate-700 flex items-center gap-3 bg-gray-50 dark:bg-slate-700">
-                <span className="material-symbols-outlined text-primary text-[24px]">settings</span>
-                <h2 className="text-lg font-bold text-text-main dark:text-white">{t('profile.sections.general')}</h2>
-              </div>
-              <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-bold text-text-main dark:text-white mb-1" htmlFor="sign-lang">{t('profile.fields.signLanguage')}</label>
-                  <div className="relative">
-                    <select
-                      className="appearance-none w-full bg-input-bg dark:bg-slate-700 border border-border-light dark:border-slate-600 text-text-main dark:text-white rounded-xl h-12 px-4 pl-10 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none font-medium cursor-pointer"
-                      id="sign-lang"
-                      value={profile.signLanguage}
-                      onChange={(e) => handleChange('signLanguage', e.target.value)}
-                    >
-                      <option value="asl">{t('profile.fields.signLanguageOptions.asl')}</option>
-                      <option value="arsl">{t('profile.fields.signLanguageOptions.arsl')}</option>
-                    </select>
-                    <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none text-text-muted dark:text-slate-400">
-                      <span className="material-symbols-outlined">expand_more</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-bold text-text-main dark:text-white mb-1" htmlFor="spoken-lang">{t('profile.fields.spokenLanguage')}</label>
-                  <div className="relative">
-                    <select
-                      className="appearance-none w-full bg-input-bg dark:bg-slate-700 border border-border-light dark:border-slate-600 text-text-main dark:text-white rounded-xl h-12 px-4 pl-10 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none font-medium cursor-pointer"
-                      id="spoken-lang"
-                      value={profile.spokenLanguage}
-                      onChange={(e) => handleChange('spokenLanguage', e.target.value)}
-                    >
-                      <option value="en-us">{t('profile.fields.spokenLanguageOptions.enUS')}</option>
-                      <option value="ar">{t('profile.fields.spokenLanguageOptions.ar')}</option>
-                    </select>
-                    <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none text-text-muted dark:text-slate-400">
-                      <span className="material-symbols-outlined">expand_more</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-            <section className="bg-surface-light dark:bg-slate-800 rounded-2xl shadow-sm border border-border-light dark:border-slate-700 overflow-hidden">
-              <div className="px-8 py-5 border-b border-border-light dark:border-slate-700 flex items-center gap-3 bg-gray-50 dark:bg-slate-700">
                 <span className="material-symbols-outlined text-primary text-[24px]">accessibility_new</span>
                 <h2 className="text-lg font-bold text-text-main dark:text-white">{t('profile.sections.accessibility')}</h2>
               </div>
