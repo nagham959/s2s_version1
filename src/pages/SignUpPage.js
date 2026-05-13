@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -57,11 +57,23 @@ const SignUpPage = () => {
 
   const usesSignLanguage = watch("usesSignLanguage");
   const signLanguage = watch("signLanguage");
+  const userType = watch("userType");
 
   const [formError, setFormError] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Auto-set sign language fields based on userType
+  useEffect(() => {
+    const isDeaf = userType === 1 || userType === "1";
+    setValue("usesSignLanguage", isDeaf, { shouldDirty: false, shouldValidate: false });
+    if (isDeaf) {
+      setValue("signLanguage", 1, { shouldDirty: false, shouldValidate: false });
+    } else {
+      setValue("signLanguage", null, { shouldDirty: false, shouldValidate: false });
+    }
+  }, [userType, setValue]);
 
   const [helpModal, setHelpModal] = useState({ open: false, title: '', videoSrc: '', anchorRect: null });
   const openHelp = (e, title, videoSrc) => {
@@ -380,43 +392,8 @@ const SignUpPage = () => {
                 )}
               </div>
 
-              {/* لغة الإشارة */}
-              <div className="flex items-center gap-3 mt-2">
-                <input
-                  type="checkbox"
-                  id="usesSignLanguage"
-                  checked={usesSignLanguage}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setValue("usesSignLanguage", checked, { shouldDirty: true, shouldValidate: true });
-                    if (!checked) setValue("signLanguage", 1, { shouldDirty: true, shouldValidate: true });
-                    if (formError) setFormError("");
-                  }}
-                  className="w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-600 text-primary focus:ring-primary cursor-pointer"
-                />
-                <label
-                  htmlFor="usesSignLanguage"
-                  className={`text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer select-none ${textStart}`}
-                >
-                  {t("signUp.fields.usesSignLanguage")}
-                </label>
-              </div>
-
-              {usesSignLanguage && (
-                <div className="flex flex-col gap-1.5">
-                  <label className={`text-sm font-medium text-slate-700 dark:text-slate-200 ${textStart}`} htmlFor="signLanguage">
-                    {t("signUp.fields.signLanguage")}
-                  </label>
-                  <select
-                    id="signLanguage"
-                    className={`h-11 px-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${textStart} appearance-none`}
-                    value={signLanguage || 1}
-                    onChange={(e) => setValue("signLanguage", Number(e.target.value), { shouldDirty: true, shouldValidate: true })}
-                  >
-                    <option value={1}>{t("signUp.options.defaultSignLanguage")}</option>
-                  </select>
-                </div>
-              )}
+              {/* لغة الإشارة - Auto-managed by useEffect based on userType */}
+              {/* No UI needed - values are set programmatically and sent to backend */}
 
               {/* كلمة المرور */}
               <div className="flex flex-col gap-1.5">

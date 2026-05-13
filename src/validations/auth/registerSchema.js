@@ -57,14 +57,4 @@ export const registerSchema = z
 
     signLanguage: z.nativeEnum(SignLanguage).optional().nullable(),
   })
-  .superRefine((data, ctx) => {
-    // Cross-field: signLanguage required when usesSignLanguage is true
-    if (data.usesSignLanguage && !data.signLanguage) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: REGISTER.signLanguageRequired,
-        path: ['signLanguage'],
-      });
-    }
-  })
   .superRefine(confirmPasswordMatch('password', 'confirmPassword'));
